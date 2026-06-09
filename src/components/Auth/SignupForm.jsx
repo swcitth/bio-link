@@ -1,6 +1,6 @@
 import React from 'react';
 import { Mail, Lock, User, AtSign } from 'lucide-react';
-import ButtonBig from './Button/button_big';
+import ButtonBig from '../Button/button_big';
 import InputField from './InputField'; 
 
 export default function SignupForm({ onSwitchView }) {

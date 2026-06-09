@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-// 👈 แก้ไข: เปลี่ยนจาก Instagram, Youtube เป็น Camera, Video
 import { ArrowRight, Layout, Smartphone, Share2, Video, Camera, ShoppingBag, CheckCircle2, Link2 } from 'lucide-react';
-import Navbar from '../components/Navbar';
+import Navbar from '../components/NavbarLanding';
 import Footer from '../components/Footer';
 import CookieBanner from '../components/CookieBanner';
 

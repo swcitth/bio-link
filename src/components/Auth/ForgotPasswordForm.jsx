@@ -1,6 +1,6 @@
 import React from 'react';
 import { Mail } from 'lucide-react';
-import ButtonBig from './Button/button_big';
+import ButtonBig from '../Button/button_big';
 
 export default function ForgotPasswordForm({ onSwitchView, onSubmit }) {
   return (
