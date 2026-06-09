@@ -2,7 +2,7 @@
 // src/pages/DashboardPage.jsx
 // ============================================================
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // นำเข้า useEffect
 import { FaPlus, FaChevronRight } from "react-icons/fa";
 
 // Components
@@ -30,15 +30,14 @@ const DashboardPage = () => {
 
   const navigate = useNavigate();
   const handleEditClick = (link) => {
-    // เช็คจากชื่อ icon หรือ type ของลิงก์นั้นๆ
     if (link.icon === "Image") {
-      navigate('/edit-shop'); // ถ้ารูปภาพ ให้ไปหน้าร้านค้า
+      navigate('/edit-shop');
     } 
     else if (link.icon === "Youtube" || link.icon === "TikTok") {
-      navigate('/edit-video'); // ถ้าเป็นวิดีโอ ให้ไปหน้าวิดีโอ
+      navigate('/edit-video');
     } 
     else {
-      navigate('/edit-link'); // กรณีอื่นๆ (เช่น Link) ไปหน้าลิงก์ปกติ
+      navigate('/edit-link');
     }
   };
 
@@ -47,6 +46,13 @@ const DashboardPage = () => {
   const [profile, setProfile] = useState(MOCK_PROFILE);
   const [links,   setLinks]   = useState([]);
   const [design,  setDesign]  = useState(MOCK_DESIGN);
+
+  // 🟢 บันทึกข้อมูลลง localStorage ทุกครั้งที่ profile, links หรือ design มีการเปลี่ยนแปลง
+  useEffect(() => {
+    localStorage.setItem("preview_profile", JSON.stringify(profile));
+    localStorage.setItem("preview_links", JSON.stringify(links));
+    localStorage.setItem("preview_design", JSON.stringify(design));
+  }, [profile, links, design]);
 
   const { handleDragStart, handleDragEnter, handleDragEnd } =
     useDragSort(links, setLinks);
