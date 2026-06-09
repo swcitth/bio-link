@@ -20,6 +20,9 @@ const PhonePreview = ({ profile, links, design }) => {
   // ธีม active สำหรับ background
   const activeTheme = THEME_LIST.find((t) => t.id === design.theme) || THEME_LIST[0];
 
+  // 🟢 ดึงสีหน้าปกจากธีมปัจจุบัน (ถ้าไม่มีใช้สีเริ่มต้น)
+  const coverBgClass = "bg-gradient-to-br from-indigo-200 to-pink-200";
+
   // Computed styles จาก design state
   const btnRadius = {
     square:  "6px",
@@ -83,11 +86,11 @@ const PhonePreview = ({ profile, links, design }) => {
           {/* Scrollable content */}
           <div className="relative z-10 h-full overflow-y-auto no-scrollbar">
 
-            {/* Cover */}
-            <div className="h-[90px] bg-gradient-to-br from-indigo-200 to-pink-200 shrink-0 overflow-hidden">
+            {/* 🟢 แก้ไขส่วน Cover ให้เปลี่ยนสีตามธีม (ใช้ตัวแปร coverBgClass) */}
+            <div className={`h-[90px] shrink-0 overflow-hidden ${coverBgClass}`}>
               {profile.cover && (
                 <img
-                  src={profile.cover} alt="cover"
+                  src={profile.cover} alt=""
                   className="w-full h-full object-cover"
                 />
               )}

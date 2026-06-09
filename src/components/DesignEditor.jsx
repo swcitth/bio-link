@@ -4,7 +4,8 @@
 // ============================================================
 
 import React, { useRef } from "react";
-import { Sparkles, Type } from "lucide-react";
+// 🟢 เพิ่ม Import ไอคอน UploadCloud และ Trash2
+import { Sparkles, Type, UploadCloud, Trash2 } from "lucide-react";
 import { THEME_LIST } from "../constants/themes";
 
 /**
@@ -38,22 +39,64 @@ const DesignEditor = ({ design, setDesign }) => {
   return (
     <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-400">
 
-      {/* ─── Background Image Upload ─── */}
-      <input
-        type="file" accept="image/*" ref={bgRef}
-        onChange={handleBgChange} className="hidden"
-      />
-      <div
-        onClick={() => bgRef.current.click()}
-        style={{
-          backgroundImage: design.bgImage ? `url(${design.bgImage})` : design.bgGradient,
-        }}
-        className="relative h-28 rounded-2xl border-2 border-dashed border-violet-200 cursor-pointer overflow-hidden flex items-center justify-center bg-cover bg-center group"
-      >
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-all" />
-        <span className="relative z-10 text-sm font-bold text-slate-700 bg-white/80 backdrop-blur-sm px-4 py-1.5 rounded-lg">
-          🖼️ เปลี่ยนรูปพื้นหลัง
-        </span>
+      {/* ─── Background Image Upload (แบบกล่องเส้นประ) ─── */}
+      <div className={sectionClass}>
+        <SectionTitle icon={<Sparkles size={16} className="text-violet-500" />}>
+          รูปภาพพื้นหลัง
+        </SectionTitle>
+
+        <div
+          onClick={() => bgRef.current.click()}
+          className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-all bg-white relative overflow-hidden group"
+        >
+          {design.bgImage ? (
+            <>
+              {/* กรณีมีรูปพื้นหลังแล้ว */}
+              <div
+                className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-20 transition-opacity"
+                style={{ backgroundImage: `url(${design.bgImage})` }}
+              />
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="bg-white/90 p-3 rounded-full shadow-sm mb-3 text-indigo-600">
+                  <UploadCloud size={24} />
+                </div>
+                <p className="text-sm font-semibold text-slate-800">คลิกเพื่อเปลี่ยนรูปพื้นหลังใหม่</p>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* กรณีที่ยังไม่มีรูปพื้นหลัง */}
+              <div className="bg-slate-50 p-3 rounded-full mb-3 text-slate-400 group-hover:text-indigo-500 transition-colors">
+                <UploadCloud size={28} />
+              </div>
+              <p className="text-sm font-semibold text-slate-700">
+                ลากไฟล์มาวางที่นี่ หรือ <span className="text-indigo-600">คลิกเพื่ออัปโหลด</span>
+              </p>
+              <p className="text-xs text-slate-400 mt-1">รองรับ JPG, PNG</p>
+            </>
+          )}
+        </div>
+
+        <input
+          type="file" accept="image/*" ref={bgRef}
+          onChange={handleBgChange} className="hidden"
+        />
+
+        {/* ปุ่มลบรูปพื้นหลัง (แสดงเมื่อมีรูป) */}
+        {design.bgImage && (
+          <div className="flex justify-end mt-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // ป้องกันไม่ให้เด้งเปิดไฟล์ซ้ำตอนกดลบ
+                update("bgImage", "");
+              }}
+              className="text-sm text-red-500 hover:text-red-600 font-medium flex items-center gap-1.5 transition-colors"
+            >
+              <Trash2 size={16} />
+              ลบรูปพื้นหลัง
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ─── Button Style ─── */}
@@ -155,24 +198,32 @@ const DesignEditor = ({ design, setDesign }) => {
               onClick={() => applyTheme(theme.id)}
               className="cursor-pointer group"
             >
-              {/* Thumbnail */}
+              {/* 🟢 Thumbnail อัปเดตใหม่ให้มีหน้าปกและรูปโปรไฟล์ */}
               <div
                 className={`
-                  w-full aspect-[3/4] rounded-xl border-2 p-2.5 flex flex-col items-center gap-2
-                  transition-all duration-200
+                  relative w-full aspect-[3/4] rounded-xl border-2 flex flex-col items-center
+                  overflow-hidden transition-all duration-200
                   ${design.theme === theme.id
                     ? "border-indigo-500 shadow-md shadow-indigo-100"
                     : "border-slate-200 group-hover:border-indigo-300"
                   }
                 `}
-                style={{ backgroundColor: theme.cfg.bgGradient ? undefined : "#fff" }}
+                style={{ background: theme.cfg.bgGradient || theme.cfg.bgColor || "#fff" }}
               >
-                {/* mini avatar */}
-                <div className={`w-8 h-8 rounded-full mt-1 ${theme.previewItem} opacity-60`} />
-                {/* mini links */}
-                <div className={`h-2 w-3/4 rounded-full ${theme.previewItem} opacity-80`} />
-                <div className={`h-2.5 w-full rounded-md mt-auto ${theme.previewItem}`} />
-                <div className={`h-2.5 w-full rounded-md ${theme.previewItem} opacity-70`} />
+                {/* 1. จำลองหน้าปก (Cover) */}
+                <div className={`w-full h-8 ${theme.previewItem} opacity-40`} />
+                
+                {/* 2. จำลองรูปโปรไฟล์ (Avatar) ขยับขึ้นไปทับขอบหน้าปกด้วย -mt-3.5 */}
+                <div className={`w-7 h-7 rounded-full border-2 border-white -mt-3.5 z-10 ${theme.previewItem} opacity-80`} />
+                
+                {/* 3. จำลองชื่อ/Bio */}
+                <div className={`h-1.5 w-3/5 rounded-full mt-2 ${theme.previewItem} opacity-60`} />
+                
+                {/* 4. จำลองปุ่มลิงก์ด้านล่าง */}
+                <div className="w-full px-2.5 mt-auto mb-2.5 flex flex-col gap-1.5">
+                  <div className={`h-2.5 w-full rounded-md ${theme.previewItem} opacity-90`} />
+                  <div className={`h-2.5 w-full rounded-md ${theme.previewItem} opacity-70`} />
+                </div>
               </div>
               <p className="text-center text-xs font-semibold text-slate-500 mt-1.5 leading-tight">
                 {theme.name}

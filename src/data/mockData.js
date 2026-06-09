@@ -14,8 +14,7 @@ export const MOCK_PROFILE = {
   username: "mara.creator",
   avatar:
     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
-  cover:
-    "https://images.unsplash.com/photo-1506744626753-1fa44df31c7f?auto=format&fit=crop&w=600&q=80",
+
 };
 
 /**
