@@ -1,7 +1,7 @@
 import React from 'react';
-import { Mail, Lock } from 'lucide-react'; // 👈 ลบ Eye, EyeOff ออกได้เลย
-import ButtonBig from './Button/button_big';
-import InputField from './InputField'; // 👈 นำเข้า InputField
+import { Mail, Lock } from 'lucide-react'; 
+import ButtonBig from '../Button/button_big';
+import InputField from './InputField'; 
 
 export default function LoginForm({ onSwitchView, onForgotPassword }) {
   return (
