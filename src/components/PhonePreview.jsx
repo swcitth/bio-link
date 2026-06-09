@@ -4,7 +4,7 @@
 // ============================================================
 
 import React from "react";
-import { ICON_MAP, ICON_EMOJI } from "../constants/icons";
+import { ICON_MAP } from "../constants/icons";
 import { THEME_LIST } from "../constants/themes";
 
 /**
@@ -66,7 +66,7 @@ const PhonePreview = ({ profile, links, design }) => {
 
         {/* Screen */}
         <div
-          className="w-full h-full overflow-hidden"
+          className="w-full h-full overflow-hidden relative"
           style={{
             borderRadius: "2rem",
             background: activeTheme.cfg.bgGradient || "#eef2ff",
@@ -98,7 +98,8 @@ const PhonePreview = ({ profile, links, design }) => {
 
               {/* Avatar */}
               <img
-                src={profile.avatar} alt="avatar"
+                src={profile.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"} 
+                alt="avatar"
                 className="w-14 h-14 rounded-full border-[3px] border-white shadow-md object-cover shrink-0"
               />
 
@@ -118,8 +119,8 @@ const PhonePreview = ({ profile, links, design }) => {
                 {profile.bio || "Bio ของคุณ"}
               </p>
 
-              {/* Links */}
-              <div className="w-full flex flex-col gap-2 mt-4">
+              {/* Links List */}
+              <div className="w-full flex flex-col gap-3 mt-4">
                 {visibleLinks.length === 0 && (
                   <p className="text-center text-[11px] text-slate-400 mt-3">
                     ยังไม่มีลิงก์แสดงผล
@@ -128,6 +129,53 @@ const PhonePreview = ({ profile, links, design }) => {
 
                 {visibleLinks.map((link) => {
                   const IconComp = ICON_MAP[link.icon] || ICON_MAP["Link"];
+
+                  // ==========================================
+                  // 1. ถ้ารูปแบบเป็น "Youtube" -> โชว์ตัวเล่นวิดีโอ
+                  // ==========================================
+                  if (link.icon === "Youtube") {
+                    const videoId = link.url && link.url.includes("v=") ? link.url.split("v=")[1] : "Jg1XN0zE9hQ"; 
+                    return (
+                      <div key={link.id} className="w-full rounded-2xl overflow-hidden shadow-sm bg-black aspect-video relative my-1">
+                        <iframe
+                          className="w-full h-full"
+                          src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+                          title={link.title}
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        ></iframe>
+                      </div>
+                    );
+                  }
+
+                  // ==========================================
+                  // 2. ถ้ารูปแบบเป็น "Image" -> โชว์รูปสินค้า + ราคา
+                  // ==========================================
+                  if (link.icon === "Image") {
+                    return (
+                      <div key={link.id} className="w-full flex flex-col text-left mb-2 mt-1">
+                        <img
+                          src={link.imageUrl || "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=500&q=80"} 
+                          alt={link.title}
+                          className="w-full aspect-square object-cover rounded-2xl shadow-sm mb-2"
+                        />
+                        <h3 className="text-[13px] font-bold leading-tight" style={{ color: design.textColor }}>
+                          {link.title || "อาหารสุนัข"}
+                        </h3>
+                        <p className="text-[10px] opacity-70 mt-0.5 leading-snug" style={{ color: design.textColor }}>
+                          {link.description || "อาหารสุนัขสำหรับลูกหมาอายุ 1-12 เดือน"}
+                        </p>
+                        <p className="text-[11px] font-bold mt-1" style={{ color: design.textColor }}>
+                          {link.price ? `${link.price} THB` : "100 THB"}
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  // ==========================================
+                  // 3. รูปแบบปุ่มลิงก์ปกติ
+                  // ==========================================
                   return (
                     <div
                       key={link.id}
@@ -147,7 +195,6 @@ const PhonePreview = ({ profile, links, design }) => {
                       onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
                       onMouseOut={(e)  => (e.currentTarget.style.transform = "scale(1)")}
                     >
-                      {/* Icon */}
                       <div
                         className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
                         style={{ background: "rgba(0,0,0,0.06)", color: design.btnTextColor }}
@@ -155,7 +202,6 @@ const PhonePreview = ({ profile, links, design }) => {
                         <IconComp size={14} />
                       </div>
 
-                      {/* Title */}
                       <span
                         className="flex-1 text-center pr-7 font-semibold"
                         style={{ fontSize: 11, color: design.btnTextColor }}
@@ -173,7 +219,7 @@ const PhonePreview = ({ profile, links, design }) => {
       </div>
 
       {/* URL badge */}
-      <div className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-full">
+      <div className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-full mt-2">
         mybiolink.com/{profile.username || "username"}
       </div>
 

@@ -68,7 +68,10 @@ export default function EditLink() {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col">
       
       {/* ---------------- Navbar ---------------- */}
-      <Header onLogoClick={() => navigate('/')} />
+      <Header 
+        onLogoClick={() => navigate('/dd')} 
+        showBackButton={true} 
+      />
 
       {/* ---------------- Main Content ---------------- */}
       <main className="flex-1 w-full max-w-3xl mx-auto px-4 pt-28 pb-20">

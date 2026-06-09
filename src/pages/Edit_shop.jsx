@@ -77,7 +77,10 @@ export default function EditShop() {
     <div className="min-h-screen bg-[#f8f9fa] font-sans pb-20 flex flex-col">
       
       {/* เรียกใช้ Header เดิม */}
-      <Header onLogoClick={() => navigate('/')} />
+      <Header 
+        onLogoClick={() => navigate('/dd')} 
+        showBackButton={true} 
+      />
 
       {/* Main Content */}
       <main className="flex-1 w-full max-w-3xl mx-auto px-4 pt-28 pb-20">
