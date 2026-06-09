@@ -3,10 +3,12 @@ import { ArrowRight, Layout, Smartphone, Share2, Video, Camera, ShoppingBag, Che
 import Navbar from '../components/NavbarLanding';
 import Footer from '../components/Footer';
 import CookieBanner from '../components/CookieBanner';
+import { useNavigate } from 'react-router-dom';
 
 export default function LandingPage() {
   const [showCookie, setShowCookie] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setMounted(true);
@@ -58,7 +60,10 @@ export default function LandingPage() {
             สร้างหน้าโปรไฟล์ลิงก์ที่สวยงาม บ่งบอกความเป็นคุณ เพื่อแชร์โซเชียลมีเดีย ผลงาน หรือร้านค้าของคุณได้ง่ายๆ ในลิงก์เดียว
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start pt-4">
-            <button className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full text-lg font-semibold transition-all shadow-xl shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:-translate-y-1 group">
+            <button 
+              onClick={() => navigate('/signup')}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full text-lg font-semibold transition-all shadow-xl shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:-translate-y-1 group"
+            >
               สร้าง Bio ของคุณ
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>

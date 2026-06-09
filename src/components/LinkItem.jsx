@@ -3,8 +3,10 @@
 // ============================================================
 
 import React, { useState } from "react";
-import { Pencil, Eye, EyeOff, Trash2, GripVertical } from "lucide-react";
+import { FiEdit2, FiEye, FiEyeOff, FiTrash2 } from "react-icons/fi";
+import { FaGripVertical } from "react-icons/fa";
 import { ICON_MAP } from "../constants/icons";
+
 
 const LinkItem = ({
   link,
@@ -14,6 +16,7 @@ const LinkItem = ({
   onDragStart,
   onDragEnter,
   onDragEnd,
+  onEdit,
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -39,7 +42,7 @@ const LinkItem = ({
       <div className="flex items-center gap-3 p-3">
 
         {/* Drag Handle */}
-        <GripVertical
+        <FaGripVertical
           size={16}
           className="text-slate-300 hover:text-slate-500 cursor-grab shrink-0 transition-colors"
         />
@@ -62,12 +65,13 @@ const LinkItem = ({
         {/* Action Buttons */}
         <div className="flex items-center gap-1.5 shrink-0">
 
-          {/* Edit — placeholder สำหรับเพื่อนมาทำต่อ */}
-          <button
+          {/* Edit */}
+          <button 
+            onClick={() => onEdit(link)}
             title="แก้ไข"
             className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 flex items-center justify-center transition-colors"
           >
-            <Pencil size={14} />
+            <FiEdit2 size={14} />
           </button>
 
           {/* Toggle Visibility */}
@@ -80,7 +84,7 @@ const LinkItem = ({
                 : "bg-slate-100 text-slate-400 hover:bg-slate-200"
             }`}
           >
-            {link.visible ? <Eye size={14} /> : <EyeOff size={14} />}
+            {link.visible ? <FiEye size={14} /> : <FiEyeOff size={14} />}
           </button>
 
           {/* Delete */}
@@ -89,7 +93,7 @@ const LinkItem = ({
             title="ลบ"
             className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition-colors"
           >
-            <Trash2 size={14} />
+            <FiTrash2 size={14} />
           </button>
 
         </div>

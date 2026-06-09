@@ -2,8 +2,27 @@ import React from 'react';
 import { Mail, Lock } from 'lucide-react'; 
 import ButtonBig from '../Button/button_big';
 import InputField from './InputField'; 
+import { useNavigate } from 'react-router-dom';
 
 export default function LoginForm({ onSwitchView, onForgotPassword }) {
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault(); // 1. หยุดไม่ให้หน้าเว็บโหลดใหม่
+
+    // สมมติว่าตรงนี้คือโค้ดสำหรับส่งอีเมล/รหัสผ่านไปเช็คกับ Backend
+    const isSuccess = true; // สมมติว่าเช็คแล้วรหัสผ่านถูกต้อง
+
+    if (isSuccess) {
+      console.log("เข้าสู่ระบบสำเร็จ!");
+      // 2. รหัสถูก ค่อยเปลี่ยนหน้าไปหน้า Dashboard หรือหน้าจัดการลิงก์
+      navigate('/dd'); 
+    } else {
+      // 3. รหัสผิด ไม่ต้องเปลี่ยนหน้า แต่โชว์ข้อความแจ้งเตือนแทน
+      alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง"); 
+    }
+  };
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
       {/* Header Texts */}
@@ -16,7 +35,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
         </p>
       </div>
 
-      <form className="flex flex-col gap-5">
+      <form className="flex flex-col gap-5" onSubmit={handleLogin}>
         
         {/* 👈 เปลี่ยนมาใช้ InputField จัดการ Email */}
         <InputField 
@@ -56,7 +75,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
         </div>
 
         {/* Submit Button */}
-        <ButtonBig type="button">
+        <ButtonBig type="submit">
           เข้าสู่ระบบ
         </ButtonBig>
 

@@ -13,6 +13,7 @@ import AddBlockModal from "../components/AddBlockModal";
 import DesignEditor  from "../components/DesignEditor";
 import PhonePreview  from "../components/PhonePreview";
 import StatsPage     from "../components/StatsPage";
+import { useNavigate } from "react-router-dom";
 
 // Hooks
 import { useDragSort } from "../hooks/useDragSort";
@@ -26,10 +27,25 @@ import {
 } from "../data/mockData";
 
 const DashboardPage = () => {
+
+  const navigate = useNavigate();
+  const handleEditClick = (link) => {
+    // เช็คจากชื่อ icon หรือ type ของลิงก์นั้นๆ
+    if (link.icon === "Image") {
+      navigate('/edit-shop'); // ถ้ารูปภาพ ให้ไปหน้าร้านค้า
+    } 
+    else if (link.icon === "Youtube" || link.icon === "TikTok") {
+      navigate('/edit-video'); // ถ้าเป็นวิดีโอ ให้ไปหน้าวิดีโอ
+    } 
+    else {
+      navigate('/edit-link'); // กรณีอื่นๆ (เช่น Link) ไปหน้าลิงก์ปกติ
+    }
+  };
+
   const [activeTab,   setActiveTab]  = useState("info");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [profile, setProfile] = useState(MOCK_PROFILE);
-  const [links,   setLinks]   = useState(MOCK_LINKS);
+  const [links,   setLinks]   = useState([]);
   const [design,  setDesign]  = useState(MOCK_DESIGN);
 
   const { handleDragStart, handleDragEnter, handleDragEnd } =
@@ -119,6 +135,7 @@ const DashboardPage = () => {
                         onDragStart={handleDragStart}
                         onDragEnter={handleDragEnter}
                         onDragEnd={handleDragEnd}
+                        onEdit={handleEditClick}
                       />
                     ))}
 

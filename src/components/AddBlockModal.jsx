@@ -1,65 +1,64 @@
-// ============================================================
-// src/components/AddBlockModal.jsx
-// Modal ป๊อปอัปสำหรับเลือกประเภทลิงก์ที่จะเพิ่ม
-// ============================================================
+import React, { useState } from "react";
+import { FiX, FiList, FiGrid, FiImage, FiCopy } from "react-icons/fi";
+import { FaYoutube, FaTiktok } from "react-icons/fa";
 
-import React from "react";
-import { FaTimes, FaYoutube, FaInstagram, FaShoppingCart, FaMusic } from "react-icons/fa";
-
+// ============================================================
+// AddBlockModal Component
+// ============================================================
 const AddBlockModal = ({ isOpen, onClose, onAdd }) => {
   if (!isOpen) return null;
 
+  // ข้อมูลของปุ่มต่างๆ แบ่งตามหมวดหมู่
   const SECTIONS = [
     {
       title: "ลิงก์",
       items: [
         {
-          emoji: "🔗",
+          icon: <FiList size={32} />,
           label: "ปุ่มลิงก์",
           sub: "1 คอลัมน์",
           action: () => onAdd("link", "ลิงก์ใหม่", "Link"),
         },
         {
-          emoji: "⊞",
-          label: "2 คอลัมน์",
-          sub: "เร็วๆ นี้",
+          icon: <FiGrid size={32} />,
+          label: "ปุ่มลิงก์",
+          sub: "เร็วๆนี้",
           disabled: true,
         },
       ],
     },
     {
-      title: "รูปภาพ / สินค้า",
+      title: "รูปภาพ/สินค้า",
       items: [
-        { emoji: "🖼️", label: "สไลเดอร์",  sub: "เร็วๆ นี้", disabled: true },
-        { emoji: "📷", label: "รูปเดี่ยว", sub: "เร็วๆ นี้", disabled: true },
+        { 
+          icon: <FiImage size={32} />, 
+          label: "รูปเดี่ยว", 
+          sub: "ขนาดใหญ่", 
+          action: () => onAdd("image", "รูปภาพ", "Image") 
+        },
+        { 
+          icon: <FiCopy size={32} />, // ใช้ FiCopy (รูปซ้อนกัน) แทน Images สไลเดอร์
+          label: "สไลเดอร์", 
+          sub: "เร็วๆนี้", 
+          disabled: true 
+        },
       ],
     },
     {
       title: "เพิ่มเติม",
       items: [
         {
-          icon: <FaYoutube size={36} />,
-          label: "YouTube",
-          sub: "ฝังวิดีโอ (ผ่านลิงก์)",
-          action: () => onAdd("link", "YouTube Video", "Youtube"),
+          icon: <FaYoutube size={32} />,
+          label: "Youtube",
+          sub: "ฝังวิดีโอ",
+          action: () => onAdd("youtube", "YouTube Video", "Youtube"),
         },
         {
-          icon: <FaInstagram size={36} />,
-          label: "Instagram",
-          sub: "เพิ่มลิงก์โปรไฟล์",
-          action: () => onAdd("link", "Instagram", "Instagram"),
-        },
-        {
-          icon: <FaShoppingCart size={36} />,
-          label: "Shopee / Lazada",
-          sub: "ลิงก์สินค้า",
-          action: () => onAdd("link", "สั่งซื้อสินค้า", "ShoppingCart"),
-        },
-        {
-          icon: <FaMusic size={36} />,
-          label: "Spotify / Music",
-          sub: "เพลย์ลิสต์",
-          action: () => onAdd("link", "My Playlist", "Music"),
+          // 👈 ใช้ FaTiktok จาก react-icons ได้เลย สะดวกมาก!
+          icon: <FaTiktok size={30} />,
+          label: "TikTok",
+          sub: "ฝัง",
+          action: () => onAdd("tiktok", "TikTok", "TikTok"),
         },
       ],
     },
@@ -67,55 +66,60 @@ const AddBlockModal = ({ isOpen, onClose, onAdd }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl"
+        className="bg-white rounded-[2rem] w-full max-w-[480px] overflow-hidden shadow-xl relative"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100">
-          <h3 className="text-lg font-bold text-slate-800">➕ เพิ่มรูปแบบ</h3>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
-          >
-            <FaTimes size={16} />
-          </button>
-        </div>
+        {/* Close Button (มุมขวาบน) */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-700 transition-colors z-10 focus:outline-none"
+        >
+          {/* เปลี่ยน X เป็น FiX */}
+          <FiX size={16} strokeWidth={2.5} />
+        </button>
 
-        {/* Content */}
-        <div className="p-6 max-h-[70vh] overflow-y-auto space-y-6 no-scrollbar">
+        {/* Content Area */}
+        <div className="p-8 pt-12 max-h-[85vh] overflow-y-auto space-y-8 no-scrollbar">
           {SECTIONS.map(({ title, items }) => (
-            <div key={title}>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+            <div key={title} className="space-y-3">
+              {/* Section Title */}
+              <h4 className="font-bold text-slate-800 text-lg ml-1">
                 {title}
-              </p>
-              <div className="grid grid-cols-2 gap-3">
+              </h4>
+              
+              {/* Grid of Buttons */}
+              <div className="grid grid-cols-2 gap-4">
                 {items.map((item, i) => (
                   <button
                     key={i}
                     onClick={item.disabled ? undefined : item.action}
                     disabled={item.disabled}
                     className={`
-                      flex flex-col items-center gap-3 p-5 rounded-2xl border text-center
-                      transition-all duration-150
+                      flex flex-col items-center justify-center gap-3 py-6 px-4 rounded-2xl text-center
+                      transition-all duration-200 border border-transparent
                       ${item.disabled
-                        ? "border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed"
-                        : "border-slate-100 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 cursor-pointer"
+                        ? "bg-[#F4F5F7] opacity-60 cursor-not-allowed"
+                        : "bg-[#F4F5F7] hover:bg-white hover:border-slate-200 hover:shadow-sm cursor-pointer"
                       }
                     `}
                   >
-                    <div className="text-slate-400">
-                      {item.icon
-                        ? item.icon
-                        : <span style={{ fontSize: 36 }}>{item.emoji}</span>
-                      }
+                    {/* Icon */}
+                    <div className={`${item.disabled ? "text-slate-300" : "text-slate-600"}`}>
+                      {item.icon}
                     </div>
-                    <div>
-                      <p className="font-bold text-sm text-slate-700">{item.label}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{item.sub}</p>
+                    
+                    {/* Text */}
+                    <div className="space-y-0.5">
+                      <p className={`font-bold text-[15px] leading-tight ${item.disabled ? "text-slate-400" : "text-slate-800"}`}>
+                        {item.label}
+                      </p>
+                      <p className="text-[13px] text-slate-500 font-medium">
+                        {item.sub}
+                      </p>
                     </div>
                   </button>
                 ))}
