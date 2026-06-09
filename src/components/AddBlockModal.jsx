@@ -4,30 +4,23 @@
 // ============================================================
 
 import React from "react";
-import { FaYoutube, FaInstagram, FaShoppingCart, FaFileAlt, FaLink, FaMusic, FaTrash, FaGripVertical } from "react-icons/fa";
+import { FaTimes, FaYoutube, FaInstagram, FaShoppingCart, FaMusic } from "react-icons/fa";
 
-/**
- * Props:
- * - isOpen  : boolean — เปิด/ปิด modal
- * - onClose : () => void
- * - onAdd   : (type: string, title: string, icon: string) => void
- */
 const AddBlockModal = ({ isOpen, onClose, onAdd }) => {
   if (!isOpen) return null;
 
-  /** รายการ block ที่รองรับ แบ่งเป็น sections */
   const SECTIONS = [
     {
       title: "ลิงก์",
       items: [
         {
-          icon: <LayoutList size={36} strokeWidth={1.5} />,
+          emoji: "🔗",
           label: "ปุ่มลิงก์",
           sub: "1 คอลัมน์",
           action: () => onAdd("link", "ลิงก์ใหม่", "Link"),
         },
         {
-          icon: <LayoutGrid size={36} strokeWidth={1.5} />,
+          emoji: "⊞",
           label: "2 คอลัมน์",
           sub: "เร็วๆ นี้",
           disabled: true,
@@ -37,48 +30,33 @@ const AddBlockModal = ({ isOpen, onClose, onAdd }) => {
     {
       title: "รูปภาพ / สินค้า",
       items: [
-        {
-          icon: (
-            <div className="flex gap-1">
-              <Square size={32} strokeWidth={1.5} />
-              <Square size={32} strokeWidth={1.5} className="opacity-40" />
-            </div>
-          ),
-          label: "สไลเดอร์",
-          sub: "เร็วๆ นี้",
-          disabled: true,
-        },
-        {
-          icon: <Image size={36} strokeWidth={1.5} />,
-          label: "รูปเดี่ยว",
-          sub: "เร็วๆ นี้",
-          disabled: true,
-        },
+        { emoji: "🖼️", label: "สไลเดอร์",  sub: "เร็วๆ นี้", disabled: true },
+        { emoji: "📷", label: "รูปเดี่ยว", sub: "เร็วๆ นี้", disabled: true },
       ],
     },
     {
       title: "เพิ่มเติม",
       items: [
         {
-          icon: <YoutubeIcon size={36} strokeWidth={1.5} />,
+          icon: <FaYoutube size={36} />,
           label: "YouTube",
           sub: "ฝังวิดีโอ (ผ่านลิงก์)",
           action: () => onAdd("link", "YouTube Video", "Youtube"),
         },
         {
-          icon: <InstagramIcon size={36} strokeWidth={1.5} />,
+          icon: <FaInstagram size={36} />,
           label: "Instagram",
           sub: "เพิ่มลิงก์โปรไฟล์",
           action: () => onAdd("link", "Instagram", "Instagram"),
         },
         {
-          icon: <ShoppingCart size={36} strokeWidth={1.5} />,
+          icon: <FaShoppingCart size={36} />,
           label: "Shopee / Lazada",
           sub: "ลิงก์สินค้า",
           action: () => onAdd("link", "สั่งซื้อสินค้า", "ShoppingCart"),
         },
         {
-          icon: <Music size={36} strokeWidth={1.5} />,
+          icon: <FaMusic size={36} />,
           label: "Spotify / Music",
           sub: "เพลย์ลิสต์",
           action: () => onAdd("link", "My Playlist", "Music"),
@@ -88,17 +66,14 @@ const AddBlockModal = ({ isOpen, onClose, onAdd }) => {
   ];
 
   return (
-    /* Backdrop */
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
       onClick={onClose}
     >
-      {/* Modal Panel */}
       <div
-        className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
+        className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100">
           <h3 className="text-lg font-bold text-slate-800">➕ เพิ่มรูปแบบ</h3>
@@ -106,7 +81,7 @@ const AddBlockModal = ({ isOpen, onClose, onAdd }) => {
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
           >
-            <X size={16} />
+            <FaTimes size={16} />
           </button>
         </div>
 
@@ -132,7 +107,12 @@ const AddBlockModal = ({ isOpen, onClose, onAdd }) => {
                       }
                     `}
                   >
-                    <div className="text-slate-400">{item.icon}</div>
+                    <div className="text-slate-400">
+                      {item.icon
+                        ? item.icon
+                        : <span style={{ fontSize: 36 }}>{item.emoji}</span>
+                      }
+                    </div>
                     <div>
                       <p className="font-bold text-sm text-slate-700">{item.label}</p>
                       <p className="text-xs text-slate-400 mt-0.5">{item.sub}</p>
@@ -143,7 +123,6 @@ const AddBlockModal = ({ isOpen, onClose, onAdd }) => {
             </div>
           ))}
         </div>
-
       </div>
     </div>
   );

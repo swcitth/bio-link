@@ -2,6 +2,8 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom'; // 👈 ลบ BrowserRouter ออกจากบรรทัดนี้
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
+import DashboardPage from './pages/DashboardPage';
+import PreviewPage from './pages/PreviewPage';
 
 function App() {
   return (
@@ -15,6 +17,9 @@ function App() {
       <Route path="/signup" element={<AuthPage defaultView="signup" />} />
       <Route path="/forgot-password" element={<AuthPage defaultView="forgot-password" />} /> 
       <Route path="/otp" element={<AuthPage defaultView="otp" />} />
+
+      <Route path="/dd" element={<DashboardPage />} />
+      <Route path="/preview" element={<PreviewPage />} />
 
 
     </Routes>

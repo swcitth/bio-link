@@ -15,7 +15,7 @@ import { ICON_MAP } from "../constants/icons";
 const StatsPage = ({ links, stats }) => {
   const maxClicks = Math.max(...links.map((l) => l.clicks || 0), 1);
   const DAY_LABELS = ["จ", "อ", "พ", "พฤ", "ศ", "ส", "อา"];
-  const BAR_COLORS = ["#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6"];
+  const BAR_COLORS = ["#f9e400", "#f472b6", "#22c55e", "#f97316", "#38bdf8", "#a855f7", "#ef4444"];
   const maxWeekly  = Math.max(...(stats.weeklyViews || [1]));
 
   return (

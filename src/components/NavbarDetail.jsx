@@ -1,19 +1,14 @@
 // ============================================================
-// src/components/Navbar.jsx
-// Navigation bar หลักของแอป
+// src/components/NavbarDetail.jsx
 // ============================================================
 
 import React from "react";
-import { InfinityIcon } from "lucide-react";
+import { Link2, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-/**
- * Props:
- * - activeTab   : 'info' | 'design' | 'stats'
- * - setActiveTab: (tab: string) => void
- * - onSave      : () => void  (callback เมื่อกดบันทึก)
- * - onShare     : () => void  (callback เมื่อกดแชร์)
- */
 const Navbar = ({ activeTab, setActiveTab, onSave, onShare }) => {
+  const navigate = useNavigate();
+
   const TABS = [
     { key: "info",   label: "ข้อมูล" },
     { key: "design", label: "ออกแบบ" },
@@ -25,9 +20,9 @@ const Navbar = ({ activeTab, setActiveTab, onSave, onShare }) => {
       <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
 
         {/* Logo */}
-        <div className="flex items-center gap-2 font-bold text-lg text-indigo-900 font-prompt">
-          <div className="bg-gradient-to-br from-indigo-600 to-violet-600 text-white p-1.5 rounded-xl">
-            <InfinityIcon size={18} />
+        <div className="flex items-center gap-2 font-bold text-2xl tracking-tight text-slate-800">
+          <div className="bg-indigo-600 p-2 rounded-xl hover:bg-indigo-700 transition-colors">
+            <Link2 className="w-6 h-6 text-white" />
           </div>
           MyBioLink
         </div>
@@ -53,6 +48,13 @@ const Navbar = ({ activeTab, setActiveTab, onSave, onShare }) => {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          {/* ปุ่มดู — ไปหน้า /preview */}
+          <button
+            onClick={() => navigate("/preview")}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors"
+          >
+            <Eye size={15} /> ดู
+          </button>
           <button
             onClick={onShare}
             className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"

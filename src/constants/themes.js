@@ -1,17 +1,3 @@
-// ============================================================
-// src/constants/themes.js
-// ธีมสำเร็จรูปสำหรับ DesignEditor และ PhonePreview
-// ============================================================
-
-/**
- * THEME_LIST
- * แต่ละธีมมี:
- *  - id          → ใช้เป็น key
- *  - name        → ชื่อที่แสดง
- *  - previewBg   → Tailwind class สำหรับ preview thumbnail
- *  - previewItem → Tailwind class สำหรับ item ใน thumbnail
- *  - cfg         → design config ที่จะ merge เข้า design state
- */
 export const THEME_LIST = [
   {
     id: "t1",
@@ -74,6 +60,70 @@ export const THEME_LIST = [
       btnRounded: "square",
       btnStyle: "none",
       bgGradient: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)",
+      bgImage: "",
+    },
+  },
+  {
+    id: "t5",
+    name: "Sunset Orange",
+    previewBg: "bg-orange-50",
+    previewItem: "bg-orange-400",
+    cfg: {
+      textColor: "#7c2d12",
+      btnBgColor: "#f97316",
+      btnTextColor: "#ffffff",
+      btnBorderColor: "transparent",
+      btnRounded: "pill",
+      btnStyle: "none",
+      bgGradient: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
+      bgImage: "",
+    },
+  },
+  {
+    id: "t6",
+    name: "Ocean Blue",
+    previewBg: "bg-blue-50",
+    previewItem: "bg-blue-500",
+    cfg: {
+      textColor: "#1e3a5f",
+      btnBgColor: "#3b82f6",
+      btnTextColor: "#ffffff",
+      btnBorderColor: "transparent",
+      btnRounded: "rounded",
+      btnStyle: "shadow3d",
+      bgGradient: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
+      bgImage: "",
+    },
+  },
+  {
+    id: "t7",
+    name: "Rose Gold",
+    previewBg: "bg-pink-50",
+    previewItem: "bg-pink-400",
+    cfg: {
+      textColor: "#881337",
+      btnBgColor: "#ffffff",
+      btnTextColor: "#f43f5e",
+      btnBorderColor: "#fecdd3",
+      btnRounded: "pill",
+      btnStyle: "outline",
+      bgGradient: "linear-gradient(135deg, #fff1f2 0%, #fce7f3 100%)",
+      bgImage: "",
+    },
+  },
+  {
+    id: "t8",
+    name: "Neon Dark",
+    previewBg: "bg-gray-950",
+    previewItem: "bg-cyan-400",
+    cfg: {
+      textColor: "#e2e8f0",
+      btnBgColor: "#0f172a",
+      btnTextColor: "#22d3ee",
+      btnBorderColor: "#22d3ee",
+      btnRounded: "square",
+      btnStyle: "outline",
+      bgGradient: "linear-gradient(135deg, #020617 0%, #0c1445 100%)",
       bgImage: "",
     },
   },
