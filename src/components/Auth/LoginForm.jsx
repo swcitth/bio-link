@@ -1,12 +1,9 @@
-import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
-// import { socialProviders } from '../data/socialProviders'; // ถ้ายังใช้ไฟล์ Data อยู่ให้ import มา
-import ButtonBig from './Button/button_big';
+import React from 'react';
+import { Mail, Lock } from 'lucide-react'; 
+import ButtonBig from '../Button/button_big';
+import InputField from './InputField'; 
 
-
-export default function LoginForm({ onSwitchView }) {
-  const [showPassword, setShowPassword] = useState(false);
-
+export default function LoginForm({ onSwitchView, onForgotPassword }) {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
       {/* Header Texts */}
@@ -20,48 +17,24 @@ export default function LoginForm({ onSwitchView }) {
       </div>
 
       <form className="flex flex-col gap-5">
-        {/* Email Field */}
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="login-email" className="text-sm font-medium text-slate-700">
-            อีเมล
-          </label>
-          <div className="relative flex items-center group">
-            <Mail className="absolute left-3.5 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" strokeWidth={1.5} />
-            <input
-              type="email"
-              id="login-email"
-              placeholder="your@email.com"
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all hover:border-slate-300"
-            />
-          </div>
-        </div>
+        
+        {/* 👈 เปลี่ยนมาใช้ InputField จัดการ Email */}
+        <InputField 
+          id="login-email" 
+          label="อีเมล" 
+          type="email" 
+          placeholder="your@email.com" 
+          icon={Mail} 
+        />
 
-        {/* Password Field */}
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="login-password" className="text-sm font-medium text-slate-700">
-            รหัสผ่าน
-          </label>
-          <div className="relative flex items-center group">
-            <Lock className="absolute left-3.5 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" strokeWidth={1.5} />
-            <input
-              type={showPassword ? "text" : "password"}
-              id="login-password"
-              placeholder="••••••••"
-              className="w-full pl-11 pr-11 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all hover:border-slate-300"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 text-slate-400 hover:text-slate-600 focus:outline-none"
-            >
-              {showPassword ? (
-                <EyeOff className="w-4 h-4" strokeWidth={1.5} />
-              ) : (
-                <Eye className="w-4 h-4" strokeWidth={1.5} />
-              )}
-            </button>
-          </div>
-        </div>
+        {/* 👈 เปลี่ยนมาใช้ InputField จัดการ Password */}
+        <InputField 
+          id="login-password" 
+          label="รหัสผ่าน" 
+          type="password" 
+          placeholder="••••••••" 
+          icon={Lock} 
+        />
 
         {/* Options Row */}
         <div className="flex items-center justify-between mt-1 mb-2">
@@ -72,9 +45,14 @@ export default function LoginForm({ onSwitchView }) {
             />
             <span className="text-sm text-slate-600">จดจำฉันไว้ในระบบ</span>
           </label>
-          <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline transition-colors">
+          
+          <button 
+            type="button"
+            onClick={onForgotPassword}
+            className="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline transition-colors focus:outline-none"
+          >
             ลืมรหัสผ่าน?
-          </a>
+          </button>
         </div>
 
         {/* Submit Button */}

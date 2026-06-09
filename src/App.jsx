@@ -1,18 +1,17 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom'; // 👈 ลบ BrowserRouter ออกจากบรรทัดนี้
+import { Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import PreviewPage from './pages/PreviewPage';
+import EditLink from './pages/Edit_link';
+import EditShop from './pages/Edit_shop';
+import EditVideo from './pages/Edit_video';
 
 function App() {
   return (
-    // 👈 ลบ <BrowserRouter> ออก เหลือแค่ <Routes>
     <Routes>
-      {/* หน้าหลัก */}
       <Route path="/" element={<LandingPage />} />
-      
-      {/* หน้า Login / Signup */}
       <Route path="/login" element={<AuthPage defaultView="login" />} />
       <Route path="/signup" element={<AuthPage defaultView="signup" />} />
       <Route path="/forgot-password" element={<AuthPage defaultView="forgot-password" />} /> 
@@ -20,6 +19,13 @@ function App() {
 
       <Route path="/dd" element={<DashboardPage />} />
       <Route path="/preview" element={<PreviewPage />} />
+      <Route path="/reset-password" element={<AuthPage defaultView="reset-password" />} />
+
+
+
+      <Route path="/edit-link" element={<EditLink />} />
+      <Route path="/edit-shop" element={<EditShop />} />
+      <Route path="/edit-video" element={<EditVideo />} />
 
 
     </Routes>
