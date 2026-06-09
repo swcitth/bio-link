@@ -7,6 +7,8 @@ import PreviewPage from './pages/PreviewPage';
 import EditLink from './pages/Edit_link';
 import EditShop from './pages/Edit_shop';
 import EditVideo from './pages/Edit_video';
+import CookiePolicyPage from './pages/CookiePolicyPage';
+import CookieSettingsPage from './pages/CookieSettingsPage';
 
 function App() {
   return (
@@ -19,6 +21,7 @@ function App() {
 
       <Route path="/dd" element={<DashboardPage />} />
       <Route path="/preview" element={<PreviewPage />} />
+
       <Route path="/reset-password" element={<AuthPage defaultView="reset-password" />} />
 
 
@@ -27,7 +30,8 @@ function App() {
       <Route path="/edit-shop" element={<EditShop />} />
       <Route path="/edit-video" element={<EditVideo />} />
 
-
+      <Route path="/cookie-policy" element={<CookiePolicyPage />} />  
+      <Route path="/cookie-settings" element={<CookieSettingsPage />} />
     </Routes>
   );
 }
