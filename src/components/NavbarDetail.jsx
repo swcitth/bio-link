@@ -4,7 +4,7 @@
 
 import React from "react";
 import { Link2, Eye } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate} from "react-router-dom";
 
 const Navbar = ({ activeTab, setActiveTab, onSave, onShare }) => {
   const navigate = useNavigate();
@@ -20,12 +20,14 @@ const Navbar = ({ activeTab, setActiveTab, onSave, onShare }) => {
       <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
 
         {/* Logo */}
-        <div className="flex items-center gap-2 font-bold text-2xl tracking-tight text-slate-800">
+        <button 
+          onClick={() => setActiveTab("info")}
+          className=" cursor-pointer flex items-center gap-2 font-bold text-2xl tracking-tight text-slate-800">
           <div className="bg-indigo-600 p-2 rounded-xl hover:bg-indigo-700 transition-colors">
             <Link2 className="w-6 h-6 text-white" />
           </div>
           MyBioLink
-        </div>
+        </button>
 
         {/* Tab Switcher */}
         <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">

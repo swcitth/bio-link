@@ -1,4 +1,16 @@
-import { FaYoutube, FaInstagram, FaShoppingCart, FaFileAlt, FaLink, FaMusic, FaTrash, FaGripVertical } from "react-icons/fa";
+import { 
+  FaYoutube, 
+  FaInstagram, 
+  FaShoppingCart, 
+  FaFileAlt, 
+  FaLink, 
+  FaMusic, 
+  FaTrash, 
+  FaGripVertical,
+  FaTiktok 
+} from "react-icons/fa";
+
+import { FiImage } from "react-icons/fi";  
 
 export const ICON_MAP = {
   Youtube: FaYoutube,
@@ -7,6 +19,8 @@ export const ICON_MAP = {
   FileText: FaFileAlt,
   Link: FaLink,
   Music: FaMusic,
+  TikTok: FaTiktok,  
+  Image: FiImage,    
 };
 
 export const ICON_EMOJI = {
@@ -16,6 +30,8 @@ export const ICON_EMOJI = {
   FileText: "📄",
   Link: "🔗",
   Music: "🎵",
+  TikTok: "📱",      
+  Image: "🖼️",       
 };
 
 export const ICON_OPTIONS = Object.keys(ICON_MAP);
