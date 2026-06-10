@@ -1,26 +1,30 @@
 // ============================================================
 // src/components/ProfileEditor.jsx
 // แก้ไขข้อมูลโปรไฟล์: รูปปก, รูปโปรไฟล์, ชื่อ, bio, username
+// อัปเดต: ดักขนาดรูป 5MB, UI กล่องอัปโหลดแบบใหม่, พรีวิวรูปหน้าปก
 // ============================================================
 
 import React, { useRef, useState } from "react";
-// 🟢 เพิ่ม Import ไอคอน UploadCloud และ Trash2 สำหรับกล่องอัปโหลด
 import { Pencil, Camera, UploadCloud, Trash2 } from "lucide-react";
 
-/**
- * Props:
- * - profile    : { name, bio, username, avatar, cover }
- * - setProfile : (updater) => void
- */
 const ProfileEditor = ({ profile, setProfile }) => {
   const avatarRef = useRef(null);
   const coverRef  = useRef(null);
   const [hoverAvatar, setHoverAvatar] = useState(false);
 
-  /** แปลงไฟล์รูปเป็น base64 แล้วอัปเดต state */
+  /** แปลงไฟล์รูปเป็น base64 แล้วอัปเดต state พร้อมดักขนาด 5MB */
   const handleImageChange = (e, field) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // 🟢 ตรวจสอบขนาดรูปภาพไม่ให้เกิน 5MB
+    const maxFileSize = 5 * 1024 * 1024; // 5 MB
+    if (file.size > maxFileSize) {
+      alert("❌ รูปภาพมีขนาดใหญ่เกินไป! กรุณาเลือกรูปภาพที่มีขนาดไม่เกิน 5MB");
+      e.target.value = ""; // เคลียร์ไฟล์ออก
+      return;
+    }
+
     const reader = new FileReader();
     reader.onloadend = () => setProfile((prev) => ({ ...prev, [field]: reader.result }));
     reader.readAsDataURL(file);
@@ -41,43 +45,44 @@ const ProfileEditor = ({ profile, setProfile }) => {
         className="hidden"
       />
 
-      {/* ─── Cover Image (แบบกล่องอัปโหลดเส้นประ) ─── */}
+      {/* ─── Cover Image ─── */}
       <div className="mb-6">
         <label className="block text-sm font-bold text-slate-700 mb-2">
           รูปหน้าปก
         </label>
         
+        {/* 🟢 อัปเดต UI กล่องอัปโหลดให้เหมือน DesignEditor (แสดงรูป + แผ่นใสสีดำอ่อน) */}
         <div 
           onClick={() => coverRef.current.click()}
-          className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-all bg-white relative overflow-hidden group"
+          className={`relative border-2 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all group overflow-hidden ${
+            profile.cover 
+              ? "border-transparent shadow-sm" 
+              : "border-dashed border-slate-300 bg-slate-50/50 hover:border-indigo-400 hover:bg-indigo-50/50"
+          }`}
+          style={profile.cover ? { backgroundImage: `url(${profile.cover})`, backgroundSize: "cover", backgroundPosition: "center" } : {}}
         >
-          {profile.cover ? (
-            <>
-              <div 
-                className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-20 transition-opacity" 
-                style={{ backgroundImage: `url(${profile.cover})` }} 
-              />
-              <div className="relative z-10 flex flex-col items-center">
-                <div className="bg-white/90 p-3 rounded-full shadow-sm mb-3 text-indigo-600">
-                  <UploadCloud size={24} />
-                </div>
-                <p className="text-sm font-semibold text-slate-800">คลิกเพื่อเปลี่ยนรูปหน้าปกใหม่</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="bg-slate-50 p-3 rounded-full mb-3 text-slate-400 group-hover:text-indigo-500 transition-colors">
-                <UploadCloud size={28} />
-              </div>
-              <p className="text-sm font-semibold text-slate-700">
-                ลากไฟล์มาวางที่นี่ หรือ <span className="text-indigo-600">คลิกเพื่ออัปโหลด</span>
-              </p>
-              <p className="text-xs text-slate-400 mt-1">รองรับ JPG, PNG</p>
-            </>
-          )}
+          {/* แผ่นใสบังรูปภาพ (Overlay) สีดำอ่อนๆ เพื่อให้อ่านตัวหนังสือสีขาวได้ชัด */}
+          {profile.cover && <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all" />}
+
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="bg-white p-3 rounded-full shadow-sm mb-2 group-hover:scale-110 transition-transform">
+              <UploadCloud size={24} className="text-indigo-500" />
+            </div>
+            
+            {profile.cover ? (
+              <p className="text-sm font-bold text-white drop-shadow-md">คลิกเพื่อเปลี่ยนรูปหน้าปกใหม่</p>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-slate-600 mb-1">
+                  ลากไฟล์มาวางที่นี่ หรือ <span className="text-indigo-600">คลิกเพื่ออัปโหลด</span>
+                </p>
+                <p className="text-xs text-slate-400">รองรับ JPG, PNG (ไม่เกิน 5MB)</p>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* ปุ่มลบรูปหน้าปก */}
+        {/* ปุ่มลบรูปหน้าปกชิดขวา */}
         {profile.cover && (
           <div className="flex justify-end mt-3">
             <button 
@@ -108,7 +113,7 @@ const ProfileEditor = ({ profile, setProfile }) => {
         >
           <div className="w-[72px] h-[72px] rounded-full border-4 border-white shadow-lg overflow-hidden">
             <img
-              src={profile.avatar} alt="avatar"
+              src={profile.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"} alt="avatar"
               className="w-full h-full object-cover"
             />
           </div>
@@ -127,7 +132,7 @@ const ProfileEditor = ({ profile, setProfile }) => {
           <div className="relative">
             <input
               type="text"
-              value={profile.name}
+              value={profile.name || ""}
               onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
               placeholder="ชื่อของคุณ"
               className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-400 outline-none rounded-xl px-3.5 py-2.5 text-slate-800 font-semibold text-sm pr-10 transition-colors"
@@ -139,7 +144,7 @@ const ProfileEditor = ({ profile, setProfile }) => {
           <div className="relative">
             <input
               type="text"
-              value={profile.bio}
+              value={profile.bio || ""}
               onChange={(e) => setProfile((p) => ({ ...p, bio: e.target.value }))}
               placeholder="คำอธิบายตัวตน..."
               className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-400 outline-none rounded-xl px-3.5 py-2.5 text-slate-500 text-sm pr-10 transition-colors"
