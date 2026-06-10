@@ -146,12 +146,13 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
                 )}
 
                 {visibleLinks.map((link) => {
+                  const IconComp = ICON_MAP[link.icon] || ICON_MAP["Link"];
                   const subItems = link.items && link.items.length > 0 ? link.items : [link];
 
                   // ==========================================
-                  // 1. ถ้ารูปแบบเป็น "Youtube" / "TikTok" (วิดีโอ)
+                  // 1. ถ้ารูปแบบเป็น "Youtube" 
                   // ==========================================
-                  if (link.icon === "Youtube" || link.icon === "TikTok") {
+                  if (link.icon === "Youtube") {
                     return (
                       <div key={link.id} className="flex flex-col gap-2 mb-2">
                         {link.items && link.title && (
@@ -162,14 +163,21 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
 
                         {subItems.filter(item => item.isVisible !== false && item.visible !== false).map((item, idx) => {
                           const videoUrl = item.link || item.url || "";
-                          const videoId = getYoutubeId(videoUrl);
+                          let videoId = "";
+                          if (videoUrl.includes("v=")) {
+                            videoId = videoUrl.split("v=")[1]?.split("&")[0];
+                          } else if (videoUrl.includes("youtu.be/")) {
+                            videoId = videoUrl.split("youtu.be/")[1]?.split("?")[0];
+                          } else if (!videoUrl && !link.items) {
+                            videoId = "M7lc1UVf-VE"; 
+                          }
 
                           return (
                             <div key={item.id || idx} className="flex flex-col gap-1">
                               <div className="w-full rounded-2xl overflow-hidden shadow-sm bg-black aspect-video relative">
                                 {videoId ? (
                                   <iframe
-                                    className="w-full h-full absolute inset-0"
+                                    className="w-full h-full"
                                     src={`https://www.youtube.com/embed/${videoId}?rel=0`}
                                     title={item.name || item.title || link.title}
                                     frameBorder="0"
@@ -177,7 +185,7 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
                                   />
                                 ) : (
                                   <div className="w-full h-full flex flex-col items-center justify-center text-white text-center px-2">
-                                    <p className="font-bold text-sm text-slate-400">ยังไม่มีวิดีโอ/URL ไม่ถูกต้อง</p>
+                                    <p className="font-bold text-sm">ยังไม่มีวิดีโอ</p>
                                   </div>
                                 )}
                               </div>
@@ -194,7 +202,7 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
                   }
 
                   // ==========================================
-                  // 2. ถ้ารูปแบบเป็น "Image" (Shop / สินค้า / รูปภาพ)
+                  // 2. ถ้ารูปแบบเป็น "Image" 
                   // ==========================================
                   if (link.icon === "Image") {
                     return (
@@ -205,45 +213,37 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
                           </h3>
                         )}
 
-                        {subItems.filter(item => item.isVisible !== false && item.visible !== false).map((item, idx) => {
-                          const imgSrc = item.image || item.imageUrl || "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=500&q=80";
-
-                          return (
-                            <a
-                              key={item.id || idx}
-                              href={item.url || item.link || "#"}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex flex-col hover:opacity-90 transition-opacity"
-                              style={{ textDecoration: 'none' }}
-                            >
-                              <img
-                                src={imgSrc}
-                                alt={item.name || item.title || "Image"}
-                                className="w-full aspect-square object-cover rounded-2xl shadow-sm mb-2 bg-slate-100"
-                              />
-                              <h4 className="text-[13px] font-bold px-1" style={{ color: design.textColor }}>
-                                {item.name || item.title || "ชื่อสินค้า"}
-                              </h4>
-                              {(item.description) && (
-                                <p className="text-[10px] opacity-70 px-1 mt-0.5" style={{ color: design.textColor }}>
-                                  {item.description}
-                                </p>
-                              )}
-                              {(item.price) && (
-                                <p className="text-[11px] font-bold px-1 mt-1 text-indigo-500">
-                                  {item.price} THB
-                                </p>
-                              )}
-                            </a>
-                          );
-                        })}
+                        {subItems.filter(item => item.isVisible !== false && item.visible !== false).map((item, idx) => (
+                          <a 
+                            key={item.id || idx} 
+                            href={item.url || item.link || "#"} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex flex-col hover:opacity-90 transition-opacity"
+                            style={{ textDecoration: 'none' }}
+                          >
+                            <img
+                              src={item.image || item.imageUrl || "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=500&q=80"}
+                              alt={item.name || item.title}
+                              className="w-full aspect-square object-cover rounded-2xl shadow-sm mb-2"
+                            />
+                            <h4 className="text-[13px] font-bold px-1" style={{ color: design.textColor }}>
+                              {item.name || item.title || "ชื่อสินค้า"}
+                            </h4>
+                            <p className="text-[10px] opacity-70 px-1 mt-0.5" style={{ color: design.textColor }}>
+                              {item.description || "รายละเอียดสินค้า"}
+                            </p>
+                            <p className="text-[11px] font-bold px-1 mt-1" style={{ color: design.textColor }}>
+                              {item.price ? `${item.price} THB` : "100 THB"}
+                            </p>
+                          </a>
+                        ))}
                       </div>
                     );
                   }
 
                   // ==========================================
-                  // 3. รูปแบบปุ่มลิงก์ปกติ (เชื่อมไปหน้าอื่นได้)
+                  // 3. รูปแบบปุ่มลิงก์ปกติ (⭐️ แก้ไขให้คลิกได้แล้ว)
                   // ==========================================
                   return (
                     <div key={link.id} className="w-full mb-3 flex flex-col gap-2">
@@ -254,26 +254,28 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
                       )}
 
                       {subItems.filter(item => item.isVisible !== false && item.visible !== false).map((item, idx) => {
+                        
+                        // ⭐️ ดึงไอคอนจาก item ก่อน (ถ้าผู้ใช้เลือก) ถ้าไม่มีให้ใช้ของ Block หลัก
                         const ItemIcon = ICON_MAP[item.iconId] || ICON_MAP[item.icon] || ICON_MAP[link.icon] || ICON_MAP["Link"];
-
+                        
                         return (
-                          <a
+                          <a // ⭐️ เปลี่ยนจาก <div> เป็น <a> เพื่อให้คลิกเชื่อมโยงไปหน้าอื่นได้
                             key={item.id || idx}
-                            href={item.url || item.link || "#"}
-                            target="_blank"
+                            href={item.url || item.link || "#"} // ⭐️ ดึง URL มาใส่
+                            target="_blank" // เปิดในแท็บใหม่
                             rel="noopener noreferrer"
-                            className="block hover:scale-[1.02] transition-transform cursor-pointer"
+                            className="block hover:scale-[1.02] transition-transform cursor-pointer" // เพิ่ม Effect ตอนชี้เมาส์
                             style={{
                               display: "flex",
                               alignItems: "center",
                               gap: 8,
                               padding: "8px 12px",
-                              backgroundColor: design.btnBgColor || "#fff",
-                              color: design.btnTextColor || "#333",
+                              backgroundColor: design.btnBgColor,
+                              color: design.btnTextColor,
                               borderRadius: btnRadius,
                               border: btnBorder,
                               boxShadow: btnBoxShadow,
-                              textDecoration: "none"
+                              textDecoration: "none" // เอาเส้นใต้ลิงก์ออก
                             }}
                           >
                             <div
@@ -287,6 +289,7 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
                               className="flex-1 text-center pr-8 font-semibold"
                               style={{ fontSize: 13, color: design.btnTextColor }}
                             >
+                              {/* ⭐️ ดึงชื่อลิงก์มาแสดงผล */}
                               {item.title || item.name || "ชื่อลิงก์"}
                             </span>
                           </a>
@@ -302,7 +305,7 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
       </div>
 
       {/* URL badge */}
-      <div className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-full mt-2 shadow-sm">
+      <div className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-full mt-2">
         mybiolink.com/{profile.username || "username"}
       </div>
     </div>

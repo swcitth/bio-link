@@ -1,7 +1,7 @@
 import React from 'react';
 import { GripVertical, Eye, EyeOff, Trash2, Plus } from 'lucide-react';
 
-export default function Blocklink({ link, IconComponent, onOpenPopup, onToggleVisibility, onRemove ,dragHandleProps }) {
+export default function Blocklink({ link, IconComponent, onOpenPopup, onToggleVisibility, onRemove ,dragHandleProps ,onChange}) {
   return (
     <div 
       className={`bg-white border ${link.isVisible ? 'border-slate-200' : 'border-slate-200 bg-slate-50 opacity-75'} rounded-2xl p-4 flex items-start sm:items-center gap-3 sm:gap-4 shadow-sm relative group transition-all`}
@@ -35,6 +35,8 @@ export default function Blocklink({ link, IconComponent, onOpenPopup, onToggleVi
           <input 
             type="text" 
             placeholder="เช่น Facebook"
+            value={link.title || ""}
+            onChange={(e) => onChange("title", e.target.value)}
             className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all" 
           />
         </div>
@@ -43,6 +45,8 @@ export default function Blocklink({ link, IconComponent, onOpenPopup, onToggleVi
           <input 
             type="text" 
             placeholder="https://"
+            value={link.url || ""}
+            onChange={(e) => onChange("url", e.target.value)}
             className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all" 
           />
         </div>
