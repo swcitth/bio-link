@@ -54,7 +54,7 @@ const LinkItem = ({
 
         {/* Title + URL */}
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-semibold text-slate-700 ${!link.visible ? "line-through" : ""}`}>
+          <p className={`text-sm font-semibold text-slate-700 ${!link.visible ? "opacity-50" : ""}`}>
             {link.title}
           </p>
           {link.url && (
