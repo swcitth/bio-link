@@ -3,35 +3,35 @@ import React from 'react';
 import { FiX, FiGlobe, FiMessageCircle, FiMail, FiPhone, FiMapPin, FiShoppingBag } from 'react-icons/fi';
 import { FaFacebook, FaInstagram, FaTwitter, FaYoutube, FaGithub, FaLinkedin } from 'react-icons/fa';
 
-// จับไอคอนใส่ Object ให้ชัดเจน
+
 const ICON_MAP = {
-  globe: FiGlobe,
-  facebook: FaFacebook,
-  instagram: FaInstagram,
-  twitter: FaTwitter,
-  youtube: FaYoutube,
-  message: FiMessageCircle,
-  mail: FiMail,
-  phone: FiPhone,
-  github: FaGithub,
-  linkedin: FaLinkedin,
-  map: FiMapPin,
-  shop: FiShoppingBag
+  Globe: FiGlobe,
+  Facebook: FaFacebook,
+  Instagram: FaInstagram,
+  Twitter: FaTwitter,
+  Youtube: FaYoutube,
+  Message: FiMessageCircle,
+  Mail: FiMail,
+  Phone: FiPhone,
+  Github: FaGithub,
+  Linkedin: FaLinkedin,
+  Map: FiMapPin,
+  Shop: FiShoppingBag
 };
 
 export const AVAILABLE_ICONS = [
-  { id: 'globe', icon: FiGlobe, name: 'Website' },
-  { id: 'facebook', icon: FaFacebook, name: 'Facebook' },
-  { id: 'instagram', icon: FaInstagram, name: 'Instagram' },
-  { id: 'twitter', icon: FaTwitter, name: 'Twitter' },
-  { id: 'youtube', icon: FaYoutube, name: 'YouTube' },
-  { id: 'message', icon: FiMessageCircle, name: 'Line/Chat' },
-  { id: 'mail', icon: FiMail, name: 'Email' },
-  { id: 'phone', icon: FiPhone, name: 'Phone' },
-  { id: 'github', icon: FaGithub, name: 'GitHub' },
-  { id: 'linkedin', icon: FaLinkedin, name: 'LinkedIn' },
-  { id: 'map', icon: FiMapPin, name: 'Location' },
-  { id: 'shop', icon: FiShoppingBag, name: 'Shop' },
+  { id: 'Globe', icon: FiGlobe, name: 'Website' },
+  { id: 'Facebook', icon: FaFacebook, name: 'Facebook' },
+  { id: 'Instagram', icon: FaInstagram, name: 'Instagram' },
+  { id: 'Twitter', icon: FaTwitter, name: 'Twitter' },
+  { id: 'Youtube', icon: FaYoutube, name: 'YouTube' },
+  { id: 'Message', icon: FiMessageCircle, name: 'Line/Chat' },
+  { id: 'Mail', icon: FiMail, name: 'Email' },
+  { id: 'Phone', icon: FiPhone, name: 'Phone' },
+  { id: 'Github', icon: FaGithub, name: 'GitHub' },
+  { id: 'Linkedin', icon: FaLinkedin, name: 'LinkedIn' },
+  { id: 'Map', icon: FiMapPin, name: 'Location' },
+  { id: 'Shop', icon: FiShoppingBag, name: 'Shop' },
 ];
 
 export const getIconComponent = (iconId) => {

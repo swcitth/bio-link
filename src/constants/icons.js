@@ -7,7 +7,8 @@ import {
   FaMusic, 
   FaTrash, 
   FaGripVertical,
-  FaTiktok 
+  FaTiktok,
+  FaFacebook
 } from "react-icons/fa";
 
 import { FiImage } from "react-icons/fi";  
@@ -16,6 +17,7 @@ export const ICON_MAP = {
   Youtube: FaYoutube,
   Instagram: FaInstagram,
   ShoppingCart: FaShoppingCart,
+  Facebook: FaFacebook,
   FileText: FaFileAlt,
   Link: FaLink,
   Music: FaMusic,

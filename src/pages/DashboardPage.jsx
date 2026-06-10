@@ -1,8 +1,4 @@
-// ============================================================
-// src/pages/DashboardPage.jsx
-// ============================================================
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaPlus, FaChevronRight } from "react-icons/fa";
 
 // Components
@@ -14,6 +10,7 @@ import DesignEditor  from "../components/DesignEditor";
 import PhonePreview  from "../components/PhonePreview";
 import StatsPage     from "../components/StatsPage";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 // Hooks
 import { useDragSort } from "../hooks/useDragSort";
@@ -29,24 +26,44 @@ import {
 const DashboardPage = () => {
 
   const navigate = useNavigate();
+  const location = useLocation();
+
   const handleEditClick = (link) => {
-    // เช็คจากชื่อ icon หรือ type ของลิงก์นั้นๆ
     if (link.icon === "Image") {
-      navigate('/edit-shop'); // ถ้ารูปภาพ ให้ไปหน้าร้านค้า
+      navigate(`/edit-shop?id=${link.id}`);
     } 
     else if (link.icon === "Youtube" || link.icon === "TikTok") {
-      navigate('/edit-video'); // ถ้าเป็นวิดีโอ ให้ไปหน้าวิดีโอ
+      navigate(`/edit-video?id=${link.id}`); 
     } 
     else {
-      navigate('/edit-link'); // กรณีอื่นๆ (เช่น Link) ไปหน้าลิงก์ปกติ
+      navigate(`/edit-link?id=${link.id}`);
     }
   };
 
-  const [activeTab,   setActiveTab]  = useState("info");
+  const [activeTab,   setActiveTab]   = useState("info");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [profile, setProfile] = useState(MOCK_PROFILE);
-  const [links,   setLinks]   = useState([]);
-  const [design,  setDesign]  = useState(MOCK_DESIGN);
+
+  // 1. ย้าย loadData ขึ้นมาไว้บนสุด เพื่อให้ตัวแปรด้านล่างเรียกใช้งานได้
+  const loadData = (key, defaultValue) => {
+    const savedData = localStorage.getItem(key);
+    if (savedData) {
+      return JSON.parse(savedData); // ถ้าเคยเซฟไว้ ให้ดึงกลับมาใช้
+    }
+    return defaultValue; // ถ้ายังไม่เคยเซฟ ให้ใช้ค่าเริ่มต้น
+  };
+
+  // 2. เรียกใช้ฟังก์ชัน loadData เพื่อกำหนดค่าเริ่มต้นตอนรีเฟรช
+  const [profile, setProfile] = useState(() => loadData("bio_profile", MOCK_PROFILE));
+  const [links,   setLinks]   = useState(() => loadData("bio_links", []));
+  const [design,  setDesign]  = useState(() => loadData("bio_design", MOCK_DESIGN));
+
+  useEffect(() => {
+    setProfile(loadData("bio_profile", MOCK_PROFILE));
+    setLinks(loadData("bio_links", []));
+    setDesign(loadData("bio_design", MOCK_DESIGN));
+  }, [location]);
+
+  
 
   const { handleDragStart, handleDragEnter, handleDragEnd } =
     useDragSort(links, setLinks);
@@ -63,6 +80,7 @@ const DashboardPage = () => {
     );
 
   const handleAddNewBlock = (type, defaultTitle, defaultIcon) => {
+
     const newId = links.length > 0 ? Math.max(...links.map((l) => l.id)) + 1 : 1;
     const newLink = {
       id:      newId,
@@ -71,12 +89,38 @@ const DashboardPage = () => {
       icon:    defaultIcon,
       visible: true,
       clicks:  0,
+      items:   []
     };
-    setLinks((prev) => [...prev, newLink]);
-    setIsModalOpen(false);
-  };
 
-  const handleSave  = () => alert("💾 บันทึกสำเร็จ!");
+    const updatedLinks = [...links, newLink];
+    setLinks(updatedLinks);
+
+
+    localStorage.setItem("bio_links", JSON.stringify(updatedLinks));
+    localStorage.setItem("bio_profile", JSON.stringify(profile)); 
+    localStorage.setItem("bio_design", JSON.stringify(design));
+
+    window.dispatchEvent(new Event("storage"));
+    setIsModalOpen(false);
+    if (defaultIcon === "Image") {
+      navigate(`/edit-shop?id=${newId}`);
+    } 
+    else if (defaultIcon === "Youtube" || defaultIcon === "TikTok") {
+      navigate(`/edit-video?id=${newId}`);
+    } 
+    else {
+      navigate(`/edit-link?id=${newId}`);
+    }
+  };
+  
+
+  const handleSave  = () => {
+    localStorage.setItem("bio_profile", JSON.stringify(profile));
+    localStorage.setItem("bio_links", JSON.stringify(links));
+    localStorage.setItem("bio_design", JSON.stringify(design));
+    alert("💾 บันทึกข้อมูลสำเร็จ! (จำลองด้วย localStorage)");
+  };
+  
   const handleShare = () => {
     const url = `https://mybiolink.com/${profile.username || "username"}`;
     navigator.clipboard?.writeText(url);
