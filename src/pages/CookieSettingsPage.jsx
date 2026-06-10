@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Navbar/Header';
+// 🟢 1. นำเข้าไอคอน FaArrowLeft
+import { FaArrowLeft } from 'react-icons/fa';
 
 export default function CookieSettingsPage() {
   const navigate = useNavigate();
@@ -35,7 +37,16 @@ export default function CookieSettingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header onLogoClick={() => navigate('/')} />
+      
+      {/* 🟢 2. เรียกใช้งาน Header และใส่ปุ่มย้อนกลับแบบเดียวกับหน้า Preview */}
+      <Header onLogoClick={() => navigate('/')}>
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-[#5a4bfc] transition-colors underline underline-offset-2"
+        >
+          <FaArrowLeft size={14} /> ย้อนกลับ
+        </button>
+      </Header>
       
       <div className="pt-24 pb-10 px-4">
         <div className="max-w-xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-gray-100">

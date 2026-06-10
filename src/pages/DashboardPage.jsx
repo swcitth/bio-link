@@ -1,4 +1,9 @@
 import React, { useState, useEffect } from "react";
+// ============================================================
+// src/pages/DashboardPage.jsx
+// ============================================================
+
+import React, { useState, useEffect } from "react"; // นำเข้า useEffect
 import { FaPlus, FaChevronRight } from "react-icons/fa";
 
 // Components
@@ -64,6 +69,13 @@ const DashboardPage = () => {
   }, [location]);
 
   
+
+  // 🟢 บันทึกข้อมูลลง localStorage ทุกครั้งที่ profile, links หรือ design มีการเปลี่ยนแปลง
+  useEffect(() => {
+    localStorage.setItem("preview_profile", JSON.stringify(profile));
+    localStorage.setItem("preview_links", JSON.stringify(links));
+    localStorage.setItem("preview_design", JSON.stringify(design));
+  }, [profile, links, design]);
 
   const { handleDragStart, handleDragEnter, handleDragEnd } =
     useDragSort(links, setLinks);

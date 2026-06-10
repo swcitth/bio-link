@@ -2,6 +2,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Navbar/Header';
+// 🟢 1. นำเข้าไอคอน FaArrowLeft
+import { FaArrowLeft } from 'react-icons/fa'; 
 
 export default function CookiePolicyPage() {
   const navigate = useNavigate();
@@ -19,20 +21,23 @@ export default function CookiePolicyPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      
       {/* ส่วนหัวของหน้า */}
-      <Header onLogoClick={() => navigate('/')} />
+      {/* 🟢 2. เรียกใช้งาน Header และใส่ปุ่มย้อนกลับแบบมีขีดเส้นใต้ */}
+      <Header onLogoClick={() => navigate('/')}>
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-[#5a4bfc] transition-colors underline underline-offset-2"
+        >
+          <FaArrowLeft size={14} /> ย้อนกลับ
+        </button>
+      </Header>
       
       {/* ส่วนเนื้อหาหลัก */}
       <div className="pt-24 pb-10 px-4">
         <div className="max-w-2xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
           
-          {/* ปุ่มกลับ */}
-          <button 
-            onClick={() => navigate(-1)} 
-            className="text-sm text-gray-500 mb-6 hover:text-black transition-colors"
-          >
-            &larr; กลับ
-          </button>
+          {/* 🟢 (ลบปุ่มกลับอันเก่าตรงนี้ออกไปแล้ว) */}
 
           <h1 className="text-3xl font-bold mb-2">นโยบายการใช้คุกกี้</h1>
           <p className="text-gray-400 text-sm mb-8">อัปเดตล่าสุด: 9 มิถุนายน 2026</p>

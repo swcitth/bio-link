@@ -3,10 +3,14 @@
 // ============================================================
 
 import React from "react";
-import { Link2, Eye } from "lucide-react";
-import { useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom"; 
+import { FaSignOutAlt } from "react-icons/fa";
+import { Eye } from "lucide-react"; 
 
-const Navbar = ({ activeTab, setActiveTab, onSave, onShare }) => {
+// 🟢 นำเข้า Header จากไฟล์ของคุณมาใช้งาน
+import Header from "./Navbar/Header"; 
+
+const Navbar = ({ activeTab, setActiveTab, onShare }) => {
   const navigate = useNavigate();
 
   const TABS = [
@@ -15,21 +19,18 @@ const Navbar = ({ activeTab, setActiveTab, onSave, onShare }) => {
     { key: "stats",  label: "สถิติ" },
   ];
 
+  // 🟢 สร้างฟังก์ชันออกจากระบบ และกลับไปหน้า Landing Page
+  const handleLogout = () => {
+    // (Optional) หากมีระบบ Login สามารถเพิ่มโค้ดลบ Token หรือ Session ได้ที่นี่
+    navigate("/");
+  };
+
   return (
-    <nav className="sticky top-0 z-50 bg-white/75 backdrop-blur-md border-b border-white/60">
-      <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-
-        {/* Logo */}
-        <button 
-          onClick={() => setActiveTab("info")}
-          className=" cursor-pointer flex items-center gap-2 font-bold text-2xl tracking-tight text-slate-800">
-          <div className="bg-indigo-600 p-2 rounded-xl hover:bg-indigo-700 transition-colors">
-            <Link2 className="w-6 h-6 text-white" />
-          </div>
-          MyBioLink
-        </button>
-
-        {/* Tab Switcher */}
+    <>
+      {/* 🟢 เรียกใช้ Header และส่งฟังก์ชันเปลี่ยนแท็บเมื่อคลิกโลโก้ */}
+      <Header onLogoClick={() => setActiveTab("info")}>
+        
+        {/* Tab Switcher (แท็บตรงกลาง) คงโค้ดเดิมของคุณไว้ทั้งหมด */}
         <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
           {TABS.map(({ key, label }) => (
             <button
@@ -48,7 +49,7 @@ const Navbar = ({ activeTab, setActiveTab, onSave, onShare }) => {
           ))}
         </div>
 
-        {/* Actions */}
+        {/* Actions (ปุ่มด้านขวา) คงโค้ดเดิมของคุณไว้ทั้งหมด */}
         <div className="flex items-center gap-2">
           {/* ปุ่มดู — ไปหน้า /preview */}
           <button
@@ -63,16 +64,21 @@ const Navbar = ({ activeTab, setActiveTab, onSave, onShare }) => {
           >
             แชร์
           </button>
+          
+          {/* ปุ่มออกจากระบบ (สีแดง) */}
           <button
-            onClick={onSave}
-            className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 rounded-xl hover:opacity-90 transition-opacity shadow-md shadow-indigo-200"
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors shadow-md shadow-red-200"
           >
-            บันทึก
+            <FaSignOutAlt size={15} /> ออกจากระบบ
           </button>
         </div>
 
-      </div>
-    </nav>
+      </Header>
+
+      {/* 🟢 เพิ่มช่องว่าง 72px เพื่อดันเนื้อหาใน Dashboard ลงมา ไม่ให้ Header ที่ fixed อยู่ด้านบนบัง */}
+      <div className="h-[72px] w-full shrink-0"></div>
+    </>
   );
 };
 
