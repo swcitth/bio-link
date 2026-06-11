@@ -179,14 +179,16 @@ const PreviewPage = () => {
                     <div key={link.id} className="flex flex-col gap-4 mb-4 w-full">
                       {link.items && link.title && <h3 className="text-base font-bold px-2" style={{ color: design.textColor || "#000" }}>{link.title}</h3>}
                       <div className="grid grid-cols-2 gap-4">
-                        {subItems.filter(item => item.isVisible !== false && item.visible !== false).map((item, idx) => (
-                          <a key={item.id || idx} href={item.url || item.link || "#"} target="_blank" rel="noopener noreferrer" className="flex flex-col hover:opacity-90 group" style={{ textDecoration: 'none' }}>
-                            <img src={item.image || item.imageUrl || "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=500&q=80"} alt={item.name || item.title} className="w-full aspect-square object-cover rounded-2xl shadow-sm mb-3 group-hover:shadow-md" />
-                            <h4 className="text-sm font-bold px-1" style={{ color: design.textColor || "#000" }}>{item.name || item.title || "ชื่อสินค้า"}</h4>
-                            <p className="text-xs opacity-70 px-1 mt-1 line-clamp-2" style={{ color: design.textColor || "#000" }}>{item.description || "รายละเอียดสินค้า"}</p>
-                            <p className="text-sm font-bold px-1 mt-2" style={{ color: design.textColor || "#000" }}>{item.price ? `${item.price} THB` : "100 THB"}</p>
-                          </a>
-                        ))}
+                        {subItems.filter(item => item.isVisible !== false && item.visible !== false).map((item, idx) => {
+                          const itemUrl = item.url || item.link;
+                          const WrapperTag = itemUrl ? "a" : "div";
+                          return (
+                            <WrapperTag key={item.id || idx} {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})} className={`flex flex-col group ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} style={{ textDecoration: 'none' }}>
+                              <img src={item.image || item.imageUrl || "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=500&q=80"} className="w-full aspect-square object-cover rounded-2xl shadow-sm mb-3" />
+                              <h4 className="text-sm font-bold px-1" style={{ color: design.textColor || "#000" }}>{item.name || item.title || "สินค้า"}</h4>
+                            </WrapperTag>
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -196,24 +198,24 @@ const PreviewPage = () => {
                   <div key={link.id} className="w-full mb-2 flex flex-col gap-3">
                     {link.items && link.title && <h3 className="text-base font-bold px-2 mb-1" style={{ color: design.textColor || "#000" }}>{link.title}</h3>}
                     {subItems.filter(item => item.isVisible !== false && item.visible !== false).map((item, idx) => {
+                      const itemUrl = item.url || item.link;
+                      const WrapperTag = itemUrl ? "a" : "div";
                       const ItemIcon = ICON_MAP[item.iconId] || ICON_MAP[item.icon] || ICON_MAP[link.icon] || ICON_MAP["Link"];
                       return (
-                        <a key={item.id || idx} href={item.url || item.link || "#"} target="_blank" rel="noopener noreferrer" className="w-full flex items-center p-4 transition-transform hover:scale-[1.02]"
+                        <WrapperTag key={item.id || idx} {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})}
+                          className={`w-full flex items-center p-4 transition-transform ${itemUrl ? "hover:scale-[1.02] cursor-pointer" : "cursor-default"}`}
                           style={{ backgroundColor: design.btnStyle === "outline" ? "transparent" : (design.btnBgColor || "#ffffff"), color: design.btnTextColor || "#000000", borderRadius: btnRadius, border: btnBorder, boxShadow: btnBoxShadow, textDecoration: "none" }}>
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(0,0,0,0.06)", color: design.btnTextColor || "#000000" }}>
-                            {ItemIcon && <ItemIcon size={20} />}
-                          </div>
-                          <span className="flex-1 text-center pr-10 font-bold" style={{ fontSize: "16px", color: design.btnTextColor || "#000000" }}>{item.title || item.name || "ชื่อลิงก์"}</span>
-                        </a>
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(0,0,0,0.06)" }}>{ItemIcon && <ItemIcon size={20} />}</div>
+                          <span className="flex-1 text-center pr-10 font-bold" style={{ fontSize: "16px" }}>{item.title || item.name || "ชื่อลิงก์"}</span>
+                        </WrapperTag>
                       );
                     })}
                   </div>
                 );
               })}
             </div>
-            <p className="mt-14 text-sm font-medium opacity-60" style={{ color: design.textColor || "#94a3b8" }}>mybiolink.com/{profile.username || "username"}</p>
+            <p className="mt-14 text-sm font-medium opacity-60 text-center" style={{ color: design.textColor || "#94a3b8" }}>mybiolink.com/{profile.username || "username"}</p>
           </div>
-          
         </div>
       </div>
     </div>
