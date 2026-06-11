@@ -24,7 +24,7 @@ function App() {
 
       <Route path="/reset-password" element={<AuthPage defaultView="reset-password" />} />
 
-
+      <Route path="/:username" element={<PreviewPage />} />
 
       <Route path="/edit-link" element={<EditLink />} />
       <Route path="/edit-shop" element={<EditShop />} />
