@@ -91,10 +91,18 @@ const PreviewPage = () => {
           )}
         </div>
 
-        {/* ⭐️ 4. โซนเนื้อหาทั้งหมด (ต้องใส่ relative z-10 เพื่อให้อยู่เหนือพื้นหลัง) */}
+        {/* ⭐️ 4. โซนเนื้อหาทั้งหมด (ต้องใส่ relative z-10 เพื่อให้อยู่เหนือพื้นหลัง //เพิ่มเงื่อนไขธีมสำเร็จมีรูป) */}
         <div className="relative z-10 pb-20">
           
-          <div className="h-48 relative overflow-hidden" style={{ background: coverBackground }}>
+          <div 
+            className="h-48 relative overflow-hidden bg-cover bg-center" 
+            style={
+              activeTheme?.cfg?.coverImage 
+                ? { backgroundImage: activeTheme.cfg.coverImage } 
+                : { background: coverBackground }
+            }
+          >
+            {/* ถ้าผู้ใช้อัปโหลดรูปมาเอง รูปที่อัปโหลดจะทับรูปโลโก้ของธีม */}
             {profile.cover && <img src={profile.cover} alt="Cover" className="w-full h-full object-cover" />}
           </div>
 
