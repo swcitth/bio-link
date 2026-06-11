@@ -1,3 +1,6 @@
+// ============================================================
+// src/pages/DashboardPage.jsx
+// ============================================================
 
 import React, { useState, useEffect } from "react"; // นำเข้า useEffect
 import { FaPlus, FaChevronRight } from "react-icons/fa";
