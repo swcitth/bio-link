@@ -7,8 +7,13 @@ export default function ShareModal({ isOpen, onClose, profile }) {
   if (!isOpen) return null;
 
   const username = profile?.username || "username";
-  const fullUrl = `https://mybiolink.com/${username}`;
-  const shortUrl = `https://mbl.to/${username}`; 
+
+  // ดึง Domain ปัจจุบันอัตโนมัติ
+  const baseUrl = window.location.origin; 
+  
+  //นำ URL ปัจจุบัน มาต่อกับชื่อ Username
+  const fullUrl = `${baseUrl}/${username}`;
+  const shortUrl = `${baseUrl}/s/${username}`;
   
   // ใช้ API ฟรีในการเจน QR Code (ไม่ต้องลงไลบรารีเพิ่ม)
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(fullUrl)}`;
