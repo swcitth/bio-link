@@ -273,31 +273,40 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
                           </h3>
                         )}
 
-                        {subItems.filter(item => item.isVisible !== false && item.visible !== false).map((item, idx) => (
-                          <a 
-                            key={item.id || idx} 
-                            href={item.url || item.link || "#"} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex flex-col hover:opacity-90 transition-opacity"
-                            style={{ textDecoration: 'none' }}
-                          >
-                            <img
-                              src={item.image || item.imageUrl || "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=500&q=80"}
-                              alt={item.name || item.title}
-                              className="w-full aspect-square object-cover rounded-2xl shadow-sm mb-2"
-                            />
-                            <h4 className="text-[13px] font-bold px-1" style={{ color: design.textColor }}>
-                              {item.name || item.title || "ชื่อสินค้า"}
-                            </h4>
-                            <p className="text-[10px] opacity-70 px-1 mt-0.5" style={{ color: design.textColor }}>
-                              {item.description || "รายละเอียดสินค้า"}
-                            </p>
-                            <p className="text-[11px] font-bold px-1 mt-1" style={{ color: design.textColor }}>
-                              {item.price ? `${item.price} THB` : "100 THB"}
-                            </p>
-                          </a>
-                        ))}
+                        {subItems.filter(item => item.isVisible !== false && item.visible !== false).map((item, idx) => {
+                          
+                          //เช็คว่ามีลิงก์กรอกไว้หรือไม่
+                          const itemUrl = item.url || item.link;
+                          // ถ้ามีลิงก์ใช้แท็ก <a> ถ้าไม่มีใช้แท็ก <div> ธรรมดา
+                          const WrapperTag = itemUrl ? "a" : "div";
+
+                          return (
+                            <WrapperTag 
+                              key={item.id || idx} 
+                              //ใส่คุณสมบัติลิงก์เฉพาะตอนที่มีลิงก์เท่านั้น
+                              {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})}
+                              
+                              //เพิ่ม cursor-pointer เฉพาะตอนที่มีลิงก์
+                              className={`flex flex-col transition-opacity ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`}
+                              style={{ textDecoration: 'none' }}
+                            >
+                              <img
+                                src={item.image || item.imageUrl || "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=500&q=80"}
+                                alt={item.name || item.title}
+                                className="w-full aspect-square object-cover rounded-2xl shadow-sm mb-2"
+                              />
+                              <h4 className="text-[13px] font-bold px-1" style={{ color: design.textColor }}>
+                                {item.name || item.title || "ชื่อสินค้า"}
+                              </h4>
+                              <p className="text-[10px] opacity-70 px-1 mt-0.5" style={{ color: design.textColor }}>
+                                {item.description || "รายละเอียดสินค้า"}
+                              </p>
+                              <p className="text-[11px] font-bold px-1 mt-1" style={{ color: design.textColor }}>
+                                {item.price ? `${item.price} THB` : "100 THB"}
+                              </p>
+                            </WrapperTag>
+                          );
+                        })}
                       </div>
                     );
                   }
