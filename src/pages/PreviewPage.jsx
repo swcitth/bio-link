@@ -25,6 +25,12 @@ const getYoutubeId = (url) => {
   return (match && match[2].length === 11) ? match[2] : null;
 };
 
+const getTiktokId = (url) => {
+  if (!url) return null;
+  const match = url.match(/video\/(\d+)/);
+  return match ? match[1] : null;
+};
+
 const PreviewPage = () => {
   const navigate = useNavigate();
 
@@ -121,7 +127,53 @@ const PreviewPage = () => {
                     </div>
                   );
                 }
+                if (link.icon === "TikTok") {
+                  return (
+                    <div key={link.id} className="flex flex-col gap-2 mb-2 w-full">
+                      {link.items && link.title && (
+                        <h3 className="text-[16px] font-bold px-2" style={{ color: design.textColor || "#000" }}>{link.title}</h3>
+                      )}
+                      {subItems.filter(item => item.isVisible !== false && item.visible !== false).map((item, idx) => {
+                        const videoUrl = item.link || item.url || "";
+                        let tiktokId = getTiktokId(videoUrl);
+                        const TiktokIcon = ICON_MAP["TikTok"] || ICON_MAP["Link"];
 
+                        return (
+                          <div key={item.id || idx} className="flex flex-col gap-2 mb-2">
+                            {/* ปรับสัดส่วนเป็น 9:16 สำหรับแนวตั้ง */}
+                            <div 
+                              className="w-full rounded-2xl overflow-hidden shadow-md bg-black relative"
+                              style={{ aspectRatio: '9/16', maxHeight: '600px' }} 
+                            >
+                              {tiktokId ? (
+                                <iframe
+                                  className="w-full h-full"
+                                  src={`https://www.tiktok.com/embed/v2/${tiktokId}`}
+                                  title={item.name || item.title || link.title}
+                                  frameBorder="0"
+                                  allow="encrypted-media;"
+                                  allowFullScreen
+                                  scrolling="no"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center text-white text-center px-2 min-h-[300px]">
+                                  <TiktokIcon size={40} className="mb-2 opacity-40" />
+                                  <p className="font-bold text-base">ยังไม่มีวิดีโอ TikTok</p>
+                                  <p className="text-sm opacity-70 mt-1">โปรดใส่ลิงก์แบบเต็ม<br/>(ที่มี /video/...)</p>
+                                </div>
+                              )}
+                            </div>
+                            {(item.name || item.title) && (
+                              <p className="text-[14px] font-medium px-2 mt-1" style={{ color: design.textColor || "#000" }}>
+                                {item.name || item.title}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }
                 if (link.icon === "Image") {
                   return (
                     <div key={link.id} className="flex flex-col gap-4 mb-4 w-full">
