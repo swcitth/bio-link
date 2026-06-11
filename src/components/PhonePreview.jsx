@@ -109,9 +109,11 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
             {/* Cover Image */}
             <div 
               className="h-[90px] shrink-0 overflow-hidden bg-slate-200"
-              style={{
-                background: coverBackground
-              }}
+              style={
+                activeTheme?.cfg?.coverImage 
+                  ? { backgroundImage: activeTheme.cfg.coverImage } 
+                  : { background: coverBackground }
+              }
             >
               {profile.cover && (
                 <img
