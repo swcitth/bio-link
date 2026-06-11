@@ -1,11 +1,60 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Mail, Lock } from 'lucide-react'; 
 import ButtonBig from '../Button/button_big';
 import InputField from './InputField'; 
 import { useNavigate } from 'react-router-dom';
+import { useGoogleLogin } from '@react-oauth/google';
 
 export default function LoginForm({ onSwitchView, onForgotPassword }) {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+
+
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setIsLoading(true);
+      try {
+        // นำ Access Token วิ่งไปขอข้อมูลรายละเอียดของบัญชีผู้ใช้จาก Google API ตรงๆ
+        const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        }).then(res => res.json());
+
+        console.log("เข้าสู่ระบบสำเร็จ ข้อมูลบัญชี:", userInfo);
+
+        // เก็บข้อมูล Session การเข้าสู่ระบบลงบน LocalStorage (รอเชื่อมโยงกับฐานข้อมูล Backend ในอนาคต)
+        const userSession = {
+          name: userInfo.name,
+          email: userInfo.email,
+          avatar: userInfo.picture,
+          isLoggedIn: true
+        };
+        localStorage.setItem("user_session", JSON.stringify(userSession));
+        
+        // บันทึกหรือเปลี่ยนข้อมูลภาพโปรไฟล์/ชื่อในระบบ เพื่อให้หน้าจอจำลองดึงค่าไปเปลี่ยนตามโปรไฟล์จริง
+        const defaultProfile = {
+          name: userInfo.name,
+          bio: "ยินดีต้อนรับสู่ MyBioLink ของฉัน ✨",
+          avatar: userInfo.picture,
+          username: userInfo.email.split('@')[0] // ดึงข้อความหน้า @ มาทำเป็น username ตั้งต้น
+        };
+        localStorage.setItem("bio_profile", JSON.stringify(defaultProfile));
+
+        alert(`ยินดีต้อนรับคุณ ${userInfo.name}!`);
+        navigate('/dd'); // เปลี่ยนหน้าไปยังระบบจัดการลิงก์หลักของคุณทันที
+        
+      } catch (error) {
+        console.error("Error retrieving user identity data:", error);
+        alert("ไม่สามารถเข้าถึงข้อมูลสิทธิ์ของผู้ใช้งานได้ กรุณาลองใหม่อีกครั้ง");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    onError: (error) => {
+      console.error('Google Login Failed:', error);
+      alert("การเข้าสู่ระบบผ่าน Google ถูกยกเลิกหรือล้มเหลว");
+    }
+  });
+
 
   const handleLogin = async (e) => {
     e.preventDefault(); // 1. หยุดไม่ให้หน้าเว็บโหลดใหม่
@@ -88,7 +137,12 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
         {/* Social Login Buttons */}
         <div className="grid grid-cols-2 gap-3">
-          <button type="button" className="flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700">
+          <button 
+            type="button" 
+            onClick={loginWithGoogle}
+            disabled={isLoading}
+            className="flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700"
+          >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -97,6 +151,8 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
             </svg>
             Google
           </button>
+
+
           <button type="button" className="flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700">
             <svg className="w-4 h-4 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
