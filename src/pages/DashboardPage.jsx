@@ -74,6 +74,9 @@ const DashboardPage = () => {
     localStorage.setItem("preview_profile", JSON.stringify(profile));
     localStorage.setItem("preview_links", JSON.stringify(links));
     localStorage.setItem("preview_design", JSON.stringify(design));
+    
+    // ⭐ เพิ่มบรรทัดนี้: ส่งสัญญาณบอกทุกหน้าจอในเบราว์เซอร์ว่าข้อมูลเปลี่ยนแล้วนะ!
+    window.dispatchEvent(new Event("storage"));
   }, [profile, links, design]);
 
   const { handleDragStart, handleDragEnter, handleDragEnd } =
@@ -220,7 +223,7 @@ const DashboardPage = () => {
 
                 {activeTab === "design" && (
                   <div>
-                    <DesignEditor design={design} setDesign={setDesign} />
+                    <DesignEditor design={design} setDesign={setDesign} profile={profile} />
                     <div className="flex justify-end mt-4">
                       <button
                         onClick={handleSave}

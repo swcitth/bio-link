@@ -50,7 +50,13 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
 
   // เช็ค Fallback ของรูปภาพ
   const defaultAvatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
+  const screenBackground = (design.theme === "custom" && design.bgColor) 
+    ? design.bgColor 
+    : (activeTheme?.cfg?.bgGradient || "#F8FAFC");
 
+  const coverBackground = (design.theme === "custom" && design.coverColor)
+    ? design.coverColor
+    : (activeTheme?.cfg?.coverBg || activeTheme?.cfg?.bgGradient || "#D8B4FE");
   return (
     <div className="flex flex-col items-center gap-3 sticky top-24">
       {/* Label */}
@@ -81,7 +87,7 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
           className="w-full h-full overflow-hidden relative"
           style={{
             borderRadius: "2rem",
-            background: activeTheme.cfg?.bgGradient || "#eef2ff",
+            background: screenBackground,
             fontFamily: selectedFont, // ⭐️ นำฟอนต์มาใช้ตรงนี้ เพื่อให้ครอบคลุมทั้งหน้าจอ
           }}
         >
@@ -100,7 +106,7 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
             <div 
               className="h-[90px] shrink-0 overflow-hidden bg-slate-200"
               style={{
-                background: activeTheme?.cfg?.coverBg || activeTheme?.cfg?.bgGradient || design?.coverBgColor
+                background: coverBackground
               }}
             >
               {profile.cover && (
