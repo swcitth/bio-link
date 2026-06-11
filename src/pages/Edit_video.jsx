@@ -13,6 +13,7 @@ export default function EditVideo() {
 
   const [headerText, setHeaderText] = useState('');
   const [items, setItems] = useState([]);
+  const [blockIcon, setBlockIcon] = useState('Youtube');
 
   // 3. โหลดข้อมูลจาก localStorage เมื่อเปิดหน้า
   useEffect(() => {
@@ -22,6 +23,7 @@ export default function EditVideo() {
     if (currentLink) {
       setHeaderText(currentLink.title || '');
       // ถ้ามีข้อมูลใน items (กรณีมีหลายวิดีโอในบล็อกเดียว) ให้ดึงมา ถ้าไม่มีให้เริ่มที่ว่างๆ
+      setBlockIcon(currentLink.icon || 'Youtube');
       setItems(currentLink.items || [{ id: Date.now(), name: '', link: '', isVisible: true }]);
     }
   }, [linkId]);
@@ -97,6 +99,7 @@ export default function EditVideo() {
                       <div ref={provided.innerRef} {...provided.draggableProps} style={{ ...provided.draggableProps.style }}>
                         <BlockVideo
                           item={item}
+                          blockIcon={blockIcon}
                           onRemove={() => handleRemoveItem(item.id)}
                           onToggleVisibility={() => handleToggleVisibility(item.id)}
                           onChange={(field, value) => handleItemChange(item.id, field, value)}

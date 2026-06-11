@@ -15,6 +15,7 @@ import PhonePreview  from "../components/PhonePreview";
 import StatsPage     from "../components/StatsPage";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import ShareModal from "../components/ShareModal";
 
 // Hooks
 import { useDragSort } from "../hooks/useDragSort";
@@ -31,6 +32,7 @@ const DashboardPage = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const handleEditClick = (link) => {
     if (link.icon === "Image") {
@@ -136,9 +138,7 @@ const DashboardPage = () => {
   };
   
   const handleShare = () => {
-    const url = `https://mybiolink.com/${profile.username || "username"}`;
-    navigator.clipboard?.writeText(url);
-    alert(`📋 คัดลอกลิงก์แล้ว: ${url}`);
+    setIsShareModalOpen(true); 
   };
 
   return (
@@ -159,6 +159,12 @@ const DashboardPage = () => {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onAdd={handleAddNewBlock}
+        />
+
+        <ShareModal 
+          isOpen={isShareModalOpen} 
+          onClose={() => setIsShareModalOpen(false)} 
+          profile={profile} 
         />
 
         <main className="max-w-6xl mx-auto px-4 py-6">

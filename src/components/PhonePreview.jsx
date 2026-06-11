@@ -22,16 +22,20 @@ const getYoutubeId = (url) => {
   return (match && match[2].length === 11) ? match[2] : null;
 };
 
+// ฟังก์ชันใหม่: ดึง Video ID จาก TikTok URL (ต้องใช้ลิงก์เต็มแบบมี /video/ตัวเลข)
+const getTiktokId = (url) => {
+  if (!url) return null;
+  const match = url.match(/video\/(\d+)/);
+  return match ? match[1] : null;
+};
+
 const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
   // กรองเฉพาะลิงก์ที่ visible = true
   const visibleLinks = links.filter((l) => l.visible);
-
   // ธีม active สำหรับ background
   const activeTheme = THEME_LIST.find((t) => t.id === design.theme) || THEME_LIST[0];
-
   // ⭐️ ดึงฟอนต์ที่เลือก ถ้าไม่มีให้ใช้ kanit เป็นค่าเริ่มต้น
   const selectedFont = FONT_MAP[design.font] || FONT_MAP.kanit;
-
   // Computed styles จาก design state
   const btnRadius = {
     square: "6px",
@@ -192,6 +196,56 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
                                 ) : (
                                   <div className="w-full h-full flex flex-col items-center justify-center text-white text-center px-2">
                                     <p className="font-bold text-sm">ยังไม่มีวิดีโอ</p>
+                                  </div>
+                                )}
+                              </div>
+                              {(item.name || item.title) && (
+                                <p className="text-[11px] font-medium px-1 mt-1" style={{ color: design.textColor }}>
+                                  {item.name || item.title}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  }
+
+                  
+                  // รูปแบบเป็น "TikTok" 
+                  if (link.icon === "TikTok") {
+                    return (
+                      <div key={link.id} className="flex flex-col gap-2 mb-2">
+                        {link.items && link.title && (
+                          <h3 className="text-[13px] font-bold px-1" style={{ color: design.textColor }}>{link.title}</h3>
+                        )}
+                        {subItems.filter(item => item.isVisible !== false && item.visible !== false).map((item, idx) => {
+                          const videoUrl = item.link || item.url || "";
+                          let tiktokId = getTiktokId(videoUrl);
+                          const TiktokIcon = ICON_MAP["TikTok"] || ICON_MAP["Link"];
+
+                          return (
+                            <div key={item.id || idx} className="flex flex-col gap-1">
+                              {/* ปรับสัดส่วนเป็น 9:16 สำหรับแนวตั้ง */}
+                              <div 
+                                className="w-full rounded-2xl overflow-hidden shadow-sm bg-black relative"
+                                style={{ aspectRatio: '9/16', maxHeight: '480px' }} 
+                              >
+                                {tiktokId ? (
+                                  <iframe
+                                    className="w-full h-full"
+                                    src={`https://www.tiktok.com/embed/v2/${tiktokId}`}
+                                    title={item.name || item.title || link.title}
+                                    frameBorder="0"
+                                    allow="encrypted-media;"
+                                    allowFullScreen
+                                    scrolling="no"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex flex-col items-center justify-center text-white text-center px-2 min-h-[200px]">
+                                    <TiktokIcon size={32} className="mb-2 opacity-40" />
+                                    <p className="font-bold text-sm">ยังไม่มีวิดีโอ TikTok</p>
+                                    <p className="text-[10px] opacity-70 mt-1">โปรดใส่ลิงก์แบบเต็ม<br/>(ที่มี /video/...)</p>
                                   </div>
                                 )}
                               </div>
