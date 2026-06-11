@@ -1,5 +1,6 @@
 import React from 'react';
 import { GripVertical, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { FaYoutube, FaTiktok } from 'react-icons/fa';
 
 // ฟังก์ชันสำหรับดึง ID ของวิดีโอและสร้างลิงก์รูปปกจาก YouTube
 const getYoutubeThumbnail = (url) => {
@@ -12,8 +13,16 @@ const getYoutubeThumbnail = (url) => {
   return null;
 };
 
-export default function BlockVideo({ item, onRemove, onToggleVisibility, onChange,dragHandleProps }) {
+//ฟังก์ชันตรวจสอบว่าเป็นลิงก์ TikTok หรือไม่
+const isTikTokLink = (url) => {
+  if (!url) return false;
+  return url.includes('tiktok.com');
+};
+
+export default function BlockVideo({ item, blockIcon,onRemove, onToggleVisibility, onChange,dragHandleProps }) {
   const thumbnailUrl = getYoutubeThumbnail(item.link);
+  const isTikTok = isTikTokLink(item.link);
+  const isTikTokMode = blockIcon && blockIcon.toLowerCase().includes('tiktok');
 
   return (
     <div className={`bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center gap-3 md:gap-5 transition-opacity ${item.isVisible ? 'opacity-100' : 'opacity-50'}`}>
@@ -29,9 +38,18 @@ export default function BlockVideo({ item, onRemove, onToggleVisibility, onChang
       {/* Thumbnail Box */}
       <div className="flex-shrink-0 w-32 h-20 md:w-56 md:h-32 bg-[#e2e8f0] rounded-lg overflow-hidden flex items-center justify-center border border-slate-100">
         {thumbnailUrl ? (
+          // ถ้าเป็นลิงก์ YouTube และมีรูปปก ให้แสดงรูปปก
           <img src={thumbnailUrl} alt="YouTube Thumbnail" className="w-full h-full object-cover" />
+        ) : isTikTokMode ? (
+          // ถ้าเป็น TikTok โชว์ฉากหลังดำ + ไอคอน TikTok
+          <div className="w-full h-full bg-[#d1d5db]/40 flex items-center justify-center">
+            <FaTiktok size={28} className="text-slate-400 opacity-50" />
+          </div>
         ) : (
-          <div className="w-full h-full bg-[#d1d5db]/40"></div>
+          // ถ้ายังไม่มีลิงก์ + อยู่ในโหมด YouTube -> โชว์ไอคอน YouTube กลางกล่องเทา
+          <div className="w-full h-full bg-[#d1d5db]/40 flex items-center justify-center">
+            <FaYoutube size={32} className="text-slate-400 opacity-50" />
+          </div>
         )}
       </div>
 
