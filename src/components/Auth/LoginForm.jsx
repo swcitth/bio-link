@@ -8,22 +8,40 @@ import ReCAPTCHA from "react-google-recaptcha";
 
 export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
-  // ส่วนตั้งค่าเริ่มต้น (Hooks & States)
   const navigate = useNavigate(); 
   const [isLoading, setIsLoading] = useState(false); 
   const [captchaValue, setCaptchaValue] = useState(null);
 
-  // ฟังก์ชันจัดการการเปลี่ยนแปลงค่า CAPTCHA
+  // สร้าง State เก็บค่า Input และข้อความ Error
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [identifierError, setIdentifierError] = useState('');
+
+  // ฟังก์ชันตรวจสอบอีเมลแบบ Real-time
+  const handleIdentifierChange = (e) => {
+    const value = e.target.value;
+    setIdentifier(value); // อัปเดตค่าที่พิมพ์
+
+    // ถ้ามีเครื่องหมาย @ แปลว่าตั้งใจพิมพ์อีเมล เราจะเช็ค Format ทันที
+    if (value.includes("@")) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value)) {
+        setIdentifierError("ไม่ถูกต้อง"); // ขึ้นข้อความสีแดง
+      } else {
+        setIdentifierError(""); // พิมพ์ถูกแล้ว เอาข้อความแดงออก
+      }
+    } else {
+      setIdentifierError(""); // ถ้าไม่มี @ (กรอก username) ไม่ต้องเช็ค
+    }
+  };
+
   const onCaptchaChange = (value) => {
-    console.log("Captcha value:", value);
     setCaptchaValue(value);
   };
 
-  // ฟังก์ชันจำลองการบันทึกผู้ใช้ใหม่ลงฐานข้อมูล
   const syncUserToAdminDatabase = (newUser) => {
     const savedUsersStr = localStorage.getItem("system_users");
     let existingUsers = savedUsersStr ? JSON.parse(savedUsersStr) : [];
-
     const isUserExist = existingUsers.find(u => u.email === newUser.email);
 
     if (!isUserExist && newUser.email) {
@@ -36,13 +54,11 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
         status: "Active",
         avatar: newUser.avatar || `https://ui-avatars.com/api/?name=${newUser.username}&background=random&color=fff`
       };
-      
       existingUsers.push(newUserForAdmin);
       localStorage.setItem("system_users", JSON.stringify(existingUsers));
     }
   };
 
-  // ส่วนจัดการการล็อกอินด้วย Google
   const loginWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setIsLoading(true); 
@@ -74,35 +90,33 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
         navigate('/dd'); 
         
       } catch (error) {
-        console.error("Error retrieving user identity data:", error);
         alert("ไม่สามารถเข้าถึงข้อมูลสิทธิ์ของผู้ใช้งานได้ กรุณาลองใหม่อีกครั้ง");
       } finally {
         setIsLoading(false); 
       }
     },
     onError: (error) => {
-      console.error('Google Login Failed:', error);
       alert("การเข้าสู่ระบบผ่าน Google ถูกยกเลิกหรือล้มเหลว");
     }
   });
 
-  // ส่วนจัดการการล็อกอินแบบปกติ (พิมพ์รหัสผ่าน)
   const handleLogin = async (e) => {
     e.preventDefault(); 
 
-    console.log("=> กดปุ่ม Login สำเร็จ! กำลังเช็คข้อมูล...");
+    // ดักไว้ว่าถ้าหน้าจอมี Error สีแดงอยู่ ห้ามกดเข้าสู่ระบบเด็ดขาด
+    if (identifierError) {
+      alert("กรุณาแก้ไขข้อมูลที่ผิดพลาดก่อน");
+      return;
+    }
+
+    if (!identifier.trim() || !password) {
+      alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+      return; 
+    }
 
     if (!captchaValue) {
       alert("กรุณายืนยันว่าคุณไม่ใช่โปรแกรมอัตโนมัติ");
       return;
-    }
-
-    const identifier = document.getElementById("login-identifier").value.trim();
-    const password = document.getElementById("login-password").value;
-
-    if (!identifier || !password) {
-      alert("กรุณากรอกข้อมูลให้ครบถ้วน");
-      return; 
     }
 
     let userRole = "user"; 
@@ -122,7 +136,6 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
     };
     
     localStorage.setItem("user_session", JSON.stringify(userSession));
-
     syncUserToAdminDatabase(userSession);
 
     if (userRole === "admin") {
@@ -142,12 +155,16 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
       <form className="flex flex-col gap-5" onSubmit={handleLogin}>
         
+        {/* 3. ส่ง State ลงไปให้ InputField */}
         <InputField 
           id="login-identifier" 
           label="อีเมล หรือ ชื่อผู้ใช้" 
           type="text" 
           placeholder="your@email.com หรือ username" 
           icon={User} 
+          value={identifier}
+          onChange={handleIdentifierChange}
+          error={identifierError} // ถ้ามีข้อความในนี้ ขอบจะแดงทันที
         />
 
         <InputField 
@@ -156,6 +173,8 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           type="password" 
           placeholder="••••••••" 
           icon={Lock} 
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
 
         <div className="flex items-center justify-between mt-1 mb-2">
@@ -175,7 +194,6 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           </button>
         </div>
 
-        {/* reCAPTCHA ไว้ตรงนี้ */}
         <div className="flex justify-center w-full my-2">
           <ReCAPTCHA
             sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
