@@ -4,35 +4,39 @@ import ButtonBig from '../Button/button_big';
 import InputField from './InputField'; 
 import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
   // ส่วนตั้งค่าเริ่มต้น (Hooks & States)
-  const navigate = useNavigate(); // ใช้สำหรับเปลี่ยนหน้าเว็บโดยไม่ต้องโหลดหน้าใหม่
-  const [isLoading, setIsLoading] = useState(false); // ใช้เก็บสถานะตอนกำลังโหลด (ป้องกันผู้ใช้กดปุ่มรัวๆ)
+  const navigate = useNavigate(); 
+  const [isLoading, setIsLoading] = useState(false); 
+  const [captchaValue, setCaptchaValue] = useState(null);
 
-  // ฟังก์ชันจำลองการบันทึกผู้ใช้ใหม่ลงฐานข้อมูล (ให้หน้า Admin เห็น)
+  // ฟังก์ชันจัดการการเปลี่ยนแปลงค่า CAPTCHA
+  const onCaptchaChange = (value) => {
+    console.log("Captcha value:", value);
+    setCaptchaValue(value);
+  };
+
+  // ฟังก์ชันจำลองการบันทึกผู้ใช้ใหม่ลงฐานข้อมูล
   const syncUserToAdminDatabase = (newUser) => {
-    // 1. ดึงสมุดรายชื่อผู้ใช้ทั้งหมดที่หน้า Admin ใช้
     const savedUsersStr = localStorage.getItem("system_users");
     let existingUsers = savedUsersStr ? JSON.parse(savedUsersStr) : [];
 
-    // 2. เช็คว่ามีคนนี้ในระบบหรือยัง (หาจากอีเมล)
     const isUserExist = existingUsers.find(u => u.email === newUser.email);
 
-    // 3. ถ้ายังไม่มี (แปลว่าเป็นคนสมัครใหม่) ให้เพิ่มชื่อลงไปในสมุด!
     if (!isUserExist && newUser.email) {
       const newUserForAdmin = {
-        id: Date.now(), // สุ่ม ID จำลอง
+        id: Date.now(), 
         name: newUser.name || "Unknown User",
         email: newUser.email,
-        role: newUser.role.toUpperCase(), // แปลงเป็นตัวพิมพ์ใหญ่ (ADMIN, USER) ให้ตรงกับหน้าเว็บแอดมิน
-        date: new Date().toISOString().split('T')[0], // วันที่วันนี้ (YYYY-MM-DD)
+        role: newUser.role.toUpperCase(), 
+        date: new Date().toISOString().split('T')[0], 
         status: "Active",
         avatar: newUser.avatar || `https://ui-avatars.com/api/?name=${newUser.username}&background=random&color=fff`
       };
       
-      // เอาผู้ใช้ใหม่ต่อท้ายเข้าไป แล้วเซฟกลับลง LocalStorage
       existingUsers.push(newUserForAdmin);
       localStorage.setItem("system_users", JSON.stringify(existingUsers));
     }
@@ -41,14 +45,12 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
   // ส่วนจัดการการล็อกอินด้วย Google
   const loginWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
-      setIsLoading(true); // เริ่มแสดงสถานะโหลด
+      setIsLoading(true); 
       try {
-        // นำ Access Token วิ่งไปขอข้อมูลรายละเอียดบัญชี (ชื่อ, อีเมล, รูปโปรไฟล์) จาก Google
         const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         }).then(res => res.json());
 
-        // จำลองการสร้าง Session สำหรับคนล็อกอินด้วย Google (ให้เป็น user ทั่วไปเสมอ)
         const userSession = {
           name: userInfo.name,
           email: userInfo.email,
@@ -56,27 +58,26 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           isLoggedIn: true,
           role: 'user' 
         };
-        localStorage.setItem("user_session", JSON.stringify(userSession)); // เซฟลงเครื่อง
+        localStorage.setItem("user_session", JSON.stringify(userSession)); 
         
-        // จำลองการสร้างโปรไฟล์ตั้งต้นของระบบ Bio Link ให้ผู้ใช้ใหม่
         const defaultProfile = {
           name: userInfo.name,
           bio: "ยินดีต้อนรับสู่ MyBioLink ของฉัน ✨",
           avatar: userInfo.picture,
-          username: userInfo.email.split('@')[0] // ตัดเอาเฉพาะคำข้างหน้า @ มาเป็นชื่อเว็บ
+          username: userInfo.email.split('@')[0] 
         };
         localStorage.setItem("bio_profile", JSON.stringify(defaultProfile));
 
         syncUserToAdminDatabase(userSession);
 
         alert(`ยินดีต้อนรับคุณ ${userInfo.name}!`);
-        navigate('/dd'); // คนล็อกอินผ่าน Google ให้ไปหน้า Dashboard ของ User ปกติ
+        navigate('/dd'); 
         
       } catch (error) {
         console.error("Error retrieving user identity data:", error);
         alert("ไม่สามารถเข้าถึงข้อมูลสิทธิ์ของผู้ใช้งานได้ กรุณาลองใหม่อีกครั้ง");
       } finally {
-        setIsLoading(false); // ปิดสถานะโหลดไม่ว่าจะสำเร็จหรือพัง
+        setIsLoading(false); 
       }
     },
     onError: (error) => {
@@ -85,30 +86,32 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
     }
   });
 
-  //ส่วนจัดการการล็อกอินแบบปกติ (พิมพ์รหัสผ่าน)
+  // ส่วนจัดการการล็อกอินแบบปกติ (พิมพ์รหัสผ่าน)
   const handleLogin = async (e) => {
-    e.preventDefault(); // ป้องกันพฤติกรรมพื้นฐานของฟอร์ม (ไม่ให้หน้าเว็บรีเฟรชเองตอนกดปุ่ม)
+    e.preventDefault(); 
 
-    // ดึงค่าจากช่อง Input ตาม ID ที่ตั้งไว้
+    console.log("=> กดปุ่ม Login สำเร็จ! กำลังเช็คข้อมูล...");
+
+    if (!captchaValue) {
+      alert("กรุณายืนยันว่าคุณไม่ใช่โปรแกรมอัตโนมัติ");
+      return;
+    }
+
     const identifier = document.getElementById("login-identifier").value.trim();
     const password = document.getElementById("login-password").value;
 
-    // ดักจับคนไม่ยอมกรอกข้อมูล
     if (!identifier || !password) {
       alert("กรุณากรอกข้อมูลให้ครบถ้วน");
-      return; // สั่งหยุดการทำงานทันที
+      return; 
     }
 
-    //จำลองการเช็คว่าเป็น Admin หรือไม่ (เปลี่ยนจากโค้ดตรงนี้เป็นยิง API ไปเช็คกับ Backend ในอนาคต)
     let userRole = "user"; 
     if ((identifier === "admin") && password === "1234") {
       userRole = "admin"; 
     }
 
-    // เช็คว่าผู้ใช้กรอกอีเมล (มี @) หรือกรอกแค่ Username
     const isEmail = identifier.includes("@");
 
-    // รวบรวมข้อมูลเพื่อทำบัตรผ่าน (Session) ให้ผู้ใช้งาน
     const userSession = {
       name: userRole === "admin" ? "ผู้ดูแลระบบสูงสุด" : "ผู้ใช้งานทั่วไป",
       email: isEmail ? identifier : `${identifier}@example.com`, 
@@ -118,35 +121,27 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
       role: userRole 
     };
     
-    // เซฟบัตรผ่านลงเบราว์เซอร์
     localStorage.setItem("user_session", JSON.stringify(userSession));
 
     syncUserToAdminDatabase(userSession);
 
-    // Routing Redirector
     if (userRole === "admin") {
-      navigate('/admin'); 
+      navigate('/admin/users'); // แก้จาก '/admin' เป็น '/admin/users' ให้ตรงกับ Router ที่คุณตั้งไว้นะครับ
     } else {
       navigate('/dd'); 
     }
   };
 
-  
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
       
-      {/* ส่วนหัวเรื่อง */}
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-slate-900 mb-2">ยินดีต้อนรับกลับมา</h1>
         <p className="text-sm text-slate-500">กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบ</p>
       </div>
 
-      {/* ตัวฟอร์มหลัก: ทันทีที่ผู้ใช้กดปุ่ม submit หรือกด Enter 
-        ระบบจะเรียกใช้งานฟังก์ชัน handleLogin ด้านบนทันที 
-      */}
       <form className="flex flex-col gap-5" onSubmit={handleLogin}>
         
-        {/* ช่องกรอก Username / Email */}
         <InputField 
           id="login-identifier" 
           label="อีเมล หรือ ชื่อผู้ใช้" 
@@ -155,7 +150,6 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           icon={User} 
         />
 
-        {/* ช่องกรอกรหัสผ่าน (type="password" ทำให้เป็นจุดไข่ปลา) */}
         <InputField 
           id="login-password" 
           label="รหัสผ่าน" 
@@ -164,7 +158,6 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           icon={Lock} 
         />
 
-        {/* ตัวเลือกเสริม: จดจำรหัสผ่าน และ ลืมรหัสผ่าน */}
         <div className="flex items-center justify-between mt-1 mb-2">
           <label className="flex items-center gap-2 cursor-pointer">
             <input 
@@ -182,24 +175,29 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           </button>
         </div>
 
-        {/* ปุ่มเข้าสู่ระบบหลัก */}
+        {/* reCAPTCHA ไว้ตรงนี้ */}
+        <div className="flex justify-center w-full my-2">
+          <ReCAPTCHA
+            sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+            onChange={onCaptchaChange}
+          />
+        </div>
+
         <ButtonBig type="submit">
           เข้าสู่ระบบ
         </ButtonBig>
 
-        {/* เส้นคั่นกลาง OR */}
         <div className="relative flex items-center py-2">
           <div className="flex-grow border-t border-slate-200"></div>
           <span className="flex-shrink-0 mx-4 text-slate-400 text-xs uppercase tracking-wider font-medium">หรือดำเนินการต่อด้วย</span>
           <div className="flex-grow border-t border-slate-200"></div>
         </div>
 
-        {/* ปุ่มล็อกอินด้วยบัญชีโซเชียล (Google) จัดให้อยู่กึ่งกลาง */}
         <div className="flex justify-center w-full">
           <button 
             type="button" 
             onClick={loginWithGoogle}
-            disabled={isLoading} // ป้องกันการกดซ้ำซ้อนถ้ากำลังโหลดอยู่
+            disabled={isLoading} 
             className="w-full sm:w-2/3 md:w-1/2 flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700 disabled:opacity-50"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -213,11 +211,10 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
         </div>
       </form>
 
-      {/* ลิงก์สำหรับผู้ใช้ที่ยังไม่มีบัญชี */}
       <div className="mt-8 text-center text-sm text-slate-600">
         ยังไม่มีบัญชีใช่ไหม?{' '}
         <button 
-          onClick={onSwitchView} // เรียกฟังก์ชันสลับ Component กลับไปที่หน้าสมัครสมาชิก
+          onClick={onSwitchView} 
           className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline focus:outline-none"
         >
           สมัครสมาชิก

@@ -4,11 +4,18 @@ import { FaArrowLeft } from "react-icons/fa";
 import { MOCK_PROFILE, MOCK_LINKS, MOCK_DESIGN } from "../data/mockData";
 import Header from "../components/Navbar/Header";
 import { THEME_LIST } from "../constants/themes";
-import BioContent from "../components/BioContent"; // ⭐️ Import component ที่เราสร้าง
+import BioContent from "../components/BioContent"; 
+
+const FONT_MAP = {
+  kanit: "'Kanit', sans-serif",
+  sarabun: "'Sarabun', sans-serif",
+  mali: "'Mali', cursive",
+  prompt: "'Prompt', sans-serif"
+};
 
 const PreviewPage = () => {
   const navigate = useNavigate();
-  const { username } = useParams(); // เผื่อเอาไว้ใช้แสดงชื่อใน URL
+  const { username } = useParams(); 
 
   // เพิ่มระบบเช็คเส้นทาง 
   const [searchParams] = useSearchParams();
@@ -17,7 +24,7 @@ const PreviewPage = () => {
   // ฟังก์ชันจัดการเมื่อกด Logo
   const handleLogoClick = () => {
     if (isFromAdmin) {
-      navigate('/admin'); // ถ้ามาจากแอดมิน กลับไปหน้าจัดการผู้ใช้
+      navigate('/admin'); 
     } else {
       navigate('/dd'); 
     }
@@ -26,14 +33,13 @@ const PreviewPage = () => {
   // ฟังก์ชันจัดการเมื่อกดปุ่มย้อนกลับ
   const handleBackClick = () => {
     if (isFromAdmin) {
-      window.close(); // แอดมินเปิดมาเป็นแท็บใหม่ พอกดกลับก็สั่ง "ปิดแท็บ" นี้ทิ้งไปเลย!
+      window.close(); 
     } else {
-      navigate(-1); // ผู้ใช้ปกติ ให้ย้อนกลับประวัติเบราว์เซอร์ 1 หน้า
+      navigate(-1); 
     }
   };
 
   // ดึงข้อมูลจาก localStorage
-
   const savedProfile = JSON.parse(localStorage.getItem("preview_profile"));
   const savedLinks   = JSON.parse(localStorage.getItem("preview_links"));
   const savedDesign  = JSON.parse(localStorage.getItem("preview_design"));
@@ -44,9 +50,8 @@ const PreviewPage = () => {
 
   const activeTheme = THEME_LIST.find((t) => t.id === design.theme) || THEME_LIST[0];
 
-  const btnRadius = { square: "8px", rounded: "14px", pill: "999px" }[design.btnRounded] || "999px";
-  const btnBoxShadow = { none: "none", outline: "none", shadow3d: "0px 4px 0px rgba(0,0,0,0.2)" }[design.btnStyle] || "none";
-  const btnBorder = design.btnStyle !== "none" ? `2px solid ${design.btnBorderColor || "transparent"}` : "none";
+  //ประกาศตัวแปร selectedFont เพื่อให้ div ด้านล่างดึงไปใช้งานได้
+  const selectedFont = FONT_MAP[design.font] || FONT_MAP.kanit;
 
   const screenBackground = design.theme === "custom" 
     ? (design.bgColor || "#f0f2ff") 
@@ -77,7 +82,7 @@ const PreviewPage = () => {
           )}
         </div>
 
-        {/* ⭐️ เรียกใช้งาน BioContent แบบจอใหญ่ (isCompact={false} เป็นค่าเริ่มต้นอยู่แล้ว) */}
+        {/* ⭐️ เรียกใช้งาน BioContent */}
         <BioContent 
           profile={profile} 
           links={links} 
