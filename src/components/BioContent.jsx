@@ -2,6 +2,7 @@
 import React from "react";
 import { ICON_MAP } from "../constants/icons";
 import { THEME_LIST } from "../constants/themes";
+import SaveContactButton from "./SaveContactButton"; // ⭐️ Import ปุ่ม Save Contact
 
 const FONT_MAP = {
   kanit: "'Kanit', sans-serif",
@@ -51,7 +52,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false }
         {profile.cover && <img src={profile.cover} alt="Cover" className="w-full h-full object-cover" />}
       </div>
 
-      {/* Profile Section */}
+      {/* Profile Section (มี relative z-10 เพื่อไม่ให้หน้าปกทับ) */}
       <div className={`flex flex-col items-center px-4 ${isCompact ? "-mt-7" : "-mt-12"} relative z-10`}>
         {/* Avatar */}
         <img
@@ -78,6 +79,10 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false }
 
         {/* Links List */}
         <div className={`w-full flex flex-col ${isCompact ? "gap-3 mt-5" : "gap-4 mt-8"}`}>
+          
+          {/* ⭐️ ปุ่ม Save Contact จะมาแสดงผลตรงนี้ ⭐️ */}
+          <SaveContactButton profile={profile} design={design} isCompact={isCompact} />
+
           {visibleLinks.length === 0 && (
             <p className={`text-center ${isCompact ? "text-[11px]" : "text-sm"} text-slate-400 mt-3`} style={{ color: design.textColor }}>
               ยังไม่มีลิงก์แสดงผล

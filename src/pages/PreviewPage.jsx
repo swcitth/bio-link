@@ -42,9 +42,7 @@ const PreviewPage = () => {
   // ดึงข้อมูลจาก localStorage
   const savedProfile = JSON.parse(localStorage.getItem("preview_profile"));
   const savedLinks   = JSON.parse(localStorage.getItem("preview_links"));
-  const savedDesign  = JSON.parse(localStorage.getItem("preview_design"));
-
-  const profile = savedProfile || MOCK_PROFILE;
+  const savedDesign  = JSON.parse(localStorage.getItem("preview_design"));  const profile = savedProfile || MOCK_PROFILE;
   const links   = savedLinks   || MOCK_LINKS;
   const design  = savedDesign  || MOCK_DESIGN;
 
@@ -70,11 +68,9 @@ const PreviewPage = () => {
             <FaArrowLeft size={14} /> ย้อนกลับ
           </button>
         </Header>
-      </div>
-
-      {/* Main Container */}
+      </div>      {/* Main Container */}
       <div className="max-w-xl mx-auto min-h-screen relative shadow-2xl pt-[72px]">
-        
+       
         {/* Background Layer */}
         <div className="fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-0 overflow-hidden" style={{ background: screenBackground }}>
           {design.bgImage && (
@@ -88,10 +84,8 @@ const PreviewPage = () => {
           links={links} 
           design={design} 
         />
-        
+       
       </div>
     </div>
   );
-};
-
-export default PreviewPage;
+};export default PreviewPage;
