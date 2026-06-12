@@ -1,10 +1,5 @@
-// ============================================================
-// src/pages/PreviewPage.jsx
-// หน้าพรีวิวแบบเต็มจอ (อัปเดตแก้บักสีพื้นหลัง/หน้าปกโหมด Custom + จำกัดความกว้างพื้นหลัง)
-// ============================================================
-
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom"; 
 import { FaArrowLeft } from "react-icons/fa";
 import { ICON_MAP } from "../constants/icons";
 import { MOCK_PROFILE, MOCK_LINKS, MOCK_DESIGN } from "../data/mockData";
@@ -33,8 +28,31 @@ const getTiktokId = (url) => {
 
 const PreviewPage = () => {
   const navigate = useNavigate();
+  const { username } = useParams(); // เผื่อเอาไว้ใช้แสดงชื่อใน URL
 
-  // ⭐️ ดึงข้อมูลจาก localStorage
+  // เพิ่มระบบเช็คเส้นทาง 
+  const [searchParams] = useSearchParams();
+  const isFromAdmin = searchParams.get('source') === 'admin';
+
+  // ฟังก์ชันจัดการเมื่อกด Logo
+  const handleLogoClick = () => {
+    if (isFromAdmin) {
+      navigate('/admin'); // ถ้ามาจากแอดมิน กลับไปหน้าจัดการผู้ใช้
+    } else {
+      navigate('/dd'); 
+    }
+  };
+
+  // ฟังก์ชันจัดการเมื่อกดปุ่มย้อนกลับ
+  const handleBackClick = () => {
+    if (isFromAdmin) {
+      window.close(); // แอดมินเปิดมาเป็นแท็บใหม่ พอกดกลับก็สั่ง "ปิดแท็บ" นี้ทิ้งไปเลย!
+    } else {
+      navigate(-1); // ผู้ใช้ปกติ ให้ย้อนกลับประวัติเบราว์เซอร์ 1 หน้า
+    }
+  };
+
+  // ดึงข้อมูลจาก localStorage
   const savedProfile = JSON.parse(localStorage.getItem("preview_profile"));
   const savedLinks   = JSON.parse(localStorage.getItem("preview_links"));
   const savedDesign  = JSON.parse(localStorage.getItem("preview_design"));
@@ -51,7 +69,6 @@ const PreviewPage = () => {
   const btnBoxShadow = { none: "none", outline: "none", shadow3d: "0px 4px 0px rgba(0,0,0,0.2)" }[design.btnStyle] || "none";
   const btnBorder = design.btnStyle !== "none" ? `2px solid ${design.btnBorderColor || "transparent"}` : "none";
 
-  // ⭐️ จุดสำคัญ: กำหนดสีพื้นหลังและสีหน้าปกให้รองรับโหมด Custom แบบเดียวกับจอมือถือ
   const screenBackground = design.theme === "custom" 
     ? (design.bgColor || "#f0f2ff") 
     : (activeTheme?.cfg?.bgGradient || "#f0f2ff");
@@ -63,22 +80,22 @@ const PreviewPage = () => {
   const defaultAvatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
 
   return (
-    // ⭐️ 1. เปลี่ยนพื้นหลังด้านนอกสุดให้เป็นสีเทาอ่อน (bg-slate-100)
     <div className="min-h-screen relative bg-slate-100" style={{ fontFamily: selectedFont }}>
       
-      {/* Header ด้านบนสุด */}
+      {/* ⭐️ จุดที่ 3: นำฟังก์ชันที่สร้างไว้ ไปผูกกับ Header และปุ่มย้อนกลับ */}
       <div className="relative z-30">
-        <Header onLogoClick={() => navigate('/')}>
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors underline underline-offset-2">
+        <Header onLogoClick={handleLogoClick}>
+          <button 
+            onClick={handleBackClick} 
+            className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors underline underline-offset-2"
+          >
             <FaArrowLeft size={14} /> ย้อนกลับ
           </button>
         </Header>
       </div>
 
-      {/* ⭐️ 2. คอนเทนเนอร์หลัก จำกัดความกว้างตรงกลาง (max-w-xl) พร้อมใส่เงาให้ดูลอยขึ้นมา */}
+      {/* ----------------- ส่วนเนื้อหาด้านล่างไม่ต้องแก้อะไรเลยครับ ----------------- */}
       <div className="max-w-xl mx-auto min-h-screen relative shadow-2xl pt-[72px]">
-        
-        {/* ⭐️ 3. พื้นหลังและรูปภาพ ถูกขังไว้ในกรอบกว้างสุดแค่ max-w-xl */}
         <div 
           className="fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-0 overflow-hidden"
           style={{ background: screenBackground }}
@@ -91,9 +108,7 @@ const PreviewPage = () => {
           )}
         </div>
 
-        {/* ⭐️ 4. โซนเนื้อหาทั้งหมด (ต้องใส่ relative z-10 เพื่อให้อยู่เหนือพื้นหลัง) */}
         <div className="relative z-10 pb-20">
-          
           <div className="h-48 relative overflow-hidden" style={{ background: coverBackground }}>
             {profile.cover && <img src={profile.cover} alt="Cover" className="w-full h-full object-cover" />}
           </div>
@@ -140,7 +155,6 @@ const PreviewPage = () => {
 
                         return (
                           <div key={item.id || idx} className="flex flex-col gap-2 mb-2">
-                            {/* ปรับสัดส่วนเป็น 9:16 สำหรับแนวตั้ง */}
                             <div 
                               className="w-full rounded-2xl overflow-hidden shadow-md bg-black relative"
                               style={{ aspectRatio: '9/16', maxHeight: '600px' }} 

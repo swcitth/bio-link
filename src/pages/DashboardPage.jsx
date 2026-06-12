@@ -220,7 +220,7 @@ const DashboardPage = () => {
                         onClick={handleSave}
                         className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-6 py-3 rounded-full font-semibold text-sm shadow-lg shadow-indigo-200 hover:opacity-90 transition-opacity"
                       >
-                        บันทึก <FaChevronRight size={14} />
+                        บันทึก 
                       </button>
                     </div>
 

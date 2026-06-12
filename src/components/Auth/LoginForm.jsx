@@ -6,48 +6,77 @@ import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 
 export default function LoginForm({ onSwitchView, onForgotPassword }) {
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
 
+  // ส่วนตั้งค่าเริ่มต้น (Hooks & States)
+  const navigate = useNavigate(); // ใช้สำหรับเปลี่ยนหน้าเว็บโดยไม่ต้องโหลดหน้าใหม่
+  const [isLoading, setIsLoading] = useState(false); // ใช้เก็บสถานะตอนกำลังโหลด (ป้องกันผู้ใช้กดปุ่มรัวๆ)
 
+  // ฟังก์ชันจำลองการบันทึกผู้ใช้ใหม่ลงฐานข้อมูล (ให้หน้า Admin เห็น)
+  const syncUserToAdminDatabase = (newUser) => {
+    // 1. ดึงสมุดรายชื่อผู้ใช้ทั้งหมดที่หน้า Admin ใช้
+    const savedUsersStr = localStorage.getItem("system_users");
+    let existingUsers = savedUsersStr ? JSON.parse(savedUsersStr) : [];
+
+    // 2. เช็คว่ามีคนนี้ในระบบหรือยัง (หาจากอีเมล)
+    const isUserExist = existingUsers.find(u => u.email === newUser.email);
+
+    // 3. ถ้ายังไม่มี (แปลว่าเป็นคนสมัครใหม่) ให้เพิ่มชื่อลงไปในสมุด!
+    if (!isUserExist && newUser.email) {
+      const newUserForAdmin = {
+        id: Date.now(), // สุ่ม ID จำลอง
+        name: newUser.name || "Unknown User",
+        email: newUser.email,
+        role: newUser.role.toUpperCase(), // แปลงเป็นตัวพิมพ์ใหญ่ (ADMIN, USER) ให้ตรงกับหน้าเว็บแอดมิน
+        date: new Date().toISOString().split('T')[0], // วันที่วันนี้ (YYYY-MM-DD)
+        status: "Active",
+        avatar: newUser.avatar || `https://ui-avatars.com/api/?name=${newUser.username}&background=random&color=fff`
+      };
+      
+      // เอาผู้ใช้ใหม่ต่อท้ายเข้าไป แล้วเซฟกลับลง LocalStorage
+      existingUsers.push(newUserForAdmin);
+      localStorage.setItem("system_users", JSON.stringify(existingUsers));
+    }
+  };
+
+  // ส่วนจัดการการล็อกอินด้วย Google
   const loginWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
-      setIsLoading(true);
+      setIsLoading(true); // เริ่มแสดงสถานะโหลด
       try {
-        // นำ Access Token วิ่งไปขอข้อมูลรายละเอียดของบัญชีผู้ใช้จาก Google API ตรงๆ
+        // นำ Access Token วิ่งไปขอข้อมูลรายละเอียดบัญชี (ชื่อ, อีเมล, รูปโปรไฟล์) จาก Google
         const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         }).then(res => res.json());
 
-        console.log("เข้าสู่ระบบสำเร็จ ข้อมูลบัญชี:", userInfo);
-
-        // เก็บข้อมูล Session การเข้าสู่ระบบลงบน LocalStorage (รอเชื่อมโยงกับฐานข้อมูล Backend ในอนาคต)
+        // จำลองการสร้าง Session สำหรับคนล็อกอินด้วย Google (ให้เป็น user ทั่วไปเสมอ)
         const userSession = {
           name: userInfo.name,
           email: userInfo.email,
           avatar: userInfo.picture,
           isLoggedIn: true,
-          role: 'user' // กำหนดบทบาทผู้ใช้เป็น 'user' เป็นค่าเริ่มต้น 
+          role: 'user' 
         };
-        localStorage.setItem("user_session", JSON.stringify(userSession));
+        localStorage.setItem("user_session", JSON.stringify(userSession)); // เซฟลงเครื่อง
         
-        // บันทึกหรือเปลี่ยนข้อมูลภาพโปรไฟล์/ชื่อในระบบ เพื่อให้หน้าจอจำลองดึงค่าไปเปลี่ยนตามโปรไฟล์จริง
+        // จำลองการสร้างโปรไฟล์ตั้งต้นของระบบ Bio Link ให้ผู้ใช้ใหม่
         const defaultProfile = {
           name: userInfo.name,
           bio: "ยินดีต้อนรับสู่ MyBioLink ของฉัน ✨",
           avatar: userInfo.picture,
-          username: userInfo.email.split('@')[0] // ดึงข้อความหน้า @ มาทำเป็น username ตั้งต้น
+          username: userInfo.email.split('@')[0] // ตัดเอาเฉพาะคำข้างหน้า @ มาเป็นชื่อเว็บ
         };
         localStorage.setItem("bio_profile", JSON.stringify(defaultProfile));
 
+        syncUserToAdminDatabase(userSession);
+
         alert(`ยินดีต้อนรับคุณ ${userInfo.name}!`);
-        navigate('/dd'); // เปลี่ยนหน้าไปยังระบบจัดการลิงก์หลักของคุณทันที
+        navigate('/dd'); // คนล็อกอินผ่าน Google ให้ไปหน้า Dashboard ของ User ปกติ
         
       } catch (error) {
         console.error("Error retrieving user identity data:", error);
         alert("ไม่สามารถเข้าถึงข้อมูลสิทธิ์ของผู้ใช้งานได้ กรุณาลองใหม่อีกครั้ง");
       } finally {
-        setIsLoading(false);
+        setIsLoading(false); // ปิดสถานะโหลดไม่ว่าจะสำเร็จหรือพัง
       }
     },
     onError: (error) => {
@@ -56,58 +85,68 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
     }
   });
 
-
+  //ส่วนจัดการการล็อกอินแบบปกติ (พิมพ์รหัสผ่าน)
   const handleLogin = async (e) => {
-    e.preventDefault(); // 1. หยุดไม่ให้หน้าเว็บโหลดใหม่
+    e.preventDefault(); // ป้องกันพฤติกรรมพื้นฐานของฟอร์ม (ไม่ให้หน้าเว็บรีเฟรชเองตอนกดปุ่ม)
 
-
-    // ดึงค่าจากช่อง Input (เปลี่ยนไอดีเป็น login-identifier)
+    // ดึงค่าจากช่อง Input ตาม ID ที่ตั้งไว้
     const identifier = document.getElementById("login-identifier").value.trim();
     const password = document.getElementById("login-password").value;
 
+    // ดักจับคนไม่ยอมกรอกข้อมูล
     if (!identifier || !password) {
       alert("กรุณากรอกข้อมูลให้ครบถ้วน");
-      return;
+      return; // สั่งหยุดการทำงานทันที
     }
 
-    // จำลองการเช็ค Role (รองรับการพิมพ์ admin)
+    //จำลองการเช็คว่าเป็น Admin หรือไม่ (เปลี่ยนจากโค้ดตรงนี้เป็นยิง API ไปเช็คกับ Backend ในอนาคต)
     let userRole = "user"; 
     if ((identifier === "admin") && password === "1234") {
       userRole = "admin"; 
     }
 
+    // เช็คว่าผู้ใช้กรอกอีเมล (มี @) หรือกรอกแค่ Username
     const isEmail = identifier.includes("@");
 
+    // รวบรวมข้อมูลเพื่อทำบัตรผ่าน (Session) ให้ผู้ใช้งาน
     const userSession = {
       name: userRole === "admin" ? "ผู้ดูแลระบบสูงสุด" : "ผู้ใช้งานทั่วไป",
-      email: isEmail ? identifier : "", // ถ้าพิมพ์ @ มาก็เก็บเป็นอีเมล
-      username: isEmail ? identifier.split('@')[0] : identifier, // เก็บ Username แยกไว้ด้วย
+      email: isEmail ? identifier : `${identifier}@example.com`, 
+      username: isEmail ? identifier.split('@')[0] : identifier, 
       avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
       isLoggedIn: true,
       role: userRole 
     };
     
+    // เซฟบัตรผ่านลงเบราว์เซอร์
     localStorage.setItem("user_session", JSON.stringify(userSession));
 
-    console.log(`เข้าสู่ระบบสำเร็จในฐานะ: ${userRole}`);
-    navigate('/dd'); 
+    syncUserToAdminDatabase(userSession);
+
+    // Routing Redirector
+    if (userRole === "admin") {
+      navigate('/admin'); 
+    } else {
+      navigate('/dd'); 
+    }
   };
 
+  
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-      {/* Header Texts */}
+      
+      {/* ส่วนหัวเรื่อง */}
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">
-          ยินดีต้อนรับกลับมา
-        </h1>
-        <p className="text-sm text-slate-500">
-          กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบ
-        </p>
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">ยินดีต้อนรับกลับมา</h1>
+        <p className="text-sm text-slate-500">กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบ</p>
       </div>
 
+      {/* ตัวฟอร์มหลัก: ทันทีที่ผู้ใช้กดปุ่ม submit หรือกด Enter 
+        ระบบจะเรียกใช้งานฟังก์ชัน handleLogin ด้านบนทันที 
+      */}
       <form className="flex flex-col gap-5" onSubmit={handleLogin}>
         
-        {/*เปลี่ยนมาใช้ InputField จัดการ Email */}
+        {/* ช่องกรอก Username / Email */}
         <InputField 
           id="login-identifier" 
           label="อีเมล หรือ ชื่อผู้ใช้" 
@@ -116,7 +155,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           icon={User} 
         />
 
-        {/* เปลี่ยนมาใช้ InputField จัดการ Password */}
+        {/* ช่องกรอกรหัสผ่าน (type="password" ทำให้เป็นจุดไข่ปลา) */}
         <InputField 
           id="login-password" 
           label="รหัสผ่าน" 
@@ -125,7 +164,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           icon={Lock} 
         />
 
-        {/* Options Row */}
+        {/* ตัวเลือกเสริม: จดจำรหัสผ่าน และ ลืมรหัสผ่าน */}
         <div className="flex items-center justify-between mt-1 mb-2">
           <label className="flex items-center gap-2 cursor-pointer">
             <input 
@@ -134,7 +173,6 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
             />
             <span className="text-sm text-slate-600">จดจำฉันไว้ในระบบ</span>
           </label>
-          
           <button 
             type="button"
             onClick={onForgotPassword}
@@ -144,25 +182,25 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           </button>
         </div>
 
-        {/* Submit Button */}
+        {/* ปุ่มเข้าสู่ระบบหลัก */}
         <ButtonBig type="submit">
           เข้าสู่ระบบ
         </ButtonBig>
 
-        {/* Divider */}
+        {/* เส้นคั่นกลาง OR */}
         <div className="relative flex items-center py-2">
           <div className="flex-grow border-t border-slate-200"></div>
           <span className="flex-shrink-0 mx-4 text-slate-400 text-xs uppercase tracking-wider font-medium">หรือดำเนินการต่อด้วย</span>
           <div className="flex-grow border-t border-slate-200"></div>
         </div>
 
-        {/* Social Login Buttons */}
+        {/* ปุ่มล็อกอินด้วยบัญชีโซเชียล (Google) จัดให้อยู่กึ่งกลาง */}
         <div className="flex justify-center w-full">
           <button 
             type="button" 
             onClick={loginWithGoogle}
-            disabled={isLoading}
-            className="w-full sm:w-2/3 md:w-1/2 flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700"
+            disabled={isLoading} // ป้องกันการกดซ้ำซ้อนถ้ากำลังโหลดอยู่
+            className="w-full sm:w-2/3 md:w-1/2 flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700 disabled:opacity-50"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -172,15 +210,14 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
             </svg>
             Google
           </button>
-
         </div>
       </form>
 
-      {/* Sign Up Link */}
+      {/* ลิงก์สำหรับผู้ใช้ที่ยังไม่มีบัญชี */}
       <div className="mt-8 text-center text-sm text-slate-600">
         ยังไม่มีบัญชีใช่ไหม?{' '}
         <button 
-          onClick={onSwitchView}
+          onClick={onSwitchView} // เรียกฟังก์ชันสลับ Component กลับไปที่หน้าสมัครสมาชิก
           className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline focus:outline-none"
         >
           สมัครสมาชิก

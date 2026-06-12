@@ -9,7 +9,7 @@ import EditShop from './pages/Edit_shop';
 import EditVideo from './pages/Edit_video';
 import CookiePolicyPage from './pages/CookiePolicyPage';
 import CookieSettingsPage from './pages/CookieSettingsPage';
-import AdminUserManagement from './pages/AdminUserManagement';
+import AdminUserManagement from './pages/Admin';
 import AdminRoute from './components/AdminRoute';
 
 function App() {
@@ -37,7 +37,7 @@ function App() {
 
       // Admin
       <Route element={<AdminRoute />}>
-        <Route path="/admin/users" element={<AdminUserManagement />} />
+        <Route path="/admin" element={<AdminUserManagement />} />
       </Route>
 
       // แชร์
