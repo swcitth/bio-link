@@ -235,7 +235,7 @@ const DashboardPage = () => {
                         onClick={handleSave}
                         className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-8 py-3 rounded-full font-semibold text-sm shadow-lg shadow-indigo-200 hover:opacity-90 transition-opacity"
                       >
-                        ✅ บันทึกการออกแบบ
+                        บันทึกการออกแบบ
                       </button>
                     </div>
                   </div>

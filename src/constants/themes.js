@@ -140,4 +140,22 @@ export const THEME_LIST = [
       coverColor: "#164e63", // สีเขียวอมฟ้าเข้ม (cyan-900) ให้หน้าปกดูดาร์กแต่มีสีสัน
     },
   },
+  {
+    id: "t_swc",
+    name: "SWC Corporate",
+    previewBg: "bg-blue-50",
+    previewItem: "bg-blue-600",
+    cfg: {
+      textColor: "#4b5563",
+      btnBgColor: "#ffffff",
+      btnTextColor: "#1b36d1",
+      btnBorderColor: "#1b36d1",
+      btnRounded: "rounded",
+      btnStyle: "outline",
+      bgGradient: "linear-gradient(180deg, #ffffff 0%, #f0f5ff 100%)",
+      bgImage: "",
+      coverColor: "#1b36d1", 
+      coverImage: "url('/SWC_Cover.png')" // 👈 เพิ่มบรรทัดนี้ชี้ไปที่ไฟล์รูปของเรา
+    },
+  }
 ];
