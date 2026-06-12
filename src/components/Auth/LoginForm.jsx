@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock } from 'lucide-react'; 
+import { User, Lock } from 'lucide-react'; 
 import ButtonBig from '../Button/button_big';
 import InputField from './InputField'; 
 import { useNavigate } from 'react-router-dom';
@@ -26,7 +26,8 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           name: userInfo.name,
           email: userInfo.email,
           avatar: userInfo.picture,
-          isLoggedIn: true
+          isLoggedIn: true,
+          role: 'user' // กำหนดบทบาทผู้ใช้เป็น 'user' เป็นค่าเริ่มต้น 
         };
         localStorage.setItem("user_session", JSON.stringify(userSession));
         
@@ -59,17 +60,37 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
   const handleLogin = async (e) => {
     e.preventDefault(); // 1. หยุดไม่ให้หน้าเว็บโหลดใหม่
 
-    // สมมติว่าตรงนี้คือโค้ดสำหรับส่งอีเมล/รหัสผ่านไปเช็คกับ Backend
-    const isSuccess = true; // สมมติว่าเช็คแล้วรหัสผ่านถูกต้อง
 
-    if (isSuccess) {
-      console.log("เข้าสู่ระบบสำเร็จ!");
-      // 2. รหัสถูก ค่อยเปลี่ยนหน้าไปหน้า Dashboard หรือหน้าจัดการลิงก์
-      navigate('/dd'); 
-    } else {
-      // 3. รหัสผิด ไม่ต้องเปลี่ยนหน้า แต่โชว์ข้อความแจ้งเตือนแทน
-      alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง"); 
+    // ดึงค่าจากช่อง Input (เปลี่ยนไอดีเป็น login-identifier)
+    const identifier = document.getElementById("login-identifier").value.trim();
+    const password = document.getElementById("login-password").value;
+
+    if (!identifier || !password) {
+      alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+      return;
     }
+
+    // จำลองการเช็ค Role (รองรับการพิมพ์ admin)
+    let userRole = "user"; 
+    if ((identifier === "admin") && password === "1234") {
+      userRole = "admin"; 
+    }
+
+    const isEmail = identifier.includes("@");
+
+    const userSession = {
+      name: userRole === "admin" ? "ผู้ดูแลระบบสูงสุด" : "ผู้ใช้งานทั่วไป",
+      email: isEmail ? identifier : "", // ถ้าพิมพ์ @ มาก็เก็บเป็นอีเมล
+      username: isEmail ? identifier.split('@')[0] : identifier, // เก็บ Username แยกไว้ด้วย
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+      isLoggedIn: true,
+      role: userRole 
+    };
+    
+    localStorage.setItem("user_session", JSON.stringify(userSession));
+
+    console.log(`เข้าสู่ระบบสำเร็จในฐานะ: ${userRole}`);
+    navigate('/dd'); 
   };
 
   return (
@@ -86,16 +107,16 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
       <form className="flex flex-col gap-5" onSubmit={handleLogin}>
         
-        {/* 👈 เปลี่ยนมาใช้ InputField จัดการ Email */}
+        {/*เปลี่ยนมาใช้ InputField จัดการ Email */}
         <InputField 
-          id="login-email" 
-          label="อีเมล" 
-          type="email" 
-          placeholder="your@email.com" 
-          icon={Mail} 
+          id="login-identifier" 
+          label="อีเมล หรือ ชื่อผู้ใช้" 
+          type="text" 
+          placeholder="your@email.com หรือ username" 
+          icon={User} 
         />
 
-        {/* 👈 เปลี่ยนมาใช้ InputField จัดการ Password */}
+        {/* เปลี่ยนมาใช้ InputField จัดการ Password */}
         <InputField 
           id="login-password" 
           label="รหัสผ่าน" 
@@ -136,12 +157,12 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
         </div>
 
         {/* Social Login Buttons */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="flex justify-center w-full">
           <button 
             type="button" 
             onClick={loginWithGoogle}
             disabled={isLoading}
-            className="flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700"
+            className="w-full sm:w-2/3 md:w-1/2 flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -152,13 +173,6 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
             Google
           </button>
 
-
-          <button type="button" className="flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700">
-            <svg className="w-4 h-4 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-            </svg>
-            Facebook
-          </button>
         </div>
       </form>
 
