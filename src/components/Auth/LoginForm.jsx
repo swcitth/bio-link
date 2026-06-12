@@ -126,7 +126,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
     syncUserToAdminDatabase(userSession);
 
     if (userRole === "admin") {
-      navigate('/admin/users'); // แก้จาก '/admin' เป็น '/admin/users' ให้ตรงกับ Router ที่คุณตั้งไว้นะครับ
+      navigate('/admin'); 
     } else {
       navigate('/dd'); 
     }
