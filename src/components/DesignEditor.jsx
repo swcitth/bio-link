@@ -14,6 +14,14 @@ const FONT_OPTIONS = [
   { id: "prompt", name: "Prompt (โมเดิร์น)", family: "'Prompt', sans-serif" },
 ];
 
+const debounce = (func, wait) => {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+};
+
 const DesignEditor = ({ design, setDesign, profile }) => {
   const bgRef = useRef(null);
 
@@ -208,27 +216,50 @@ const SectionTitle = ({ icon, children }) => (
   <h3 className="flex items-center gap-2 font-bold text-slate-800 mb-4 text-sm">{icon}{children}</h3>
 );
 
-const ColorInput = ({ label, disabled, disabledText, value, onChange }) => (
-  <div className={`flex flex-col gap-1.5 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}>
-    <span className="text-[11px] text-slate-400 font-semibold truncate">
-      {label} {disabled && disabledText}
-    </span>
-    <label className={`flex items-center gap-2 p-1.5 border border-slate-200 rounded-xl bg-slate-50 transition-all ${!disabled && "hover:border-indigo-300 hover:bg-white cursor-pointer"}`}>
-      <div className="relative w-6 h-6 rounded-full overflow-hidden shadow-sm border border-slate-200/50 shrink-0">
-        <input
-          type="color"
-          disabled={disabled}
-          value={value || "#ffffff"}
-          onChange={onChange}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] cursor-pointer"
-        />
-      </div>
-      <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider truncate">
-        {value || "#FFFFFF"}
+// 🟢 แก้ไข ColorInput ให้มี Local State: สีเปลี่ยนทันที + ไม่ดีเลย์
+const ColorInput = ({ label, disabled, disabledText, value, onChange }) => {
+  // สร้าง Local State จำค่าสีชั่วคราวเพื่อให้ปุ่มสีเปลี่ยนทันทีที่ลาก
+  const [localColor, setLocalColor] = React.useState(value || "#ffffff");
+
+  // ถ้าค่าหลักเปลี่ยนจากภายนอก (เช่น กดเลือกธีม) ให้อัปเดต Local State ด้วย
+  React.useEffect(() => {
+    setLocalColor(value || "#ffffff");
+  }, [value]);
+
+  // สร้างฟังก์ชันส่งค่ากลับไปให้ Parent แบบหน่วงเวลา
+  const debouncedOnChange = React.useCallback(
+    debounce((newColor) => onChange({ target: { value: newColor } }), 80),
+    [onChange]
+  );
+
+  const handleChange = (e) => {
+    const newColor = e.target.value;
+    setLocalColor(newColor); // อัปเดตสีที่ตัวปุ่ม Color Picker ทันที (ไม่ดีเลย์)
+    debouncedOnChange(newColor); // สั่งอัปเดตระบบใหญ่แบบหน่วงเวลาเพื่อลดการค้าง
+  };
+
+  return (
+    <div className={`flex flex-col gap-1.5 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}>
+      <span className="text-[11px] text-slate-400 font-semibold truncate">
+        {label} {disabled && disabledText}
       </span>
-    </label>
-  </div>
-);
+      <label className={`flex items-center gap-2 p-1.5 border border-slate-200 rounded-xl bg-slate-50 transition-all ${!disabled && "hover:border-indigo-300 hover:bg-white cursor-pointer"}`}>
+        <div className="relative w-6 h-6 rounded-full overflow-hidden shadow-sm border border-slate-200/50 shrink-0">
+          <input
+            type="color"
+            disabled={disabled}
+            value={localColor}
+            onChange={handleChange}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] cursor-pointer"
+          />
+        </div>
+        <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider truncate">
+          {localColor.toUpperCase()}
+        </span>
+      </label>
+    </div>
+  );
+};
 
 const SegmentedControl = ({ value, onChange, options }) => (
   <div className="flex bg-slate-100 p-1 rounded-xl gap-1 border border-slate-200/50">
