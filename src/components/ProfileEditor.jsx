@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-// ⭐️ นำเข้าไอคอน User เพิ่มเติมสำหรับช่องกรอกชื่อ
+// นำเข้าไอคอน User เพิ่มเติมสำหรับช่องกรอกชื่อ
 import { Pencil, Camera, UploadCloud, Trash2, Phone, Mail, Building, Briefcase, User } from "lucide-react";
 
 const ProfileEditor = ({ profile, setProfile }) => {
@@ -192,6 +192,25 @@ const ProfileEditor = ({ profile, setProfile }) => {
                 <Briefcase size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
             </div>
+          </div>
+
+          {/* ⭐️ สวิตช์เปิด-ปิด ปุ่ม Save Contact (เพิ่มใหม่) ⭐️ */}
+          <div className="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold text-slate-700">แสดงปุ่ม Save Contact</p>
+              <p className="text-xs text-slate-500">เปิดเพื่อแสดงปุ่มบันทึกรายชื่อบนหน้าโปรไฟล์</p>
+            </div>
+            
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                className="sr-only peer"
+                // เช็คว่าถ้าค่าเป็น undefined ให้ถือว่าเป็น true (แสดงไว้ก่อน)
+                checked={profile.showSaveContact !== false} 
+                onChange={(e) => setProfile((p) => ({ ...p, showSaveContact: e.target.checked }))}
+              />
+              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
+            </label>
           </div>
 
         </div>

@@ -16,7 +16,10 @@ const getTextColorBasedOnBg = (bgColor) => {
   return yiq >= 128 ? "#000000" : "#ffffff"; 
 };
 
-const SaveContactButton = ({ profile, design, isCompact }) => {
+// แก้ไขตรงบรรทัดรับ Props ให้ชื่อตรงกับที่ส่งมาจาก BioContent
+const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false }) => {
+  const profile = profileData || {};
+  
   const handleSaveContact = () => {
     let photoData = "";
     if (profile.avatar && profile.avatar.includes("base64,")) {
@@ -36,7 +39,6 @@ const SaveContactButton = ({ profile, design, isCompact }) => {
       noteData = `\nNOTE:${combinedNote}`;
     }
 
-    // ⭐️ พระเอกอยู่ตรงนี้: ดึง contactName มาใช้ก่อน ถ้าไม่มีค่อยดึง name ปกติ
     const finalName = profile.contactName || profile.name || "ไม่มีชื่อ";
 
     const vcardContent = `BEGIN:VCARD\nVERSION:3.0\nFN:${finalName}${noteData}\nTEL;TYPE=CELL:${profile.phone || ""}\nEMAIL:${profile.email || ""}${photoData}\nEND:VCARD`;
@@ -46,7 +48,6 @@ const SaveContactButton = ({ profile, design, isCompact }) => {
 
     const link = document.createElement("a");
     link.href = url;
-    // เปลี่ยนชื่อไฟล์ดาวน์โหลดให้ตรงกับชื่อที่ตั้งไว้
     link.download = `${finalName}.vcf`;
     document.body.appendChild(link);
     link.click();
