@@ -110,13 +110,17 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false }
                   {link.items && link.title && <h3 className={titleClass} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
                   {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
                     const videoUrl = item?.link || item?.url || "";
-                    let videoId = getYoutubeId(videoUrl) || (!videoUrl && !link.items ? "M7lc1UVf-VE" : "");
+                    
+                    // ถ้าไม่มี url ให้คืนค่าว่าง
+                    let videoId = getYoutubeId(videoUrl); 
+
                     return (
                       <div key={item?.id || idx} className="flex flex-col gap-1">
                         <div className="w-full rounded-2xl overflow-hidden shadow-md bg-black aspect-video relative">
                           {videoId ? (
                             <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${videoId}?rel=0`} title={item?.name || item?.title || link.title} frameBorder="0" allowFullScreen />
                           ) : (
+                            // โชว์หน้าจอดำ "ยังไม่มีวิดีโอ" ถ้าไม่ได้ใส่ลิงก์
                             <div className="w-full h-full flex items-center justify-center text-white text-sm font-bold">ยังไม่มีวิดีโอ</div>
                           )}
                         </div>
@@ -165,13 +169,24 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false }
                   <div className={`grid ${isCompact ? "grid-cols-1" : "grid-cols-2 gap-4"}`}>
                     {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
                       const itemUrl = item?.url || item?.link;
+                      const imageUrl = item?.image || item?.imageUrl; // ดึงรูปจริงมาเช็ค
                       const WrapperTag = itemUrl ? "a" : "div";
+                      
                       return (
                         <WrapperTag key={item?.id || idx} {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})} className={`flex flex-col group ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} style={{ textDecoration: 'none' }}>
-                          <img src={item?.image || item?.imageUrl || "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=500&q=80"} alt={item?.name || item?.title} className="w-full aspect-square object-cover rounded-2xl shadow-sm mb-2" />
+                          
+                          {/* ถ้ามีรูปให้โชว์รูป ถ้าไม่มีให้โชว์กล่องสีเทา*/}
+                          {imageUrl ? (
+                            <img src={imageUrl} alt={item?.name || item?.title} className="w-full aspect-square object-cover rounded-2xl shadow-sm mb-2" />
+                          ) : (
+                            <div className="w-full aspect-square bg-slate-200 rounded-2xl shadow-sm mb-2 flex items-center justify-center">
+                              <span className="text-slate-400 text-xs font-bold">ยังไม่มีรูปภาพ</span>
+                            </div>
+                          )}
+                          
                           <h4 className={`${isCompact ? "text-[13px]" : "text-sm"} font-bold px-1`} style={{ color: safeDesign.textColor || "#000" }}>{item?.name || item?.title || "สินค้า"}</h4>
                           {isCompact && <p className="text-[10px] opacity-70 px-1 mt-0.5" style={{ color: safeDesign.textColor }}>{item?.description || "รายละเอียดสินค้า"}</p>}
-                          {isCompact && <p className="text-[11px] font-bold px-1 mt-1" style={{ color: safeDesign.textColor }}>{item?.price ? `${item.price} THB` : "100 THB"}</p>}
+                          {isCompact && <p className="text-[11px] font-bold px-1 mt-1" style={{ color: safeDesign.textColor }}>{item?.price ? `${item.price} THB` : "0 THB"}</p>}
                         </WrapperTag>
                       );
                     })}
