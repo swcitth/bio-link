@@ -16,7 +16,6 @@ const getTextColorBasedOnBg = (bgColor) => {
   return yiq >= 128 ? "#000000" : "#ffffff"; 
 };
 
-// แก้ไขตรงบรรทัดรับ Props ให้ชื่อตรงกับที่ส่งมาจาก BioContent
 const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false }) => {
   const profile = profileData || {};
   
@@ -31,17 +30,25 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
       photoData = `\nPHOTO;ENCODING=b;TYPE=${ext}:${base64String}`;
     }
 
+    // ⭐️ แก้ไข: ลบการดึงเว็บไซต์ออกจาก Note เหลือแค่บริษัทและตำแหน่ง ⭐️
     let noteData = "";
     if (profile.company || profile.title) {
       const companyText = profile.company ? `บริษัท: ${profile.company}` : "";
       const titleText = profile.title ? `ตำแหน่ง: ${profile.title}` : "";
+      
       const combinedNote = [companyText, titleText].filter(Boolean).join("  ");
-      noteData = `\nNOTE:${combinedNote}`;
+      if (combinedNote) {
+        noteData = `\nNOTE:${combinedNote}`;
+      }
     }
 
     const finalName = profile.contactName || profile.name || "ไม่มีชื่อ";
 
-    const vcardContent = `BEGIN:VCARD\nVERSION:3.0\nFN:${finalName}${noteData}\nTEL;TYPE=CELL:${profile.phone || ""}\nEMAIL:${profile.email || ""}${photoData}\nEND:VCARD`;
+    // ⭐️ แท็ก URL จะเป็นตัวสร้างช่อง "โฮมเพจ" ในมือถือ ⭐️
+    const websiteData = profile.website ? `\nURL:${profile.website}` : "";
+
+    // นำตัวแปร websiteData มารวมใน vCard ตามปกติ
+    const vcardContent = `BEGIN:VCARD\nVERSION:3.0\nFN:${finalName}${noteData}\nTEL;TYPE=CELL:${profile.phone || ""}\nEMAIL:${profile.email || ""}${websiteData}${photoData}\nEND:VCARD`;
 
     const blob = new Blob([vcardContent], { type: "text/vcard;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -56,7 +63,8 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
     URL.revokeObjectURL(url);
   };
 
-  if (!profile.phone && !profile.email) return null;
+  // แสดงปุ่มก็ต่อเมื่อมีข้อมูลติดต่ออย่างน้อย 1 อย่าง
+  if (!profile.phone && !profile.email && !profile.website) return null;
 
   const btnRadius = { square: isCompact ? "6px" : "8px", rounded: "14px", pill: "999px" }[design.btnRounded] || "999px";
   const btnBoxShadow = { none: "none", outline: "none", shadow3d: isCompact ? "3px 3px 0px rgba(0,0,0,0.8)" : "0px 4px 0px rgba(0,0,0,0.2)" }[design.btnStyle] || "none";

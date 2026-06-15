@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 // นำเข้าไอคอน User เพิ่มเติมสำหรับช่องกรอกชื่อ
-import { Pencil, Camera, UploadCloud, Trash2, Phone, Mail, Building, Briefcase, User } from "lucide-react";
+import { Pencil, Camera, UploadCloud, Trash2, Phone, Mail, Building, Briefcase, User, Globe } from "lucide-react";
 
 const ProfileEditor = ({ profile, setProfile }) => {
   const avatarRef = useRef(null);
@@ -169,6 +169,7 @@ const ProfileEditor = ({ profile, setProfile }) => {
               <Mail size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
 
+            {/* กลุ่มที่อยู่บรรทัดเดียวกัน (บริษัท / ตำแหน่ง) */}
             <div className="flex gap-3">
               <div className="relative w-1/2">
                 <input
@@ -192,9 +193,22 @@ const ProfileEditor = ({ profile, setProfile }) => {
                 <Briefcase size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
             </div>
+
+            {/* ⭐️ ช่องกรอกเว็บไซต์ (แยกออกมานอก flex gap-3 เพื่อให้ขึ้นบรรทัดใหม่และเต็มความกว้าง) ⭐️ */}
+            <div className="relative">
+              <input
+                type="url"
+                value={profile.website || ""}
+                onChange={(e) => setProfile((p) => ({ ...p, website: e.target.value }))}
+                placeholder="เว็บไซต์"
+                className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-400 outline-none rounded-xl px-3.5 py-2.5 text-slate-700 text-sm pr-10 transition-colors"
+              />
+              <Globe size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+
           </div>
 
-          {/* ⭐️ สวิตช์เปิด-ปิด ปุ่ม Save Contact (เพิ่มใหม่) ⭐️ */}
+          {/* ⭐️ สวิตช์เปิด-ปิด ปุ่ม Save Contact ⭐️ */}
           <div className="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-slate-700">แสดงปุ่ม Save Contact</p>
