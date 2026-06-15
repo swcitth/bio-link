@@ -86,19 +86,6 @@ export default function ShareModal({ isOpen, onClose, profile }) {
 
         <p className="text-sm font-bold text-slate-600 mb-3">หรือ</p>
 
-        {/* ช่องลิงก์ย่อที่ 2 */}
-        <div className="w-full flex items-center bg-slate-100 rounded-xl px-4 py-3 mb-4 border border-slate-200">
-          <span className="flex-1 text-sm text-slate-700 truncate mr-2">{shortUrl}</span>
-          <button 
-            onClick={() => handleCopy(shortUrl, 2)}
-            className="text-indigo-600 font-bold text-sm shrink-0 hover:text-indigo-700 transition-colors"
-          >
-            {copiedIndex === 2 ? 'คัดลอกแล้ว!' : 'คัดลอก'}
-          </button>
-        </div>
-
-        <p className="text-sm font-bold text-slate-600 mb-3">หรือ</p>
-
         {/* QR Code */}
         <div className="bg-white p-2 rounded-2xl mb-6 shadow-sm border border-slate-200">
           <img 
