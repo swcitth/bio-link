@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"; 
 import { FaArrowLeft } from "react-icons/fa";
 import { MOCK_PROFILE, MOCK_LINKS, MOCK_DESIGN } from "../data/mockData";
-import Header from "../components/Navbar/Header";
+import Header from "../components/Layout/Header";
 import { THEME_LIST } from "../constants/themes";
-import BioContent from "../components/BioContent"; 
+import BioContent from "../components/Editors/BioContent"; 
 
 const FONT_MAP = {
   kanit: "'Kanit', sans-serif",

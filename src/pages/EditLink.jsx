@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
-import Header from "../components/Navbar/Header";
-import ButtonAdd from "../components/Button/button_add";
-import ButtonSave from "../components/Button/button_save";
-import BlockLink from "../components/Blocklink";
-import IconModal, { getIconComponent } from "../components/IconModal";
+import Header from "../components/Layout/Header";
+import ButtonAdd from "../components/UI/Button/ButtonAdd";
+import ButtonSave from "../components/UI/Button/ButtonSave";
+import BlockLink from "../components/Blocks/Blocklink";
+import IconModal, { getIconComponent } from "../components/Modals/IconModal";
 
 export default function EditLink() {
   const navigate = useNavigate();

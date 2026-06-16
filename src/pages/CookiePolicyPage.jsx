@@ -1,7 +1,7 @@
 // src/pages/CookiePolicyPage.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../components/Navbar/Header';
+import Header from "../components/Layout/Header";
 // 🟢 1. นำเข้าไอคอน FaArrowLeft
 import { FaArrowLeft } from 'react-icons/fa'; 
 

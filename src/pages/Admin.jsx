@@ -9,7 +9,7 @@ import {
   Eye,
   LogOut
 } from "lucide-react";
-import Header from '../components/Navbar/Header'; 
+import Header from "../components/Layout/Header";
 import { useNavigate } from 'react-router-dom';
 
 export default function AdminUserManagement() {

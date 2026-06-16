@@ -1,6 +1,6 @@
 import React from 'react';
 import { Lock } from 'lucide-react';
-import ButtonBig from '../Button/button_big';
+import ButtonBig from '../UI/Button/ButtonBig';
 import InputField from './InputField';
 
 export default function ResetPasswordForm({ onSubmit }) {

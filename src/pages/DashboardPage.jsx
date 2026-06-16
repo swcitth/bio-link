@@ -6,16 +6,16 @@ import React, { useState, useEffect } from "react"; // นำเข้า useEff
 import { FaPlus, FaChevronRight } from "react-icons/fa";
 
 // Components
-import Navbar        from "../components/NavbarDetail";
-import ProfileEditor from "../components/ProfileEditor";
-import LinkItem      from "../components/LinkItem";
-import AddBlockModal from "../components/AddBlockModal";
-import DesignEditor  from "../components/DesignEditor";
-import PhonePreview  from "../components/PhonePreview";
-import StatsPage     from "../components/StatsPage";
+import Navbar        from "../components/Layout/NavbarDetail";
+import ProfileEditor from "../components/Editors/ProfileEditor";
+import LinkItem      from "../components/Blocks/LinkItem";
+import AddBlockModal from "../components/Modals/AddBlockModal";
+import DesignEditor  from "../components/Editors/DesignEditor";
+import PhonePreview  from "../components/Previews/PhonePreview";
+import StatsPage     from "../pages/StatsPage";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import ShareModal from "../components/ShareModal";
+import ShareModal from "../components/Modals/ShareModal";
 
 // Hooks
 import { useDragSort } from "../hooks/useDragSort";

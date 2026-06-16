@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'; // 👈 นำเข้า useState และ useRef
-import ButtonBig from '../Button/button_big';
+import ButtonBig from '../UI/Button/ButtonBig';
 
 export default function OTPForm({ onBack, onSubmit }) {
   // 1. สร้าง State เก็บค่า OTP 4 หลัก

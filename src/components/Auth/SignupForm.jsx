@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, AtSign } from 'lucide-react';
-import ButtonBig from '../Button/button_big';
+import ButtonBig from '../UI/Button/ButtonBig';
 import InputField from './InputField'; 
 import { useNavigate } from 'react-router-dom';
 

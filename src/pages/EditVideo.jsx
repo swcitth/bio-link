@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom'; // 1. นำเข้า useSearchParams
-import Header from '../components/Navbar/Header'; 
-import ButtonAdd from '../components/Button/button_add'; 
-import ButtonSave from '../components/Button/button_save'; 
-import BlockVideo from '../components/BlockVideo'; 
+import Header from "../components/Layout/Header"; 
+import ButtonAdd from '../components/UI/Button/ButtonAdd'; 
+import ButtonSave from '../components/UI/Button/ButtonSave'; 
+import BlockVideo from '../components/Blocks/BlockVideo'; 
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'; 
 
 export default function EditVideo() {

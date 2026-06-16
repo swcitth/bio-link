@@ -8,7 +8,7 @@ import { FaSignOutAlt } from "react-icons/fa";
 import { Eye } from "lucide-react"; 
 
 // 🟢 นำเข้า Header จากไฟล์ของคุณมาใช้งาน
-import Header from "./Navbar/Header"; 
+import Header from "./Header"; 
 
 const Navbar = ({ activeTab, setActiveTab, onShare }) => {
   const navigate = useNavigate();

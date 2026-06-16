@@ -1,6 +1,6 @@
 import React from "react";
 import { THEME_LIST } from "../../constants/themes";
-import BioContent from "./BioContent"; // ⭐️ Import component ที่เราสร้าง
+import BioContent from "../Editors/BioContent";
 
 const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
   const activeTheme = THEME_LIST.find((t) => t.id === design.theme) || THEME_LIST[0];

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../components/Navbar/Header'; 
-import Card from '../components/Card'; // 👈 นำเข้า Card
+import Header from "../components/Layout/Header";
+import Card from '../components/UI/Card'; 
 import SignupForm from '../components/Auth/SignupForm';
 import LoginForm from '../components/Auth/LoginForm';
 import ForgotPasswordForm from '../components/Auth/ForgotPasswordForm'; 

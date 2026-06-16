@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import Header from "../components/Navbar/Header";
-import BlockShop from "../components/BlockShop";
-import ButtonAdd from "../components/Button/button_add";
-import ButtonSave from "../components/Button/button_save";
+import Header from "../components/Layout/Header";
+import BlockShop from "../components/Blocks/BlockShop";
+import ButtonAdd from "../components/UI/Button/ButtonAdd";
+import ButtonSave from "../components/UI/Button/ButtonSave";
 import {
   DragDropContext,
   Droppable,
