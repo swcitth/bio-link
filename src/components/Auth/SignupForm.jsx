@@ -4,6 +4,9 @@ import ButtonBig from '../UI/Button/ButtonBig';
 import InputField from './InputField'; 
 import { useNavigate } from 'react-router-dom';
 
+// ใช้ axios สำหรับส่งข้อมูลไปยัง API
+import axios from 'axios';
+
 export default function SignupForm({ onSwitchView }) {
   const navigate = useNavigate();
   
@@ -34,8 +37,8 @@ export default function SignupForm({ onSwitchView }) {
     }
   };
 
-  // ฟังก์ชันจัดการเมื่อกดปุ่ม Submit ฟอร์ม
-  const handleRegister = (e) => {
+  // ฟังก์ชันจัดการเมื่อกดปุ่ม Submit ฟอร์ม และ async เข้าไป เพื่อให้ใช้งาน await ยิง API ได้
+  const handleRegister = async (e) => {
     e.preventDefault(); 
     
     // ดักไว้: ถ้าหน้าจอมี Error แจ้งเตือนอยู่ ห้ามส่งข้อมูลเด็ดขาด
@@ -49,12 +52,37 @@ export default function SignupForm({ onSwitchView }) {
       alert("กรุณากรอกข้อมูลให้ครบถ้วน");
       return;
     }
+
+    // การส่งข้อมูลไปยัง API ด้วย axios 
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/api/register', {
+        // คีย์ฝั่งซ้าย (ชื่อที่ส่งไปหา Laravel) ต้องเหมือนกับที่ Laravel รอรับใน Controller
+        // ตัวแปรฝั่งขวา (ชื่อแปรใน React)
+        display_name: displayName,
+        username: username,
+        email: email,
+        password: password
+      });
     
     console.log("บันทึกข้อมูลสมัครสมาชิกสำเร็จ!");
 
     // เมื่อลงทะเบียนสำเร็จ จะให้เปลี่ยนหน้า หรือ สลับ Component ก็ทำได้เลย
     // navigate('/login'); 
     onSwitchView(); // อันนี้สลับกลับไปหน้า Login ให้อัตโนมัติ (ตามที่คุณเขียนส่ง prop มา)
+  } catch (error) {
+    console.error("เกิดข้อผิดพลาดในการสมัครสมาชิก:", error);
+
+    // error.response: เช็คก่อนว่าเซิร์ฟเวอร์ยังตอบกลับมาอยู่ไหม
+    // error.response.status: เช็คสถานะ HTTP ว่าเป็น 422 หรือเปล่า (ซึ่ง Laravel ใช้สำหรับ Validation Error)
+    if (error.response && error.response.status === 422) {
+        // ดึงข้อความ error ตัวแรกสุดที่ Laravel ออกมาโชว์ให้ User เห็น
+        const errors = error.response.data.errors;
+        const firstErrorMessage = Object.values(errors)[0][0];
+        alert(`ไม่สามารถสมัครได้: ${firstErrorMessage}`);
+      } else {
+        alert("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้งค่ะ");
+      }
+    }
   };
 
   return (

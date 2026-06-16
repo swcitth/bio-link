@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import ReCAPTCHA from "react-google-recaptcha";
 
+import axios from 'axios';
+
 export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
   const navigate = useNavigate(); 
@@ -100,6 +102,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
     }
   });
 
+  // ส่วนนี้จะเป็นส่วนที่ทำงานร่วมกับ backend API
   const handleLogin = async (e) => {
     e.preventDefault(); 
 
@@ -119,30 +122,53 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
       return;
     }
 
-    let userRole = "user"; 
-    if ((identifier === "admin") && password === "1234") {
-      userRole = "admin"; 
+    try {
+      // ยิง API ไปหา Laravel Backend
+      const response = await axios.post('http://127.0.0.1:8000/api/login',{
+        email: identifier,
+        password: password
+      });
+
+      console.log("API Response Data:", response.data);
+
+      const userData = response.data.user;
+
+      if (!userData) {
+        throw new Error("หาข้อมูล User จาก API ไม่เจอ");
+      }
+
+      // ถ้าสำเร็จ เก็บ Token และข้อมูล User ลง LocalStorage(จดจำสถานะการล็อกอิน (Session))
+
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      alert("เข้าสู่ระบบสำเร็จ!");
+
+      // นำ Role จากฐานข้อมูลมาเช็คเพื่อเปลี่ยนหน้า
+      if (userData.role === "admin") {
+        navigate('/admin'); 
+      } else {
+        navigate('/dd'); 
+      }
+
+      } catch (error) {
+      console.error("Catch Error:", error);
+      
+      if (error.response) {
+        // ถ้าเข้าเงื่อนไขนี้ แปลว่าเป็น Error จากฝั่ง Laravel ตอบกลับมา
+        if (error.response.status === 401) {
+          alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้งค่ะ");
+        } else if (error.response.status === 422) {
+          alert("รูปแบบข้อมูลไม่ถูกต้อง กรุณาใช้อีเมลในการเข้าสู่ระบบ");
+        } else {
+          alert("เซิร์ฟเวอร์เกิดข้อผิดพลาด (Status: " + error.response.status + ")");
+        }
+      } else {
+        // ถ้าเข้าเงื่อนไขนี้ แปลว่าโค้ด React ของเราเองที่ทำงานผิดพลาด (เช่น พิมพ์ชื่อตัวแปรผิด)
+        alert("เกิดข้อผิดพลาดในหน้าเว็บ: " + error.message);
+      }
     }
 
-    const isEmail = identifier.includes("@");
-
-    const userSession = {
-      name: userRole === "admin" ? "ผู้ดูแลระบบสูงสุด" : "ผู้ใช้งานทั่วไป",
-      email: isEmail ? identifier : `${identifier}@example.com`, 
-      username: isEmail ? identifier.split('@')[0] : identifier, 
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
-      isLoggedIn: true,
-      role: userRole 
-    };
-    
-    localStorage.setItem("user_session", JSON.stringify(userSession));
-    syncUserToAdminDatabase(userSession);
-
-    if (userRole === "admin") {
-      navigate('/admin'); 
-    } else {
-      navigate('/dd'); 
-    }
   };
 
   return (
