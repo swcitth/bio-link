@@ -16,6 +16,7 @@ import StatsPage     from "../pages/StatsPage";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import ShareModal from "../components/Modals/ShareModal";
+import axios from "axios"; // นำเข้า Axios เพื่อเตรียมยิงข้อมูลไปหา Laravel
 
 // Hooks
 import { useDragSort } from "../hooks/useDragSort";
@@ -130,11 +131,56 @@ const DashboardPage = () => {
   };
   
 
-  const handleSave  = () => {
-    localStorage.setItem("bio_profile", JSON.stringify(profile));
-    localStorage.setItem("bio_links", JSON.stringify(links));
-    localStorage.setItem("bio_design", JSON.stringify(design));
-    alert("💾 บันทึกข้อมูลสำเร็จ! (จำลองด้วย localStorage)");
+  const handleSave = async () => {
+    try {
+      // 1. บันทึกใน localStorage ตามปกติ
+      localStorage.setItem("bio_profile", JSON.stringify(profile));
+      localStorage.setItem("bio_links", JSON.stringify(links));
+      localStorage.setItem("bio_design", JSON.stringify(design));
+
+      // เช็คดักไว้ก่อน: ถ้าผู้ใช้ลืมกรอก username หรือเป็นค่าว่าง จะได้ไม่ยิงไปมั่วๆ
+      if (!profile.username) {
+        alert("⚠️ บันทึกไม่ได้: กรุณากรอกช่อง username บนหน้าเว็บก่อนครับ!");
+        return;
+      }
+
+      // 2. จับคู่ข้อมูลเตรียมส่งให้ Laravel
+      const payload = {
+        username: profile.username,
+        display_name: profile.name,         
+        bio: profile.bio,
+        avatar_url: profile.avatar,
+        cover_url: profile.cover,
+        contact_name: profile.contactName,  
+        contact_phone: profile.phone,       
+        contact_email: profile.email,       
+        contact_company: profile.company,   
+        contact_job_title: profile.title,   
+        contact_website: profile.website,   
+        show_save_contact: profile.showSaveContact !== false ? 1 : 0,
+      };
+
+      // 3. ยิงข้อมูลไปหาหลังบ้าน
+      const response = await axios.put(
+        `http://127.0.0.1:8000/api/profiles/${profile.username}/test-update`, 
+        payload
+      );
+      
+      if (response.status === 200) {
+        alert("💾 บันทึกข้อมูลลงฐานข้อมูล MySQL จริงสำเร็จเรียบร้อยแล้วครับ!");
+      }
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาด:", error);
+
+      // 🔥 [ทีเด็ดอยู่ตรงนี้] แกะกล่องเอาข้อความด่าจาก Laravel ออกมาโชว์บน Alert ตรงๆ ทันที!
+      const errorFromLaravel = error.response?.data?.error_from_backend;
+      const generalMessage   = error.response?.data?.message;
+      const systemError      = error.message;
+
+      const finalReport = errorFromLaravel || generalMessage || systemError;
+
+      alert(`❌ บันทึกไม่สำเร็จ! หลังบ้านฟ้องว่า:\n\n👉 "${finalReport}"`);
+    }
   };
   
   const handleShare = () => {
