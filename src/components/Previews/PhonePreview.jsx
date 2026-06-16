@@ -1,5 +1,5 @@
 import React from "react";
-import { THEME_LIST } from "../constants/themes";
+import { THEME_LIST } from "../../constants/themes";
 import BioContent from "./BioContent"; // ⭐️ Import component ที่เราสร้าง
 
 const PhonePreview = ({ profile = {}, links = [], design = {} }) => {

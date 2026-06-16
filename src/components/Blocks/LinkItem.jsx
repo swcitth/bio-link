@@ -5,7 +5,7 @@
 import React, { useState } from "react";
 import { FiEdit2, FiEye, FiEyeOff, FiTrash2 } from "react-icons/fi";
 import { FaGripVertical } from "react-icons/fa";
-import { ICON_MAP } from "../constants/icons";
+import { ICON_MAP } from "../../constants/icons";
 
 
 const LinkItem = ({

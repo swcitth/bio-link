@@ -5,7 +5,7 @@
 
 import React, { useRef } from "react";
 import { Sparkles, Type, UploadCloud, Trash2 } from "lucide-react";
-import { THEME_LIST } from "../constants/themes";
+import { THEME_LIST } from "../../constants/themes";
 
 const FONT_OPTIONS = [
   { id: "kanit", name: "Kanit (ทันสมัย)", family: "'Kanit', sans-serif" },

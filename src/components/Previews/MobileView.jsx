@@ -1,5 +1,5 @@
 import React from "react";
-import { ICON_MAP } from "../constants/icons";
+import { ICON_MAP } from "../../constants/icons";
 
 const MobileView = ({ profile, links, design, activeTheme }) => {
   // Logic: ตรวจสอบว่าโหมด Custom หรือไม่

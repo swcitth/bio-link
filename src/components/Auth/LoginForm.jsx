@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, Lock } from 'lucide-react'; 
-import ButtonBig from '../Button/button_big';
+import ButtonBig from '../UI/Button/ButtonBig';
 import InputField from './InputField'; 
 import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
@@ -153,7 +153,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
         <p className="text-sm text-slate-500">กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบ</p>
       </div>
 
-      <form className="flex flex-col gap-5" onSubmit={handleLogin}>
+      <form className="flex flex-col gap-5" onSubmit={handleLogin} method="">
         
         {/* 3. ส่ง State ลงไปให้ InputField */}
         <InputField 
