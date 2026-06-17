@@ -11,6 +11,8 @@ export default function SignupForm({ onSwitchView }) {
   const navigate = useNavigate();
   
   // สร้าง State สำหรับเก็บค่าต่างๆ ที่พิมพ์ลงไป
+  // setDisplayName คือการรับค่า
+  // displayName คือการเอาค่าไปใช้
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');

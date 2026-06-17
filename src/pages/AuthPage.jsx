@@ -13,6 +13,10 @@ export default function AuthPage({ defaultView = 'login' }) {
   const [currentView, setCurrentView] = useState(defaultView);
   const navigate = useNavigate();
 
+  //สร้าง State สำหรับเป็น "กระเป๋าความจำ" ส่วนกลาง
+  const [resetEmail, setResetEmail] = useState(''); // จำอีเมลตอนลืมรหัส
+  const [verifiedOtp, setVerifiedOtp] = useState(''); // จำ OTP ที่ยืนยันผ่านแล้ว
+
   // ดักจับว่าถ้า URL เปลี่ยน (defaultView เปลี่ยน) ให้เปลี่ยนหน้าต่างตาม
   useEffect(() => {
     setCurrentView(defaultView);
@@ -42,7 +46,10 @@ export default function AuthPage({ defaultView = 'login' }) {
 
           {currentView === 'forgot-password' && (
             <ForgotPasswordForm 
-              onSubmit={() => navigate('/otp')} 
+              onSubmit={(emailFromInput) => {
+                setResetEmail(emailFromInput); 
+                navigate('/otp'); 
+              }} 
               onSwitchView={() => navigate('/login')} 
             />
           )}
@@ -50,12 +57,22 @@ export default function AuthPage({ defaultView = 'login' }) {
 
           {currentView === 'otp' && (
             <OTPForm 
+            email={resetEmail}
             onBack={() => navigate('/forgot-password')} 
-            onSubmit={() => navigate('/reset-password')} />
+            onSubmit={() => navigate('/reset-password')} 
+            onSuccess={(otpString) => {
+                setVerifiedOtp(otpString);
+                navigate('/reset-password');
+              }}
+            />
           )}
 
           {currentView === 'reset-password' && (
-            <ResetPasswordForm onSubmit={() => navigate('/login')} />
+            <ResetPasswordForm 
+              mail={resetEmail}
+              otp={verifiedOtp}
+              onSubmit={() => navigate('/login')} 
+              />
           )}
 
         </Card>
