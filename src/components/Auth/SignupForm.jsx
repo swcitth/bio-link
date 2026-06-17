@@ -1,3 +1,4 @@
+// useState จะใช้จำข้อมูลที่พิมลงไปในฟอร์ม
 import React, { useState } from 'react';
 import { Mail, Lock, User, AtSign } from 'lucide-react';
 import ButtonBig from '../UI/Button/ButtonBig';

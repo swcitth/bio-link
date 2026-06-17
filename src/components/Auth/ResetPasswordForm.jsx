@@ -43,7 +43,7 @@ export default function ResetPasswordForm({ email, otp, onSubmit }) {
         email: email,
         otp: otp,
         password: password,
-        password_confirmation: passwordConfirmation // ตรวจสอบชื่อตัวแปรให้ตรงกับ Laravel validator
+        password_confirmation: passwordConfirmation // ชื่ออยู่ใน format ที่จะนำไปใช้กับ comfirmed ใน backend
       });
 
       if (response.status === 200) {
