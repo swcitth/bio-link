@@ -193,70 +193,73 @@ const DashboardPage = () => {
   
   // ⭐️ ฟังก์ชันบันทึกข้อมูลและอัปโหลดไฟล์ไปที่ Laravel ⭐️
   const handleSave = async () => {
-    try {
-      localStorage.setItem("bio_profile", JSON.stringify(profile));
-      localStorage.setItem("bio_links", JSON.stringify(links));
-      localStorage.setItem("bio_design", JSON.stringify(design));
+  try {
+    // 1. บันทึกใน localStorage ตามปกติ
+    localStorage.setItem("bio_profile", JSON.stringify(profile));
+    localStorage.setItem("bio_links", JSON.stringify(links));
+    localStorage.setItem("bio_design", JSON.stringify(design));
 
-      if (!profile.username) {
-        alert("⚠️ บันทึกไม่ได้: กรุณากรอกช่อง username บนหน้าเว็บก่อนครับ!");
-        return;
+    if (!profile.username) {
+      alert("⚠️ บันทึกไม่ได้: กรุณากรอกช่อง username บนหน้าเว็บก่อนครับ!");
+      return;
+    }
+
+    // 2. สร้าง FormData สำหรับส่งข้อมูลและไฟล์รูปภาพ
+    const formData = new FormData();
+    formData.append("_method", "PUT"); // หลอก Laravel ว่าเป็น PUT request
+
+    // เพิ่มข้อมูล Text เข้าไปใน FormData
+    formData.append("username", profile.username);
+    formData.append("display_name", profile.name || "");
+    formData.append("bio", profile.bio || "");
+    formData.append("contact_name", profile.contactName || "");
+    formData.append("contact_phone", profile.phone || "");
+    formData.append("contact_email", profile.email || "");
+    formData.append("contact_company", profile.company || "");
+    formData.append("contact_job_title", profile.title || "");
+    formData.append("contact_website", profile.website || "");
+    formData.append("show_save_contact", profile.showSaveContact !== false ? 1 : 0);
+
+    // 3. แนบไฟล์รูปภาพของจริง (ถ้ามีไฟล์ใหม่เลือกเข้ามา)
+    if (profile.avatarFile) {
+      formData.append("avatar", profile.avatarFile);
+    }
+    if (profile.coverFile) {
+      formData.append("cover", profile.coverFile);
+    }
+    if (design.bgImageFile) {
+      formData.append("bg_image", design.bgImageFile);
+    }
+
+    // 4. ยิง API ด้วย POST เพราะมีไฟล์ (multipart/form-data)
+    const response = await axios.post(
+      `http://127.0.0.1:8000/api/profiles/${profile.username}/test-update`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       }
+    );
 
-      const formData = new FormData();
-      formData.append("_method", "PUT"); 
-
-      // ข้อมูล Text ทั่วไป
-      formData.append("username", profile.username);
-      formData.append("display_name", profile.name || "");        
-      formData.append("bio", profile.bio || "");
-      formData.append("contact_name", profile.contactName || "");  
-      formData.append("contact_phone", profile.phone || "");       
-      formData.append("contact_email", profile.email || "");       
-      formData.append("contact_company", profile.company || "");   
-      formData.append("contact_job_title", profile.title || "");   
-      formData.append("contact_website", profile.website || "");   
-      formData.append("show_save_contact", profile.showSaveContact !== false ? 1 : 0);
-
-      // แนบไฟล์รูปภาพ
-      if (profile.avatarFile) {
-        formData.append("avatar", profile.avatarFile);
-      }
-      if (profile.coverFile) {
-        formData.append("cover", profile.coverFile);
-      }
-      if (design.bgImageFile) {
-        formData.append("bg_image", design.bgImageFile);
-      }
-
-      // ยิง API
-      const response = await axios.post(
-        `http://127.0.0.1:8000/api/profiles/${profile.username}/test-update`, 
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          }
-        }
-      );
-      
-      if (response.status === 200) {
-        alert("💾 บันทึกข้อมูลและรูปภาพลงฐานข้อมูล MySQL จริงสำเร็จเรียบร้อยแล้วครับ!");
-        // ⭐️ 3. เรียกฟังก์ชันนี้หลังบันทึกเสร็จ เพื่อดึง URL รูปจริงจากหลังบ้านมาอัปเดตหน้าจอทันที ⭐️
+    if (response.status === 200) {
+      alert("💾 บันทึกข้อมูลและรูปภาพลงฐานข้อมูล MySQL จริงสำเร็จเรียบร้อยแล้วครับ!");
+      // เรียกใช้ฟังก์ชัน fetchMyProfile เพื่อดึงรูปจริงและเคลียร์ไฟล์ออกจาก state
+      if (typeof fetchMyProfile === 'function') {
         fetchMyProfile();
       }
-    } catch (error) {
-      console.error("เกิดข้อผิดพลาด:", error);
-
-      const errorFromLaravel = error.response?.data?.error_from_backend;
-      const generalMessage   = error.response?.data?.message;
-      const systemError      = error.message;
-
-      const finalReport = errorFromLaravel || generalMessage || systemError;
-
-      alert(`❌ บันทึกไม่สำเร็จ! หลังบ้านฟ้องว่า:\n\n👉 "${finalReport}"`);
     }
-  };
+  } catch (error) {
+    console.error("เกิดข้อผิดพลาด:", error);
+
+    const errorFromLaravel = error.response?.data?.error_from_backend;
+    const generalMessage = error.response?.data?.message;
+    const systemError = error.message;
+
+    const finalReport = errorFromLaravel || generalMessage || systemError;
+    alert(`❌ บันทึกไม่สำเร็จ! หลังบ้านฟ้องว่า:\n\n👉 "${finalReport}"`);
+  }
+};
   
   const handleShare = () => {
     setIsShareModalOpen(true); 
