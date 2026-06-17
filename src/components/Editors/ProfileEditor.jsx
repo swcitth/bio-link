@@ -12,7 +12,7 @@ const ProfileEditor = ({ profile, setProfile }) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const maxFileSize = 5 * 1024 * 1024; // ลิมิต 5MB
+    const maxFileSize = 20 * 1024 * 1024
     if (file.size > maxFileSize) {
       alert("❌ รูปภาพมีขนาดใหญ่เกินไป! กรุณาเลือกรูปภาพที่มีขนาดไม่เกิน 5MB");
       e.target.value = ""; 
