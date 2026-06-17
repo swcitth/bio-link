@@ -1,6 +1,5 @@
 // ============================================================
-// src/components/DesignEditor.jsx
-// รวมระบบ: ดักขนาดรูป 5MB, แสดงพรีวิวชัดเจนไม่มีขอบขุ่น, และปุ่มลบชิดขวา
+// src/components/Editors/DesignEditor.jsx
 // ============================================================
 
 import React, { useRef } from "react";
@@ -25,36 +24,38 @@ const debounce = (func, wait) => {
 const DesignEditor = ({ design, setDesign, profile }) => {
   const bgRef = useRef(null);
 
-  // เปลี่ยน theme เป็น custom เฉพาะตอนที่แก้สีพื้นหลัง
   const update = (field, value) => {
     setDesign((prev) => {
       const newState = { ...prev, [field]: value };
-      
-      // ถ้าเปลี่ยนสีพื้นหลัง ให้หลุดจากธีม (กลายเป็น custom)
       if (field === "bgColor") {
         newState.theme = "custom";
       }
-      
       return newState;
     });
   };
 
+  // ✨ อัปเดต: เปลี่ยนจากการแปลง Base64 เป็นการเก็บไฟล์จริง (File Upload)
   const handleBgChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // ระบบตรวจสอบขนาดรูปภาพไม่ให้เกิน 5MB
     const maxFileSize = 5 * 1024 * 1024; // 5 MB
     if (file.size > maxFileSize) {
       alert("❌ รูปภาพมีขนาดใหญ่เกินไป! กรุณาเลือกรูปภาพที่มีขนาดไม่เกิน 5MB");
-      e.target.value = ""; // เคลียร์ค่าไฟล์ที่เลือกมาทิ้งไป
+      e.target.value = ""; 
       return;
     }
 
-    // ถ้าขนาดผ่านเงื่อนไข (ไม่เกิน 5MB) ค่อยทำการแปลงรูป
-    const reader = new FileReader();
-    reader.onloadend = () => update("bgImage", reader.result);
-    reader.readAsDataURL(file);
+    // 1. สร้าง URL พรีวิวชั่วคราว
+    const previewUrl = URL.createObjectURL(file);
+
+    // 2. เก็บทั้ง "ไฟล์จริง" และ "URL พรีวิว"
+    setDesign((prev) => ({
+      ...prev,
+      bgImageFile: file,    // 👉 สำหรับส่งไปให้ Laravel (FormData)
+      bgImage: previewUrl,  // 👉 สำหรับโชว์บนหน้าจอทันที
+      theme: "custom"       // เปลี่ยนเป็นธีม custom เมื่อมีการใส่รูปพื้นหลัง
+    }));
   };
 
   const applyTheme = (themeId) => {
@@ -80,7 +81,6 @@ const DesignEditor = ({ design, setDesign, profile }) => {
       <div className={sectionClass}>
         <SectionTitle icon={<Sparkles size={16} className="text-violet-500" />}>รูปภาพพื้นหลัง</SectionTitle>
         
-        {/* 🟢 UI อัปโหลดรูป (แก้ไขแผ่นใสให้เป็นสีดำอ่อนๆ รูปจะเนียนและสีสดใส 100%) */}
         <div 
           onClick={() => bgRef.current.click()} 
           className={`relative border-2 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all group overflow-hidden ${
@@ -90,7 +90,6 @@ const DesignEditor = ({ design, setDesign, profile }) => {
           }`}
           style={design.bgImage ? { backgroundImage: `url(${design.bgImage})`, backgroundSize: "cover", backgroundPosition: "center" } : {}}
         >
-          {/* เอาสีขาวขุ่นออก เปลี่ยนเป็นสีดำโปร่งแสงบางๆ แทน */}
           {design.bgImage && <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all" />}
 
           <div className="relative z-10 flex flex-col items-center">
@@ -98,7 +97,6 @@ const DesignEditor = ({ design, setDesign, profile }) => {
               <UploadCloud size={24} className="text-indigo-500" />
             </div>
             
-            {/* เปลี่ยนสีตัวหนังสือเป็นสีขาวและเอาขอบออก เพื่อให้เข้ากับรูปพื้นหลัง */}
             {design.bgImage ? (
               <p className="text-sm font-bold text-white drop-shadow-md">คลิกเพื่อเปลี่ยนรูปพื้นหลังใหม่</p>
             ) : (
@@ -114,11 +112,12 @@ const DesignEditor = ({ design, setDesign, profile }) => {
         
         <input type="file" accept="image/*" ref={bgRef} onChange={handleBgChange} className="hidden" />
         
-        {/* ปุ่มลบชิดขวา (justify-end) */}
+        {/* ปุ่มลบชิดขวา */}
         {design.bgImage && (
           <div className="flex justify-end mt-3">
             <button 
-              onClick={() => update("bgImage", "")} 
+              // ✨ อัปเดตตอนลบรูป ให้เคลียร์ค่าไฟล์จริงทิ้งด้วย
+              onClick={() => setDesign(prev => ({ ...prev, bgImage: "", bgImageFile: null }))} 
               className="text-sm text-red-500 hover:text-red-600 flex items-center gap-1 font-semibold transition-colors"
             >
               <Trash2 size={16} /> ลบรูปพื้นหลัง
@@ -216,17 +215,13 @@ const SectionTitle = ({ icon, children }) => (
   <h3 className="flex items-center gap-2 font-bold text-slate-800 mb-4 text-sm">{icon}{children}</h3>
 );
 
-// 🟢 แก้ไข ColorInput ให้มี Local State: สีเปลี่ยนทันที + ไม่ดีเลย์
 const ColorInput = ({ label, disabled, disabledText, value, onChange }) => {
-  // สร้าง Local State จำค่าสีชั่วคราวเพื่อให้ปุ่มสีเปลี่ยนทันทีที่ลาก
   const [localColor, setLocalColor] = React.useState(value || "#ffffff");
 
-  // ถ้าค่าหลักเปลี่ยนจากภายนอก (เช่น กดเลือกธีม) ให้อัปเดต Local State ด้วย
   React.useEffect(() => {
     setLocalColor(value || "#ffffff");
   }, [value]);
 
-  // สร้างฟังก์ชันส่งค่ากลับไปให้ Parent แบบหน่วงเวลา
   const debouncedOnChange = React.useCallback(
     debounce((newColor) => onChange({ target: { value: newColor } }), 80),
     [onChange]
@@ -234,8 +229,8 @@ const ColorInput = ({ label, disabled, disabledText, value, onChange }) => {
 
   const handleChange = (e) => {
     const newColor = e.target.value;
-    setLocalColor(newColor); // อัปเดตสีที่ตัวปุ่ม Color Picker ทันที (ไม่ดีเลย์)
-    debouncedOnChange(newColor); // สั่งอัปเดตระบบใหญ่แบบหน่วงเวลาเพื่อลดการค้าง
+    setLocalColor(newColor); 
+    debouncedOnChange(newColor); 
   };
 
   return (
