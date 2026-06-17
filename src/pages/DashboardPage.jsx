@@ -2,7 +2,7 @@
 // src/pages/DashboardPage.jsx
 // ============================================================
 
-import React, { useState, useEffect } from "react"; // นำเข้า useEffect
+import React, { useState, useEffect } from "react";
 import { FaPlus, FaChevronRight } from "react-icons/fa";
 
 // Components
@@ -13,10 +13,9 @@ import AddBlockModal from "../components/Modals/AddBlockModal";
 import DesignEditor  from "../components/Editors/DesignEditor";
 import PhonePreview  from "../components/Previews/PhonePreview";
 import StatsPage     from "../pages/StatsPage";
-import { useNavigate } from "react-router-dom";
-import { useLocation } from "react-router-dom";
-import ShareModal from "../components/Modals/ShareModal";
-import axios from "axios"; // นำเข้า Axios เพื่อเตรียมยิงข้อมูลไปหา Laravel
+import { useNavigate, useLocation } from "react-router-dom";
+import ShareModal    from "../components/Modals/ShareModal";
+import axios         from "axios"; 
 
 // Hooks
 import { useDragSort } from "../hooks/useDragSort";
@@ -25,7 +24,6 @@ import {
   MOCK_DESIGN,
   MOCK_STATS,
 } from "../data/mockData";
-
 
 const DashboardPage = () => {
 
@@ -49,7 +47,7 @@ const DashboardPage = () => {
     name: realUser?.display_name || realUser?.username || "ผู้ใช้งานใหม่",
     username: realUser?.username || "",
     email: realUser?.email || "",
-    bio: "ยินดีต้อนรับสู่พื้นที่ของฉัน ✨", // คำทักทายเริ่มต้น
+    bio: "ยินดีต้อนรับสู่พื้นที่ของฉัน ✨",
     avatar: `https://ui-avatars.com/api/?name=${realUser?.username || 'User'}&background=random&color=fff`,
     cover: "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=800&q=80", 
     contactName: "",
@@ -75,30 +73,69 @@ const DashboardPage = () => {
   const [activeTab,   setActiveTab]   = useState("info");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 1. ย้าย loadData ขึ้นมาไว้บนสุด เพื่อให้ตัวแปรด้านล่างเรียกใช้งานได้
+  // ฟังก์ชันโหลดข้อมูลจาก LocalStorage
   const loadData = (key, defaultValue) => {
     const savedData = localStorage.getItem(key);
     if (savedData) {
-      return JSON.parse(savedData); // ถ้าเคยเซฟไว้ ให้ดึงกลับมาใช้
+      return JSON.parse(savedData);
     }
-    return defaultValue; // ถ้ายังไม่เคยเซฟ ให้ใช้ค่าเริ่มต้น
+    return defaultValue;
   };
 
-  // เปลี่ยนมาใช้ INITIAL_PROFILE แทน MOCK_PROFILE 
+  // State เก็บข้อมูลต่างๆ
   const [profile, setProfile] = useState(() => loadData("bio_profile", INITIAL_PROFILE));
-  // ตั้งค่าลิงก์เป็นอาร์เรย์ว่าง [] แทน MOCK_LINKS เพื่อให้หน้าจอเป็นหน้าเปล่าๆ
   const [links,   setLinks]   = useState(() => loadData("bio_links", []));
-  const [design,  setDesign]  = useState(() => loadData("bio_design", MOCK_DESIGN)); // ธีมตั้งต้นยังใช้ Mock ได้
+  const [design,  setDesign]  = useState(() => loadData("bio_design", MOCK_DESIGN));
 
+  // ⭐️ 1. แยกฟังก์ชัน fetchMyProfile ออกมาข้างนอก เพื่อให้เรียกใช้ได้ทุกที่ ⭐️
+  const fetchMyProfile = async () => {
+    if (!realUser?.username) return;
+
+    try {
+      const response = await axios.get(`http://127.0.0.1:8000/api/profiles/${realUser.username}`);
+      
+      if (response.status === 200 && response.data.data) {
+        const dbData = response.data.data;
+        
+        setProfile(prev => ({
+          ...prev,
+          username: dbData.username || realUser.username,
+          name: dbData.display_name || prev.name,
+          bio: dbData.bio || prev.bio,
+          // ใช้ URL จริงจากหลังบ้าน
+          avatar: dbData.avatar_url ? `http://127.0.0.1:8000${dbData.avatar_url}` : prev.avatar,
+          cover: dbData.cover_url ? `http://127.0.0.1:8000${dbData.cover_url}` : prev.cover,
+          avatarFile: null, // เคลียร์ไฟล์ชั่วคราวทิ้งหลังดึงข้อมูลเสร็จ
+          coverFile: null,  // เคลียร์ไฟล์ชั่วคราวทิ้งหลังดึงข้อมูลเสร็จ
+          contactName: dbData.contact_name || "",
+          phone: dbData.contact_phone || "",
+          email: dbData.contact_email || "",
+          company: dbData.contact_company || "",
+          title: dbData.contact_job_title || "",
+          website: dbData.contact_website || "",
+          showSaveContact: dbData.show_save_contact === 1
+        }));
+
+        if (dbData.bg_image_url) {
+          setDesign(prev => ({ 
+            ...prev, 
+            bgImage: `http://127.0.0.1:8000${dbData.bg_image_url}`,
+            bgImageFile: null // เคลียร์ไฟล์ชั่วคราวทิ้งหลังดึงข้อมูลเสร็จ
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("ไม่พบข้อมูล Profile เดิม หรือผู้ใช้ยังไม่เคยบันทึกข้อมูล:", error);
+    }
+  };
+
+  // ⭐️ 2. เรียกใช้ fetchMyProfile ตอนเปิดหน้าเว็บครั้งแรก ⭐️
   useEffect(() => {
-    setProfile(loadData("bio_profile", INITIAL_PROFILE));
-    setLinks(loadData("bio_links", []));
-    setDesign(loadData("bio_design", MOCK_DESIGN));
-  }, [location]);
+    fetchMyProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); 
 
-  
-
-  // 🟢 บันทึกข้อมูลลง localStorage ทุกครั้งที่ profile, links หรือ design มีการเปลี่ยนแปลง
+  // 🟢 บันทึกข้อมูลลง localStorage ทุกครั้งที่มีการเปลี่ยนแปลง เพื่อให้ Preview แสดงผลเรียลไทม์
   useEffect(() => {
     localStorage.setItem("preview_profile", JSON.stringify(profile));
     localStorage.setItem("preview_links", JSON.stringify(links));
@@ -122,7 +159,6 @@ const DashboardPage = () => {
     );
 
   const handleAddNewBlock = (type, defaultTitle, defaultIcon) => {
-
     const newId = links.length > 0 ? Math.max(...links.map((l) => l.id)) + 1 : 1;
     const newLink = {
       id:      newId,
@@ -137,13 +173,13 @@ const DashboardPage = () => {
     const updatedLinks = [...links, newLink];
     setLinks(updatedLinks);
 
-
     localStorage.setItem("bio_links", JSON.stringify(updatedLinks));
     localStorage.setItem("bio_profile", JSON.stringify(profile)); 
     localStorage.setItem("bio_design", JSON.stringify(design));
 
     window.dispatchEvent(new Event("storage"));
     setIsModalOpen(false);
+    
     if (defaultIcon === "Image") {
       navigate(`/edit-shop?id=${newId}`);
     } 
@@ -155,49 +191,63 @@ const DashboardPage = () => {
     }
   };
   
-
+  // ⭐️ ฟังก์ชันบันทึกข้อมูลและอัปโหลดไฟล์ไปที่ Laravel ⭐️
   const handleSave = async () => {
     try {
-      // 1. บันทึกใน localStorage ตามปกติ
       localStorage.setItem("bio_profile", JSON.stringify(profile));
       localStorage.setItem("bio_links", JSON.stringify(links));
       localStorage.setItem("bio_design", JSON.stringify(design));
 
-      // เช็คดักไว้ก่อน: ถ้าผู้ใช้ลืมกรอก username หรือเป็นค่าว่าง จะได้ไม่ยิงไปมั่วๆ
       if (!profile.username) {
         alert("⚠️ บันทึกไม่ได้: กรุณากรอกช่อง username บนหน้าเว็บก่อนครับ!");
         return;
       }
 
-      // 2. จับคู่ข้อมูลเตรียมส่งให้ Laravel
-      const payload = {
-        username: profile.username,
-        display_name: profile.name,         
-        bio: profile.bio,
-        avatar_url: profile.avatar,
-        cover_url: profile.cover,
-        contact_name: profile.contactName,  
-        contact_phone: profile.phone,       
-        contact_email: profile.email,       
-        contact_company: profile.company,   
-        contact_job_title: profile.title,   
-        contact_website: profile.website,   
-        show_save_contact: profile.showSaveContact !== false ? 1 : 0,
-      };
+      const formData = new FormData();
+      formData.append("_method", "PUT"); 
 
-      // 3. ยิงข้อมูลไปหาหลังบ้าน
-      const response = await axios.put(
+      // ข้อมูล Text ทั่วไป
+      formData.append("username", profile.username);
+      formData.append("display_name", profile.name || "");        
+      formData.append("bio", profile.bio || "");
+      formData.append("contact_name", profile.contactName || "");  
+      formData.append("contact_phone", profile.phone || "");       
+      formData.append("contact_email", profile.email || "");       
+      formData.append("contact_company", profile.company || "");   
+      formData.append("contact_job_title", profile.title || "");   
+      formData.append("contact_website", profile.website || "");   
+      formData.append("show_save_contact", profile.showSaveContact !== false ? 1 : 0);
+
+      // แนบไฟล์รูปภาพ
+      if (profile.avatarFile) {
+        formData.append("avatar", profile.avatarFile);
+      }
+      if (profile.coverFile) {
+        formData.append("cover", profile.coverFile);
+      }
+      if (design.bgImageFile) {
+        formData.append("bg_image", design.bgImageFile);
+      }
+
+      // ยิง API
+      const response = await axios.post(
         `http://127.0.0.1:8000/api/profiles/${profile.username}/test-update`, 
-        payload
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          }
+        }
       );
       
       if (response.status === 200) {
-        alert("💾 บันทึกข้อมูลลงฐานข้อมูล MySQL จริงสำเร็จเรียบร้อยแล้วครับ!");
+        alert("💾 บันทึกข้อมูลและรูปภาพลงฐานข้อมูล MySQL จริงสำเร็จเรียบร้อยแล้วครับ!");
+        // ⭐️ 3. เรียกฟังก์ชันนี้หลังบันทึกเสร็จ เพื่อดึง URL รูปจริงจากหลังบ้านมาอัปเดตหน้าจอทันที ⭐️
+        fetchMyProfile();
       }
     } catch (error) {
       console.error("เกิดข้อผิดพลาด:", error);
 
-      // 🔥 [ทีเด็ดอยู่ตรงนี้] แกะกล่องเอาข้อความด่าจาก Laravel ออกมาโชว์บน Alert ตรงๆ ทันที!
       const errorFromLaravel = error.response?.data?.error_from_backend;
       const generalMessage   = error.response?.data?.message;
       const systemError      = error.message;

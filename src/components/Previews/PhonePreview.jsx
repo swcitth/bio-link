@@ -4,9 +4,22 @@ import BioContent from "../Editors/BioContent";
 
 const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
   const activeTheme = THEME_LIST.find((t) => t.id === design.theme) || THEME_LIST[0];
+  
+  // จัดการสีพื้นหลัง
   const screenBackground = (design.theme === "custom" && design.bgColor) 
     ? design.bgColor 
     : (activeTheme?.cfg?.bgGradient || "#F8FAFC");
+
+  // ✨ จัดการเรื่องฟอนต์ (Font Family) เพื่อให้เปลี่ยนตามที่ผู้ใช้เลือก
+  const getFontFamily = (fontId) => {
+    switch(fontId) {
+      case "sarabun": return "'Sarabun', sans-serif";
+      case "mali":    return "'Mali', cursive";
+      case "prompt":  return "'Prompt', sans-serif";
+      case "kanit":
+      default:        return "'Kanit', sans-serif";
+    }
+  };
 
   return (
     <div className="flex flex-col items-center gap-3 sticky top-24">
@@ -27,11 +40,21 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#1a1a2e] z-20" style={{ width: 80, height: 22, borderRadius: "0 0 14px 14px" }} />
 
         {/* Screen */}
-        <div className="w-full h-full overflow-hidden relative" style={{ borderRadius: "2rem", background: screenBackground }}>
+        <div 
+          className="w-full h-full overflow-hidden relative" 
+          style={{ 
+            borderRadius: "2rem", 
+            background: screenBackground,
+            fontFamily: getFontFamily(design.font) // ✨ สั่งให้แสดงฟอนต์ตามที่ออกแบบไว้
+          }}
+        >
           
           {/* Background Image Layer */}
           {design.bgImage && (
-            <div className="absolute inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: `url(${design.bgImage})`, opacity: 0.6 }} />
+            <div 
+              className="absolute inset-0 z-0 bg-cover bg-center" 
+              style={{ backgroundImage: `url(${design.bgImage})`, opacity: 0.6 }} 
+            />
           )}
 
           {/* Scrollable Content */}

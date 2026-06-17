@@ -7,20 +7,27 @@ const ProfileEditor = ({ profile, setProfile }) => {
   const coverRef  = useRef(null);
   const [hoverAvatar, setHoverAvatar] = useState(false);
 
+  // ✨ อัปเดตฟังก์ชันจัดการรูปภาพให้รองรับ File Upload จริงๆ
   const handleImageChange = (e, field) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const maxFileSize = 5 * 1024 * 1024; 
+    const maxFileSize = 5 * 1024 * 1024; // ลิมิต 5MB
     if (file.size > maxFileSize) {
       alert("❌ รูปภาพมีขนาดใหญ่เกินไป! กรุณาเลือกรูปภาพที่มีขนาดไม่เกิน 5MB");
       e.target.value = ""; 
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => setProfile((prev) => ({ ...prev, [field]: reader.result }));
-    reader.readAsDataURL(file);
+    // 1. สร้าง URL พรีวิวชั่วคราวให้แสดงบนหน้าเว็บได้ทันที
+    const previewUrl = URL.createObjectURL(file);
+
+    // 2. เก็บทั้ง "ไฟล์จริง (สำหรับส่งไป Laravel)" และ "URL พรีวิว (สำหรับโชว์บนหน้าจอ)"
+    setProfile((prev) => ({ 
+      ...prev, 
+      [`${field}File`]: file, // จะได้ตัวแปร avatarFile หรือ coverFile
+      [field]: previewUrl     // จะได้ตัวแปร avatar หรือ cover (เอาไว้โชว์ในแท็บ img)
+    }));
   };
 
   return (
@@ -60,7 +67,11 @@ const ProfileEditor = ({ profile, setProfile }) => {
         {profile.cover && (
           <div className="flex justify-end mt-3">
             <button 
-              onClick={(e) => { e.stopPropagation(); setProfile({ ...profile, cover: "" }); }} 
+              // ✨ อัปเดตตอนกดลบรูปปก ให้ลียร์ไฟล์จริง (coverFile) ทิ้งด้วย
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                setProfile({ ...profile, cover: "", coverFile: null }); 
+              }} 
               className="text-sm text-red-500 hover:text-red-600 font-medium flex items-center gap-1.5 transition-colors"
             >
               <Trash2 size={16} /> ลบรูปหน้าปก
@@ -194,7 +205,7 @@ const ProfileEditor = ({ profile, setProfile }) => {
               </div>
             </div>
 
-            {/* ⭐️ ช่องกรอกเว็บไซต์ (แยกออกมานอก flex gap-3 เพื่อให้ขึ้นบรรทัดใหม่และเต็มความกว้าง) ⭐️ */}
+            {/* ⭐️ ช่องกรอกเว็บไซต์ ⭐️ */}
             <div className="relative">
               <input
                 type="url"
@@ -219,7 +230,6 @@ const ProfileEditor = ({ profile, setProfile }) => {
               <input 
                 type="checkbox" 
                 className="sr-only peer"
-                // เช็คว่าถ้าค่าเป็น undefined ให้ถือว่าเป็น true (แสดงไว้ก่อน)
                 checked={profile.showSaveContact !== false} 
                 onChange={(e) => setProfile((p) => ({ ...p, showSaveContact: e.target.checked }))}
               />
