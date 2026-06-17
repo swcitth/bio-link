@@ -123,11 +123,16 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
     }
 
     try {
+
+      // เช็คอีเมล (มี @) หรือเป็น Username
+      const isEmail = identifier.includes('@');
+
+      const payload = isEmail
+      ? { email: identifier, password: password}
+      : { username: identifier, password: password};
+
       // ยิง API ไปหา Laravel Backend
-      const response = await axios.post('http://127.0.0.1:8000/api/login',{
-        email: identifier,
-        password: password
-      });
+      const response = await axios.post('http://127.0.0.1:8000/api/login', payload);
 
       console.log("API Response Data:", response.data);
 
@@ -136,6 +141,8 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
       if (!userData) {
         throw new Error("หาข้อมูล User จาก API ไม่เจอ");
       }
+
+      localStorage.clear();
 
       // ถ้าสำเร็จ เก็บ Token และข้อมูล User ลง LocalStorage(จดจำสถานะการล็อกอิน (Session))
 
