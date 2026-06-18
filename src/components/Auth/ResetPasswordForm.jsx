@@ -1,9 +1,68 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Lock } from 'lucide-react';
 import ButtonBig from '../UI/Button/ButtonBig';
 import InputField from './InputField';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-export default function ResetPasswordForm({ onSubmit }) {
+export default function ResetPasswordForm({ email, otp, onSubmit }) {
+
+  //State สำหรับเก็บรหัสผ่านและสถานะการโหลด
+  const [password, setPassword] = useState('');
+  const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // State สำหรับ เปิด-ปิด ตาเพื่อดูรหัสผ่าน
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  //ฟังก์ชันส่งข้อมูลรหัสใหม่ไปหา Laravel
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!email || !otp) {
+      alert("ข้อมูลการทำรายการสูญหาย กรุณากลับไปเริ่มต้นทำรายการใหม่อีกครั้งค่ะ");
+      return; 
+    }
+
+    if (password.length < 8) {
+      alert("รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 8 ตัวอักษรค่ะ");
+      return;
+    }
+
+    if (password !== passwordConfirmation) {
+      alert("รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกันค่ะ");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // ยิงข้อมูลทั้งหมดส่งไปหา Laravel
+      const response = await axios.post('http://127.0.0.1:8000/api/reset-password', {
+        email: email,
+        otp: otp,
+        password: password,
+        password_confirmation: passwordConfirmation // ชื่ออยู่ใน format ที่จะนำไปใช้กับ comfirmed ใน backend
+      });
+
+      if (response.status === 200) {
+        alert(response.data.message); // แจ้งว่าเปลี่ยนรหัสสำเร็จ
+        onSubmit(); // กลับไปหน้า Login 
+      }
+
+    } catch (error) {
+      console.error("Reset Password Error:", error);
+      if (error.response && error.response.data) {
+        alert(error.response.data.message);
+      } else {
+        alert("ระบบมีปัญหาไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้งค่ะ");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
       {/* Header Texts */}
@@ -17,7 +76,7 @@ export default function ResetPasswordForm({ onSubmit }) {
       </div>
 
       {/* Reset Password Form */}
-      <form className="flex flex-col gap-5">
+      <form className="flex flex-col gap-5" onSubmit={handleResetSubmit}>
         
         {/* ช่องรหัสผ่านใหม่ */}
         <InputField
@@ -26,6 +85,7 @@ export default function ResetPasswordForm({ onSubmit }) {
           type="password"
           placeholder="••••••••"
           icon={Lock}
+          onChange={(e) => setPassword(e.target.value)}
         />
 
         {/* ช่องยืนยันรหัสผ่าน */}
@@ -35,10 +95,11 @@ export default function ResetPasswordForm({ onSubmit }) {
           type="password"
           placeholder="••••••••"
           icon={Lock}
+          onChange={(e) => setPasswordConfirmation(e.target.value)}
         />
 
         {/* ปุ่มบันทึก */}
-        <ButtonBig type="button" onClick={onSubmit} className="mt-2">
+        <ButtonBig type="submit" disabled={isLoading} className="mt-2">
           บันทึก
         </ButtonBig>
       </form>

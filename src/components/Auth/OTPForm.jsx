@@ -1,10 +1,10 @@
-import React, { useState, useRef } from 'react'; // 👈 นำเข้า useState และ useRef
+import React, { useState, useRef } from 'react'; 
 import ButtonBig from '../UI/Button/ButtonBig';
+import axios from 'axios';
 
-export default function OTPForm({ onBack, onSubmit }) {
-  // 1. สร้าง State เก็บค่า OTP 4 หลัก
+export default function OTPForm({ email, onBack, onSuccess }) {
   const [otp, setOtp] = useState(['', '', '', '']);
-  // 2. สร้าง Ref เก็บอ้างอิงของกล่อง input ทั้ง 4 กล่อง
+  const [isLoading, setIsLoading] = useState(false);
   const inputRefs = useRef([]);
 
   // ฟังก์ชันจัดการเมื่อมีการพิมพ์
@@ -33,6 +33,41 @@ export default function OTPForm({ onBack, onSubmit }) {
     }
   };
 
+  // ยิง API ไปหา Laravel
+  const handleVerify = async () => {
+    // รวมร่าง Array ['1','2','3','4'] ให้กลายเป็นข้อความ "1234"
+    const otpString = otp.join(''); 
+    
+    if (otpString.length < 4) {
+      alert("กรุณากรอกรหัส OTP ให้ครบ 4 หลักค่ะ");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/api/verify-otp', {
+        email: email, 
+        otp: otpString
+      });
+
+      if (response.status === 200) {
+        // ถ้ารหัสถูกต้อง ให้ส่งค่า OTP กลับไปให้หน้าแม่ เพื่อเปลี่ยนเป็นสเตปที่ 3
+        onSuccess(otpString); 
+      }
+
+    } catch (error) {
+      console.error("Verify OTP Error:", error);
+      if (error.response && error.response.status === 400) {
+        alert(error.response.data.message); // โชว์ข้อความผิดพลาดจาก Laravel
+      } else {
+        alert("เซิร์ฟเวอร์มีปัญหา กรุณาลองใหม่อีกครั้ง");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="mb-8 text-center">
@@ -42,26 +77,33 @@ export default function OTPForm({ onBack, onSubmit }) {
         </p>
       </div>
 
-      <form className="flex flex-col gap-8">
+      <form 
+        className="flex flex-col gap-8"
+        onSubmit={(e) => {
+          e.preventDefault(); //สั่งห้ามเบราว์เซอร์รีเฟรชหน้าเว็บ
+          handleVerify();     //แล้วค่อยเรียกฟังก์ชันยิง API ของเราทำงานต่อ
+        }}
+        >
+
         <div className="flex justify-center gap-3 sm:gap-4">
           {/* เปลี่ยนจาก [1,2,3,4] เป็น [0,1,2,3] เพื่อให้ตรงกับ Index ของ Array */}
           {[0, 1, 2, 3].map((index) => (
             <input
               key={index}
-              ref={(el) => (inputRefs.current[index] = el)} // 👈 เก็บอ้างอิง (Ref) ของแต่ละกล่อง
+              ref={(el) => (inputRefs.current[index] = el)} //  เก็บอ้างอิง (Ref) ของแต่ละกล่อง
               type="text"
               maxLength={1}
-              value={otp[index]} // 👈 ผูกค่ากับ State
-              onChange={(e) => handleChange(e, index)} // 👈 เรียกฟังก์ชันตอนพิมพ์
-              onKeyDown={(e) => handleKeyDown(e, index)} // 👈 เรียกฟังก์ชันตอนกดคีย์บอร์ด
+              value={otp[index]} //  ผูกค่ากับ State
+              onChange={(e) => handleChange(e, index)} //  เรียกฟังก์ชันตอนพิมพ์
+              onKeyDown={(e) => handleKeyDown(e, index)} //  เรียกฟังก์ชันตอนกดคีย์บอร์ด
               className="w-14 h-16 text-center text-2xl font-bold text-slate-900 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all hover:border-slate-300"
               placeholder="-"
             />
           ))}
         </div>
 
-        <ButtonBig type="button" onClick={onSubmit}>
-          ตกลง
+        <ButtonBig type="submit" disabled={isLoading}>
+          {isLoading ? 'กำลังตรวจสอบ...' : 'ตกลง'}
         </ButtonBig>
       </form>
 
