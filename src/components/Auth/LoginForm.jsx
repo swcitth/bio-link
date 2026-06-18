@@ -132,8 +132,9 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
       : { username: identifier, password: password};
 
       // ยิง API ไปหา Laravel Backend
-      const response = await axios.post('http://127.0.0.1:8000/api/login', payload);
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/login`, payload);
 
+      
       console.log("API Response Data:", response.data);
 
       const userData = response.data.user;
@@ -146,7 +147,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
       // ถ้าสำเร็จ เก็บ Token และข้อมูล User ลง LocalStorage(จดจำสถานะการล็อกอิน (Session))
 
-      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('token', response.data.access_token);
       localStorage.setItem('user', JSON.stringify(userData));
 
       alert("เข้าสู่ระบบสำเร็จ!");

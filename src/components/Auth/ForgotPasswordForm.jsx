@@ -21,7 +21,7 @@ export default function ForgotPasswordForm({ onSwitchView, onSubmit }) {
 
     try {
       //  ยิง API ขอรหัส OTP จาก Laravel 
-      const response = await axios.post('http://127.0.0.1:8000/api/forgot-password', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/forgot-password`, {
         email: email
       });
 

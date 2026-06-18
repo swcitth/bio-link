@@ -25,6 +25,7 @@ export default function Header({ onLogoClick, children, showBackButton = false }
 
         {showBackButton && (
           <button 
+            type="button"
             onClick={() => navigate(-1)} 
             className="text-sm font-medium text-slate-600 hover:text-[#5a4bfc] underline underline-offset-4 decoration-slate-300 hover:decoration-[#5a4bfc] transition-colors focus:outline-none cursor-pointer"
           >

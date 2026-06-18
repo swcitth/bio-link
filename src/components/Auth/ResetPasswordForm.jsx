@@ -39,7 +39,7 @@ export default function ResetPasswordForm({ email, otp, onSubmit }) {
 
     try {
       // ยิงข้อมูลทั้งหมดส่งไปหา Laravel
-      const response = await axios.post('http://127.0.0.1:8000/api/reset-password', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/reset-password`, {
         email: email,
         otp: otp,
         password: password,
