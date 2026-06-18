@@ -137,10 +137,24 @@ const DashboardPage = () => {
           showSaveContact: dbData.contact?.is_enabled === 1 || dbData.contact?.is_enabled === true
         }));
 
-        if (dbData.images?.background) {
+        if (dbData.theme) {
+          // ตรวจสอบว่าข้อมูลที่ส่งกลับมาต้องทำการแปลงรูปวัตถุหรือไม่
+          const themeCfg = typeof dbData.theme === 'string' ? JSON.parse(dbData.theme) : dbData.theme;
+          
           setDesign(prev => ({ 
             ...prev, 
-            bgImage: `http://127.0.0.1:8000${dbData.images.background}`,
+            theme: themeCfg.theme || prev.theme,
+            font: themeCfg.font || prev.font,
+            bgColor: themeCfg.bgColor || prev.bgColor,
+            coverColor: themeCfg.coverColor || prev.coverColor,
+            textColor: themeCfg.textColor || prev.textColor,
+            btnBgColor: themeCfg.btnBgColor || prev.btnBgColor,
+            btnTextColor: themeCfg.btnTextColor || prev.btnTextColor,
+            btnBorderColor: themeCfg.btnBorderColor || prev.btnBorderColor,
+            btnRounded: themeCfg.btnRounded || prev.btnRounded,
+            btnStyle: themeCfg.btnStyle || prev.btnStyle,
+            // คงค่ารูปภาพพื้นหลังเดิมไว้
+            bgImage: dbData.images?.background ? `http://127.0.0.1:8000${dbData.images.background}` : prev.bgImage,
             bgImageFile: null
           }));
         }
@@ -243,6 +257,21 @@ const DashboardPage = () => {
     formData.append("contact_job_title", profile.title || "");
     formData.append("contact_website", profile.website || "");
     formData.append("show_save_contact", profile.showSaveContact !== false ? 1 : 0);
+
+    // ─── ⭐️ เพิ่มโค้ดส่วนนี้เพื่อมัดรวมข้อมูลดีไซน์ส่งไปหลังบ้าน ⭐️ ───
+    const themeConfigData = {
+      theme: design.theme || "custom",
+      font: design.font || "kanit",
+      bgColor: design.bgColor || "",
+      coverColor: design.coverColor || "",
+      textColor: design.textColor || "",
+      btnBgColor: design.btnBgColor || "",
+      btnTextColor: design.btnTextColor || "",
+      btnBorderColor: design.btnBorderColor || "",
+      btnRounded: design.btnRounded || "rounded",
+      btnStyle: design.btnStyle || "none",
+    };
+    formData.append("theme_config", JSON.stringify(themeConfigData));
 
     // 3. แนบไฟล์รูปภาพของจริง (ถ้ามีไฟล์ใหม่เลือกเข้ามา)
     if (profile.avatarFile) {
