@@ -22,20 +22,17 @@ const PreviewPage = () => {
   const navigate = useNavigate();
   const { username } = useParams(); 
 
-  // เพิ่มระบบเช็คเส้นทาง 
   const [searchParams] = useSearchParams();
   const isFromAdmin = searchParams.get('source') === 'admin';
 
-  // สร้าง State สำหรับจัดการสถานะและการเก็บข้อมูลจาก Backend
   const [profile, setProfile] = useState(MOCK_PROFILE);
   const [links, setLinks] = useState(MOCK_LINKS);
   const [design, setDesign] = useState(MOCK_DESIGN);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ใช้ useEffect ยิง API ไปหา Laravel ทันทีที่เปิดหน้านี้ขึ้นมา
   useEffect(() => {
-    // ดึงข้อมูลจาก localStorage เผื่อกรณีเปิดจากหน้า Dashboard หลังบ้านชั่วคราว
+    // ดึงค่าสำรองจาก LocalStorage เผื่อกรณีอินเทอร์เน็ตมีปัญหา
     const savedProfile = JSON.parse(localStorage.getItem("preview_profile"));
     const savedLinks   = JSON.parse(localStorage.getItem("preview_links"));
     const savedDesign  = JSON.parse(localStorage.getItem("preview_design"));
@@ -44,32 +41,47 @@ const PreviewPage = () => {
       setIsLoading(true);
       setError(null);
       
-      // ⭐️ เปลี่ยนจากการฝัง URL ตรงๆ เป็นการดึงตัวแปรจากไฟล์ .env ⭐️
-      axios.get(`${import.meta.env.VITE_API_URL}/profiles/${username}`)
+      // ⭐️ แก้ไข: เติม /api/ เข้าไปให้ถูกต้องแล้วครับ ⭐️
+      axios.get(`${import.meta.env.VITE_API_URL}/api/profiles/${username}`)
         .then((response) => {
-          const apiData = response.data.data;
+          const apiData = response.data.data || response.data;
           
-          // ทำการ Map จับคู่โครงสร้างข้อมูลของ Laravel JSON เข้ากับ Props ของหน้าบ้าน
+          // เปลี่ยนชื่อตัวแปรให้ตรงกับที่หน้าบ้านต้องการ (name, avatar, cover)
           setProfile({
             ...MOCK_PROFILE,
             username: apiData.username,
-            display_name: apiData.display_name || "",
+            name: apiData.display_name || "",
             bio: apiData.bio || "",
-            avatar_url: apiData.images?.avatar || null,
-            cover_url: apiData.images?.cover || null,
-            bg_image_url: apiData.images?.background || null,
-            contact_name: apiData.contact?.name || null,
-            contact_phone: apiData.contact?.phone || null,
-            contact_email: apiData.contact?.email || null,
-            contact_company: apiData.contact?.company || null,
-            contact_job_title: apiData.contact?.job_title || null,
-            contact_website: apiData.contact?.website || null,
-            show_save_contact: apiData.contact?.is_enabled || false,
+            avatar: apiData.images?.avatar ? `http://127.0.0.1:8000${apiData.images.avatar}` : MOCK_PROFILE.avatar,
+            cover: apiData.images?.cover ? `http://127.0.0.1:8000${apiData.images.cover}` : MOCK_PROFILE.cover,
+            contactName: apiData.contact?.name || "",
+            phone: apiData.contact?.phone || "",
+            email: apiData.contact?.email || "",
+            company: apiData.contact?.company || "",
+            title: apiData.contact?.job_title || "",
+            website: apiData.contact?.website || "",
+            showSaveContact: apiData.contact?.is_enabled === 1 || apiData.contact?.is_enabled === true
           });
 
-          // ถ้าดึงข้อมูลสำเร็จและมีเซฟ Links/Design อยู่ ให้ดึงตามมา
-          if (savedLinks) setLinks(savedLinks);
-          if (savedDesign) setDesign(savedDesign);
+          // ดึงข้อมูลการออกแบบ (Theme & Colors) มาจากฐานข้อมูล
+          const themeData = apiData.theme || apiData.theme_config;
+          if (themeData) {
+            const themeCfg = typeof themeData === 'string' ? JSON.parse(themeData) : themeData;
+            setDesign({
+              ...MOCK_DESIGN,
+              ...themeCfg,
+              bgImage: apiData.images?.background ? `http://127.0.0.1:8000${apiData.images.background}` : null,
+            });
+          } else if (savedDesign) {
+            setDesign(savedDesign);
+          }
+
+          // จัดการลิงก์ (ดึงจากฐานข้อมูลก่อน ถ้าไม่มีค่อยดึงจาก LocalStorage)
+          if (apiData.blocks && apiData.blocks.length > 0) {
+            setLinks(apiData.blocks);
+          } else if (savedLinks) {
+            setLinks(savedLinks);
+          }
 
           setIsLoading(false);
         })
@@ -79,7 +91,6 @@ const PreviewPage = () => {
           setIsLoading(false);
         });
     } else {
-      // หากไม่มี username บน URL ให้ดึงจาก LocalStorage/Mock ตามปกติ (เช่น โหมดพรีวิวด่วน)
       setProfile(savedProfile || MOCK_PROFILE);
       setLinks(savedLinks || MOCK_LINKS);
       setDesign(savedDesign || MOCK_DESIGN);
@@ -87,7 +98,6 @@ const PreviewPage = () => {
     }
   }, [username]);
 
-  // ฟังก์ชันจัดการเมื่อกด Logo
   const handleLogoClick = () => {
     if (isFromAdmin) {
       navigate('/admin'); 
@@ -96,7 +106,6 @@ const PreviewPage = () => {
     }
   };
 
-  // ฟังก์ชันจัดการเมื่อกดปุ่มย้อนกลับ
   const handleBackClick = () => {
     if (isFromAdmin) {
       window.close(); 
@@ -105,14 +114,12 @@ const PreviewPage = () => {
     }
   };
 
-  // ตัวแปรเหล่านี้จะประมวลผลใหม่โดยอัตโนมัติเมื่อ State ข้อมูลเปลี่ยนไป
   const activeTheme = THEME_LIST.find((t) => t.id === design.theme) || THEME_LIST[0];
   const selectedFont = FONT_MAP[design.font] || FONT_MAP.kanit;
   const screenBackground = design.theme === "custom" 
     ? (design.bgColor || "#f0f2ff") 
     : (activeTheme?.cfg?.bgGradient || "#f0f2ff");
 
-  // หน้าจอระหว่างโหลดข้อมูล (Loading)
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100 font-sans">
@@ -121,7 +128,6 @@ const PreviewPage = () => {
     );
   }
 
-  // หน้าจอเมื่อเกิดข้อผิดพลาด เช่น หาชื่อผู้ใช้ไม่เจอ (404)
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-100 p-6 text-center font-sans">

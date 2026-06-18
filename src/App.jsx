@@ -16,31 +16,30 @@ function App() {
   return (
     <Routes>
 
-      // หน้าแรกและหน้าสำหรับการเข้าสู่ระบบ/สมัครสมาชิก
+      {/* หน้าแรกและหน้าสำหรับการเข้าสู่ระบบ/สมัครสมาชิก */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<AuthPage defaultView="login" />} />
       <Route path="/signup" element={<AuthPage defaultView="signup" />} />
       <Route path="/forgot-password" element={<AuthPage defaultView="forgot-password" />} /> 
 
-      // หน้าหลักของระบบจัดการและโปรไฟล์
+      {/* หน้าหลักของระบบจัดการและโปรไฟล์ */}
       <Route path="/dd" element={<DashboardPage />} />
       <Route path="/preview" element={<PreviewPage />} />
       <Route path="/edit-link" element={<EditLink />} />
       <Route path="/edit-shop" element={<EditShop />} />
       <Route path="/edit-video" element={<EditVideo />} />
 
-      // นโยบายคุกกี้และการตั้งค่าคุกกี้
+      {/* นโยบายคุกกี้และการตั้งค่าคุกกี้ */}
       <Route path="/cookie-policy" element={<CookiePolicyPage />} />  
       <Route path="/cookie-settings" element={<CookieSettingsPage />} />
 
-      // Admin
+      {/* Admin */}
       <Route element={<AdminRoute />}>
         <Route path="/admin" element={<AdminUserManagement />} />
       </Route>
 
-      // แชร์
+      {/* แชร์ */}
       <Route path="/:username" element={<PreviewPage />} />
-
 
     </Routes>
   );
