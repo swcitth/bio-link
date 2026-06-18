@@ -40,6 +40,11 @@ const DashboardPage = () => {
     realUser = realUser.user;
   }
 
+  // ⭐️ ดักจับและลบช่องว่าง (Spacebar) ออกจาก username ทันทีที่โหลดข้อมูลมา
+  if (realUser && typeof realUser.username === 'string') {
+    realUser.username = realUser.username.trim();
+  }
+
   // ถ้าไม่มีข้อมูล User แปลว่ายังไม่ Login ให้เตะกลับหน้า Login ทันที
   useEffect(() => {
     if (!realUser) {
@@ -102,6 +107,7 @@ const DashboardPage = () => {
     }
 
     try {
+      // url จะไม่มี %20 แน่นอนเพราะโดน trim() ไปแล้วด้านบน
       console.log(`📡 กำลังดึงข้อมูลจาก: http://127.0.0.1:8000/api/profiles/${realUser.username}`);
       const response = await axios.get(`http://127.0.0.1:8000/api/profiles/${realUser.username}`);
       
@@ -209,22 +215,25 @@ const DashboardPage = () => {
   // ⭐️ ฟังก์ชันบันทึกข้อมูลและอัปโหลดไฟล์ไปที่ Laravel ⭐️
   const handleSave = async () => {
   try {
-    // 1. บันทึกใน localStorage ตามปกติ
-    localStorage.setItem("bio_profile", JSON.stringify(profile));
-    localStorage.setItem("bio_links", JSON.stringify(links));
-    localStorage.setItem("bio_design", JSON.stringify(design));
+    // ⭐️ ลบช่องว่างส่วนเกินออกจาก username ที่ผู้ใช้กรอกบนหน้าเว็บ
+    const cleanProfileUsername = profile.username ? profile.username.trim() : "";
 
-    if (!profile.username) {
+    if (!cleanProfileUsername) {
       alert("⚠️ บันทึกไม่ได้: กรุณากรอกช่อง username บนหน้าเว็บก่อนครับ!");
       return;
     }
+
+    // 1. บันทึกใน localStorage ด้วยชื่อที่ไม่มีช่องว่าง
+    localStorage.setItem("bio_profile", JSON.stringify({ ...profile, username: cleanProfileUsername }));
+    localStorage.setItem("bio_links", JSON.stringify(links));
+    localStorage.setItem("bio_design", JSON.stringify(design));
 
     // 2. สร้าง FormData สำหรับส่งข้อมูลและไฟล์รูปภาพ
     const formData = new FormData();
     formData.append("_method", "PUT"); // หลอก Laravel ว่าเป็น PUT request
 
     // เพิ่มข้อมูล Text เข้าไปใน FormData
-    formData.append("username", profile.username);
+    formData.append("username", cleanProfileUsername); // ส่งชื่อที่ไม่มีช่องว่างไปฐานข้อมูล
     formData.append("display_name", profile.name || "");
     formData.append("bio", profile.bio || "");
     formData.append("contact_name", profile.contactName || "");
@@ -246,9 +255,9 @@ const DashboardPage = () => {
       formData.append("bg_image", design.bgImageFile);
     }
 
-    // 4. ยิง API ด้วย POST เพราะมีไฟล์ (multipart/form-data)
+    // 4. ยิง API ด้วย POST โดยอ้างอิงจาก username เดิม
     const response = await axios.post(
-      `http://127.0.0.1:8000/api/profiles/${profile.username}/test-update`,
+      `http://127.0.0.1:8000/api/profiles/${realUser.username}/test-update`,
       formData,
       {
         headers: {
@@ -260,10 +269,13 @@ const DashboardPage = () => {
     if (response.status === 200) {
       alert("💾 บันทึกข้อมูลและรูปภาพลงฐานข้อมูล MySQL จริงสำเร็จเรียบร้อยแล้วครับ!");
       
+      // อัปเดต state ให้หน้าจอโชว์ชื่อที่ลบช่องว่างแล้ว
+      setProfile(prev => ({ ...prev, username: cleanProfileUsername }));
+
       // อัปเดต Username ในระบบจำล็อกอิน เผื่อผู้ใช้เปลี่ยนชื่อบนหน้าเว็บ
-      const updatedUser = { ...realUser, username: profile.username };
+      const updatedUser = { ...realUser, username: cleanProfileUsername };
       localStorage.setItem('user', JSON.stringify(updatedUser));
-      realUser.username = profile.username; // อัปเดตตัวแปรปัจจุบันทันที
+      realUser.username = cleanProfileUsername; // อัปเดตตัวแปรปัจจุบันทันที
 
       // เรียกใช้ฟังก์ชัน fetchMyProfile เพื่อดึงรูปจริงและเคลียร์ไฟล์ออกจาก state
       if (typeof fetchMyProfile === 'function') {
