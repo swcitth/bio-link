@@ -34,8 +34,8 @@ export default function ForgotPasswordForm({ onSwitchView, onSubmit }) {
     } catch (error) {
       console.error("Forgot Password Error:", error);
       // ถ้า Laravel ตอบกลับมาว่า 404 (หาอีเมลไม่เจอ) ให้โชว์แจ้งเตือน
-      if (error.response && error.response.status === 404) {
-        alert(error.response.data.message); 
+      if (error.response && error.response.data) {
+        alert("แจ้งเตือนจากหลังบ้าน: " + error.response.data.message); 
       } else {
         alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้งค่ะ");
       }

@@ -23,13 +23,17 @@ export default function SignupForm({ onSwitchView }) {
   const [emailError, setEmailError] = useState('');
 
   // ฟังก์ชันตรวจสอบอีเมลแบบ Real-time
+  // e = event ผู้ใช้กดปุ่ม 1 ทีจะส่งช้อมูลกลับมาให้ react
   const handleEmailChange = (e) => {
+    // เก็บข้อความล่าสุดที่ผู้ใช้พิมในช่อง input ไว้ที่ value
     const value = e.target.value;
     setEmail(value); // อัปเดตค่าอีเมลทันทีที่พิมพ์
 
     // ถ้ามีการพิมพ์อะไรลงไป ให้เริ่มเช็ค Format ทันที
     if (value.length > 0) {
+      // check format emsil -> ข้อความ @ ข้อความ . ข้อความ
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
       if (!emailRegex.test(value)) {
         setEmailError("ไม่ถูกต้อง"); // ขอบจะแดงและขึ้นข้อความ
       } else {
@@ -42,7 +46,7 @@ export default function SignupForm({ onSwitchView }) {
 
   // ฟังก์ชันจัดการเมื่อกดปุ่ม Submit ฟอร์ม และ async เข้าไป เพื่อให้ใช้งาน await ยิง API ได้
   const handleRegister = async (e) => {
-    e.preventDefault(); 
+    e.preventDefault(); // คำสั่งนี้จะเป็นการห้ามไม่ให้หน้าเว็บรีเฟรช
     
     // ดักไว้: ถ้าหน้าจอมี Error แจ้งเตือนอยู่ ห้ามส่งข้อมูลเด็ดขาด
     if (emailError) {
@@ -51,12 +55,15 @@ export default function SignupForm({ onSwitchView }) {
     }
 
     // ดักไว้: ถ้ามีช่องไหนเว้นว่าง ห้ามส่งข้อมูล
+    // trim จะเป้นคำสังในการลบช่องว่าง
     if (!displayName.trim() || !username.trim() || !email.trim() || !password) {
       alert("กรุณากรอกข้อมูลให้ครบถ้วน");
       return;
     }
 
     // การส่งข้อมูลไปยัง API ด้วย axios 
+    // try คือกรลองส่งถ้าเกิดพังจะไปทำงานต่อที่ catch แล้วเว็บก็จะยังไม่พัง 
+    // await ให้โปรแกรมรอจนกว่า laravel จะทำงานเสร็จ
     try {
       const response = await axios.post('http://127.0.0.1:8000/api/register', {
         // คีย์ฝั่งซ้าย (ชื่อที่ส่งไปหา Laravel) ต้องเหมือนกับที่ Laravel รอรับใน Controller
@@ -69,9 +76,8 @@ export default function SignupForm({ onSwitchView }) {
     
     console.log("บันทึกข้อมูลสมัครสมาชิกสำเร็จ!");
 
-    // เมื่อลงทะเบียนสำเร็จ จะให้เปลี่ยนหน้า หรือ สลับ Component ก็ทำได้เลย
-    // navigate('/login'); 
-    onSwitchView(); // อันนี้สลับกลับไปหน้า Login ให้อัตโนมัติ (ตามที่คุณเขียนส่ง prop มา)
+    // เมื่อลงทะเบียนสำเร็จ จะให้เปลี่ยนหน้า
+    onSwitchView(); // อันนี้สลับกลับไปหน้า Login ให้อัตโนมัติ (ตามที่เขียน prop มาจากหน้า Auth)
   } catch (error) {
     console.error("เกิดข้อผิดพลาดในการสมัครสมาชิก:", error);
 
@@ -95,14 +101,18 @@ export default function SignupForm({ onSwitchView }) {
         <p className="text-sm text-slate-500">เริ่มต้นสร้างหน้าโปรไฟล์ของคุณ ฟรี!</p>
       </div>
 
-      <form className="flex flex-col gap-4" onSubmit={handleRegister} >
+      {/*onSubmit การเอาฟังก์ชันส่ง API มาผูกไว้ที่นี่เมื่อมีการส่ง handleRegister จะทำงานทันที*/ }
+      <form className="flex flex-col gap-4" onSubmit={handleRegister} > 
         
         <InputField 
           id="displayName" 
           label="ชื่อที่แสดง (Display Name)" 
           placeholder="ชื่อที่จะแสดง..." 
           icon={User} 
+          
+          // การผูกค่าในช่องนี้กับ displayName
           value={displayName}
+          // เมื่อผู้ใช้พิมมาให้เอาข้อมูลไปอัพเดทใน state 
           onChange={(e) => setDisplayName(e.target.value)}
         />
         
@@ -138,6 +148,7 @@ export default function SignupForm({ onSwitchView }) {
         />
 
         <div className="mt-2">
+          {/*type="submit" เป็นการระบุว่าหากผู้ใช้กดปุ่มนนี้มันจะทำให้คำสั่ง onSubmit={handleRegister} ที่อยู่ในform ทำงาน*/ }
           <ButtonBig type="submit">ลงทะเบียน</ButtonBig>
         </div>
       </form>
