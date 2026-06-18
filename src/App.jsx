@@ -21,8 +21,6 @@ function App() {
       <Route path="/login" element={<AuthPage defaultView="login" />} />
       <Route path="/signup" element={<AuthPage defaultView="signup" />} />
       <Route path="/forgot-password" element={<AuthPage defaultView="forgot-password" />} /> 
-      <Route path="/otp" element={<AuthPage defaultView="otp" />} />
-      <Route path="/reset-password" element={<AuthPage defaultView="reset-password" />} />
 
       // หน้าหลักของระบบจัดการและโปรไฟล์
       <Route path="/dd" element={<DashboardPage />} />

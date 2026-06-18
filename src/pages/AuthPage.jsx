@@ -13,6 +13,12 @@ export default function AuthPage({ defaultView = 'login' }) {
   const [currentView, setCurrentView] = useState(defaultView);
   const navigate = useNavigate();
 
+  //สร้าง State สำหรับเป็นกระเป๋าความจำส่วนกลาง
+  const [resetEmail, setResetEmail] = useState(''); // จำอีเมลตอนลืมรหัส
+  const [verifiedOtp, setVerifiedOtp] = useState(''); // จำ OTP ที่ยืนยันผ่านแล้ว
+
+  console.log("🔍 ตรวจสอบข้อมูลปัจจุบันในหน้า AuthPage:", { currentView, resetEmail, verifiedOtp });
+
   // ดักจับว่าถ้า URL เปลี่ยน (defaultView เปลี่ยน) ให้เปลี่ยนหน้าต่างตาม
   useEffect(() => {
     setCurrentView(defaultView);
@@ -21,15 +27,15 @@ export default function AuthPage({ defaultView = 'login' }) {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-800">
       
-      {/* 1. ส่วน Layout คงที่: Header */}
       <Header onLogoClick={() => navigate('/')} />
 
       <main className="flex-1 flex flex-col justify-center items-center px-4 pt-24 pb-12">
-        {/* 2. ส่วน Layout คงที่: กล่องขาว (Card) */}
         <Card>
-          
-          {/* 3. ส่วนเนื้อหาที่เปลี่ยนไปตามเงื่อนไข (Conditional Rendering) */}
+
+          {/* Maps('/ชื่อหน้า') ระบบจะเปลี่ยน URL ด้านบนเบราว์เซอร์ และทำลายหน้าเก่าทิ้งเพื่อสร้างหน้าใหม่ */}
+          {/* ความจำใน usestate จะหายไป */}
           {currentView === 'signup' && (
+            // ดึง SignupForm มา show
             <SignupForm onSwitchView={() => navigate('/login')} />
           )}
           
@@ -40,22 +46,37 @@ export default function AuthPage({ defaultView = 'login' }) {
             />
           )}
 
+          {/* setCurrentView('ชื่อหน้า') URL เดิมแต่เปลี่ยนการแสดงผล */}
+          {/* ความจำใน usestate ไม่หาย */}
           {currentView === 'forgot-password' && (
             <ForgotPasswordForm 
-              onSubmit={() => navigate('/otp')} 
-              onSwitchView={() => navigate('/login')} 
+              onSubmit={(emailFromInput) => {
+                setResetEmail(emailFromInput); // setResetEmail รับค่าของ emailFromInput แล้วเก็บไว้ที่ resetEmail
+                setCurrentView('otp');        
+              }} 
+              onSwitchView={() => setCurrentView('login')} 
             />
           )}
 
 
           {currentView === 'otp' && (
             <OTPForm 
-            onBack={() => navigate('/forgot-password')} 
-            onSubmit={() => navigate('/reset-password')} />
+              email={resetEmail} //เemail = ค่าใน resetEmail เราจะเอาค่านี้ไปเรียกใช้ใน OTPForm เพื่อเทียบกับหลังบ้าน
+              onBack={() => setCurrentView('forgot-password')} // onback คือการกลับไปหน้าก่อนหน้า(ขึ้นอยู่กับที่เราจะเซ็ทใน currentview)โดยที่ยังคงข้อมูลและ url เดิมไว้
+              // onSuccess feellike onSubmit แค่ชื่อต่าง
+              onSuccess={(otpString) => {
+                setVerifiedOtp(otpString);
+                setCurrentView('reset-password'); 
+              }} 
+            />
           )}
 
           {currentView === 'reset-password' && (
-            <ResetPasswordForm onSubmit={() => navigate('/login')} />
+            <ResetPasswordForm 
+              email={resetEmail}
+              otp={verifiedOtp}
+              onSubmit={() => navigate('/login')} 
+              />
           )}
 
         </Card>
