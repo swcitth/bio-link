@@ -23,9 +23,8 @@ const getTiktokId = (url) => {
   return match ? match[1] : null;
 };
 
-// รับ Props: isCompact เข้ามา เพื่อเช็คว่าเป็นหน้าจอมือถือจำลอง (true) หรือหน้าจอพรีวิวเต็ม (false)
-const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false }) => {
-  // ระบบป้องกันตัวแปรเป็น null หรือ undefined
+// ⭐️ เพิ่ม onLinkClick รับฟังก์ชันยิงสถิติมาจาก PreviewPage
+const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, onLinkClick }) => {
   const safeLinks = Array.isArray(links) ? links : [];
   const safeProfile = profile || {};
   const safeDesign = design || {};
@@ -34,7 +33,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false }
   const activeTheme = THEME_LIST?.find((t) => t.id === safeDesign.theme) || THEME_LIST?.[0] || {};
   const selectedFont = FONT_MAP[safeDesign.font] || FONT_MAP.kanit;
 
-  // ปรับขนาดปุ่มตาม isCompact
   const btnRadius = { square: isCompact ? "6px" : "8px", rounded: "14px", pill: "999px" }[safeDesign.btnRounded] || "999px";
   const btnBoxShadow = { none: "none", outline: "none", shadow3d: isCompact ? "3px 3px 0px rgba(0,0,0,0.8)" : "0px 4px 0px rgba(0,0,0,0.2)" }[safeDesign.btnStyle] || "none";
   const btnBorder = safeDesign.btnStyle !== "none" ? `2px solid ${safeDesign.btnBorderColor || "transparent"}` : "none";
@@ -84,7 +82,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false }
         {/* Links List */}
         <div className={`w-full flex flex-col ${isCompact ? "gap-3 mt-5" : "gap-4 mt-8"}`}>
           
-        {/* ✅ เพิ่ม design={design} เข้าไปด้วยเพื่อให้ปุ่มมีข้อมูลไปอ่านค่า */}
             {safeProfile.showSaveContact !== false && (
             <SaveContactButton 
                 profileData={safeProfile} 
@@ -110,8 +107,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false }
                   {link.items && link.title && <h3 className={titleClass} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
                   {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
                     const videoUrl = item?.link || item?.url || "";
-                    
-                    // ถ้าไม่มี url ให้คืนค่าว่าง
                     let videoId = getYoutubeId(videoUrl); 
 
                     return (
@@ -120,7 +115,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false }
                           {videoId ? (
                             <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${videoId}?rel=0`} title={item?.name || item?.title || link.title} frameBorder="0" allowFullScreen />
                           ) : (
-                            // โชว์หน้าจอดำ "ยังไม่มีวิดีโอ" ถ้าไม่ได้ใส่ลิงก์
                             <div className="w-full h-full flex items-center justify-center text-white text-sm font-bold">ยังไม่มีวิดีโอ</div>
                           )}
                         </div>
@@ -169,13 +163,18 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false }
                   <div className={`grid ${isCompact ? "grid-cols-1" : "grid-cols-2 gap-4"}`}>
                     {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
                       const itemUrl = item?.url || item?.link;
-                      const imageUrl = item?.image || item?.imageUrl; // ดึงรูปจริงมาเช็ค
+                      const imageUrl = item?.image || item?.imageUrl; 
                       const WrapperTag = itemUrl ? "a" : "div";
                       
                       return (
-                        <WrapperTag key={item?.id || idx} {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})} className={`flex flex-col group ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} style={{ textDecoration: 'none' }}>
-                          
-                          {/* ถ้ามีรูปให้โชว์รูป ถ้าไม่มีให้โชว์กล่องสีเทา*/}
+                        <WrapperTag 
+                          key={item?.id || idx} 
+                          {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})} 
+                          className={`flex flex-col group ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} 
+                          style={{ textDecoration: 'none' }}
+                          // ⭐️ ผูกฟังก์ชันเก็บสถิติ "ยอดคลิก" 
+                          onClick={() => { if(itemUrl && onLinkClick) onLinkClick(item?.id || link?.id) }}
+                        >
                           {imageUrl ? (
                             <img src={imageUrl} alt={item?.name || item?.title} className="w-full aspect-square object-cover rounded-2xl shadow-sm mb-2" />
                           ) : (
@@ -209,6 +208,8 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false }
                       key={item?.id || idx} 
                       {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})}
                       className={`block w-full flex items-center transition-transform ${itemUrl ? "hover:scale-[1.02] cursor-pointer" : "cursor-default"}`}
+                      // ⭐️ ผูกฟังก์ชันเก็บสถิติ "ยอดคลิก" 
+                      onClick={() => { if(itemUrl && onLinkClick) onLinkClick(item?.id || link?.id) }}
                       style={{
                         padding: isCompact ? "8px 12px" : "16px",
                         backgroundColor: safeDesign.btnStyle === "outline" ? "transparent" : (safeDesign.btnBgColor || "#ffffff"),
