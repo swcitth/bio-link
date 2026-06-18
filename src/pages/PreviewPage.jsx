@@ -31,8 +31,27 @@ const PreviewPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // ⭐️ 1. ฟังก์ชันแอบยิง API เก็บสถิติ (ทำงานอยู่เบื้องหลัง) ⭐️
+  const trackAnalytics = (targetUsername, blockId = null) => {
+    // ถ้านี่คือการเปิดพรีวิวจากหน้าแอดมินหรือหน้าแก้ไข จะไม่นับยอดวิวเพื่อไม่ให้สถิติเพี้ยน
+    if (isFromAdmin || !targetUsername) return; 
+
+    // สร้างหรือดึง Session ID ของคนที่เข้ามาดู (ใช้ Session Storage เพื่อกันการ F5 ปั่นวิว)
+    let sessionId = sessionStorage.getItem("analytics_session");
+    if (!sessionId) {
+      sessionId = "sess_" + Math.random().toString(36).substr(2, 9) + Date.now();
+      sessionStorage.setItem("analytics_session", sessionId);
+    }
+
+    // ยิง API ไปหลังบ้านแบบเงียบๆ (ไม่ต้องใช้ await เพราะไม่ต้องการให้หน้าเว็บรอ)
+    axios.post(`${import.meta.env.VITE_API_URL}/api/analytics/track/${targetUsername}`, {
+      session_id: sessionId,
+      block_id: blockId, // ถ้าเป็น null = ยอดเข้าชมหน้าเว็บ / ถ้ามีไอดี = ยอดคลิกลิงก์
+      referrer_url: document.referrer // เก็บข้อมูลว่าเข้ามาจากแอปไหน (FB, IG, LINE)
+    }).catch(err => console.log("Analytics Tracking Error:", err));
+  };
+
   useEffect(() => {
-    // ดึงค่าสำรองจาก LocalStorage เผื่อกรณีอินเทอร์เน็ตมีปัญหา
     const savedProfile = JSON.parse(localStorage.getItem("preview_profile"));
     const savedLinks   = JSON.parse(localStorage.getItem("preview_links"));
     const savedDesign  = JSON.parse(localStorage.getItem("preview_design"));
@@ -41,12 +60,10 @@ const PreviewPage = () => {
       setIsLoading(true);
       setError(null);
       
-      // ⭐️ แก้ไข: เติม /api/ เข้าไปให้ถูกต้องแล้วครับ ⭐️
       axios.get(`${import.meta.env.VITE_API_URL}/api/profiles/${username}`)
         .then((response) => {
           const apiData = response.data.data || response.data;
           
-          // เปลี่ยนชื่อตัวแปรให้ตรงกับที่หน้าบ้านต้องการ (name, avatar, cover)
           setProfile({
             ...MOCK_PROFILE,
             username: apiData.username,
@@ -63,7 +80,6 @@ const PreviewPage = () => {
             showSaveContact: apiData.contact?.is_enabled === 1 || apiData.contact?.is_enabled === true
           });
 
-          // ดึงข้อมูลการออกแบบ (Theme & Colors) มาจากฐานข้อมูล
           const themeData = apiData.theme || apiData.theme_config;
           if (themeData) {
             const themeCfg = typeof themeData === 'string' ? JSON.parse(themeData) : themeData;
@@ -76,7 +92,6 @@ const PreviewPage = () => {
             setDesign(savedDesign);
           }
 
-          // จัดการลิงก์ (ดึงจากฐานข้อมูลก่อน ถ้าไม่มีค่อยดึงจาก LocalStorage)
           if (apiData.blocks && apiData.blocks.length > 0) {
             setLinks(apiData.blocks);
           } else if (savedLinks) {
@@ -84,6 +99,9 @@ const PreviewPage = () => {
           }
 
           setIsLoading(false);
+
+          // ⭐️ 2. เรียกใช้งานฟังก์ชันเก็บสถิติ "ยอดเข้าชม" เมื่อโหลดข้อมูลสำเร็จ
+          trackAnalytics(apiData.username, null);
         })
         .catch((err) => {
           console.error("Error fetching profile:", err);
@@ -146,7 +164,6 @@ const PreviewPage = () => {
   return (
     <div className="min-h-screen relative bg-slate-100" style={{ fontFamily: selectedFont }}>
       
-      {/* Header */}
       <div className="relative z-30">
         <Header onLogoClick={handleLogoClick}>
           <button 
@@ -158,21 +175,20 @@ const PreviewPage = () => {
         </Header>
       </div>
 
-      {/* Main Container */}
       <div className="max-w-xl mx-auto min-h-screen relative shadow-2xl pt-[72px]">
        
-        {/* Background Layer */}
         <div className="fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-0 overflow-hidden" style={{ background: screenBackground }}>
           {design.bgImage && (
             <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${design.bgImage})`, opacity: 0.6 }} />
           )}
         </div>
 
-        {/* ⭐️ เรียกใช้งาน BioContent โดยส่งข้อมูลจริงที่ได้จาก API */}
+        {/* ⭐️ 3. ส่ง Props ฟังก์ชันจับการคลิกไปให้ BioContent ใช้งาน */}
         <BioContent 
           profile={profile} 
           links={links} 
           design={design} 
+          onLinkClick={(blockId) => trackAnalytics(profile.username, blockId)}
         />
        
       </div>

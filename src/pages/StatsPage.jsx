@@ -3,7 +3,7 @@
 // ============================================================
 
 import React, { useState, useEffect } from "react";
-import { FaEye, FaMousePointer, FaChartBar, FaStar } from "react-icons/fa"; // ✨ เปลี่ยนมาใช้ react-icons/fa ทั้งหมด
+import { FaEye, FaMousePointer, FaChartBar, FaStar } from "react-icons/fa"; 
 import axios from "axios";
 
 const StatsPage = () => {
@@ -16,7 +16,6 @@ const StatsPage = () => {
       try {
         setIsLoading(true);
         
-        // ดึง Token จาก LocalStorage (รองรับทั้งการเก็บแยกหรือเก็บรวมในก้อน user)
         const token = localStorage.getItem('token') || JSON.parse(localStorage.getItem('user'))?.access_token;
 
         if (!token) {
@@ -62,29 +61,15 @@ const StatsPage = () => {
     );
   }
 
-  // หาค่าสูงสุดของยอดวิวใน 7 วัน เพื่อนำมาคำนวณสัดส่วนความสูงของกราฟแท่ง
   const maxViewsInChart = stats?.chart_data?.length > 0 
     ? Math.max(...stats.chart_data.map(d => d.views)) 
     : 0;
 
-  // รายการสีไล่เฉดสำหรับกราฟแต่ละแท่ง จ-อา ให้สวยงามตามดีไซน์
-  const barGradients = [
-    "from-yellow-400 to-pink-500",   // จ
-    "from-pink-400 to-purple-500",   // อ
-    "from-green-400 to-emerald-500", // พ
-    "from-orange-400 to-amber-600",  // พฤ
-    "from-sky-400 to-indigo-500",    // ศ
-    "from-purple-500 to-indigo-600", // ส
-    "from-orange-400 to-red-500"     // อา
-  ];
-
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-400">
       
-      {/* ─── ส่วนที่ 1: การ์ดสรุปตัวเลข 4 กล่อง ─── */}
+      {/* ─── ส่วนที่ 1: การ์ดสรุปตัวเลข 5 กล่อง ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        
-        {/* การ์ด ยอดเข้าชม */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
           <div>
             <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
@@ -97,7 +82,6 @@ const StatsPage = () => {
           <span className="text-xs text-slate-400 mt-2 block">ทั้งหมด</span>
         </div>
 
-        {/* การ์ด ยอดคลิก */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
           <div>
             <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
@@ -110,7 +94,6 @@ const StatsPage = () => {
           <span className="text-xs text-slate-400 mt-2 block">ทั้งหมด</span>
         </div>
 
-        {/* การ์ด CTR */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
           <div>
             <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
@@ -123,7 +106,6 @@ const StatsPage = () => {
           <span className="text-xs text-slate-400 mt-2 block">อัตราคลิก</span>
         </div>
 
-        {/* การ์ด ลิงก์ยอดนิยม */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
           <div>
             <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
@@ -136,45 +118,116 @@ const StatsPage = () => {
           <span className="text-xs text-slate-400 mt-2 block">อันดับ 1</span>
         </div>
 
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
+          <div>
+            <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
+              <FaStar className="text-pink-500" size={14} /> ยอดกด Save
+            </span>
+            <h2 className="text-3xl font-extrabold text-slate-800 mt-2">
+              {stats?.total_saves || 0}
+            </h2>
+          </div>
+          <span className="text-xs text-slate-400 mt-2 block">คนกดบันทึกข้อมูล</span>
+        </div>
       </div>
 
-      {/* ─── ส่วนที่ 2: กราฟแท่งยอดเข้าชม 7 วันล่าสุด ─── */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-        <h3 className="text-sm font-bold text-slate-700 mb-6 flex items-center gap-2">
-          <FaChartBar className="text-indigo-500" size={15} /> ยอดเข้าชม 7 วันล่าสุด
+      {/* ─── ส่วนที่ 2: กราฟเส้นแบบ Responsive (ยืดหยุ่นเต็มจอ) ─── */}
+      <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-100">
+        <h3 className="text-sm font-bold text-slate-700 mb-2 sm:mb-6 flex items-center gap-2">
+          <FaChartBar className="text-indigo-600" size={15} /> ยอดเข้าชม 7 วันล่าสุด
         </h3>
 
-        {/* ตัวกราฟ */}
-        <div className="flex items-end justify-between gap-2 h-48 pt-4 px-2 border-b border-slate-100">
-          {stats?.chart_data?.map((day, index) => {
-            // คำนวณเปอร์เซ็นต์ความสูง ถ้าไม่มีคนดูเลยให้สูง 5% เป็นฐานมินิไว้เพื่อความสวยงาม
-            const barHeight = maxViewsInChart > 0 
-              ? (day.views / maxViewsInChart) * 100 
-              : 5;
+        {/* ⭐️ แก้ไข: เอา h-64 ออก เพื่อไม่ให้เกิดที่ว่าง และปรับสัดส่วนกราฟให้กระชับขึ้น */}
+        <div className="relative w-full mt-6">
+          {stats?.chart_data?.length > 0 && (
+            <svg viewBox="0 0 500 220" className="w-full h-auto overflow-visible">
+              <defs>
+                <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#3b82f6" />
+                  <stop offset="100%" stopColor="#4f46e5" />
+                </linearGradient>
+                <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.15" />
+                  <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
 
-            const finalHeight = barHeight < 5 ? 5 : barHeight;
+              {/* ระบายสีแรเงาใต้เส้นกราฟ */}
+              <path
+                d={`
+                  M 30,170
+                  ${stats.chart_data.map((day, index) => {
+                    const x = 30 + index * 73.33; 
+                    const y = 160 - (maxViewsInChart > 0 ? (day.views / maxViewsInChart) * 110 : 0);
+                    return `L ${x},${y}`;
+                  }).join(" ")}
+                  L 470,170
+                  Z
+                `}
+                fill="url(#areaGradient)"
+                className="transition-all duration-500"
+              />
 
-            return (
-              <div key={day.date} className="flex-1 flex flex-col items-center group relative">
+              {/* เส้นกราฟหลัก */}
+              <polyline
+                fill="none"
+                stroke="url(#lineGradient)"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points={stats.chart_data.map((day, index) => {
+                  const x = 30 + index * 73.33;
+                  const y = 160 - (maxViewsInChart > 0 ? (day.views / maxViewsInChart) * 110 : 0);
+                  return `${x},${y}`;
+                }).join(" ")}
+                className="transition-all duration-500"
+              />
+
+              {/* ตุ่มวงกลม, ตัวเลขยอดวิว, และ ชื่อวัน */}
+              {stats.chart_data.map((day, index) => {
+                const x = 30 + index * 73.33;
+                const y = 160 - (maxViewsInChart > 0 ? (day.views / maxViewsInChart) * 110 : 0);
                 
-                {/* ยอดวิวที่จะเด้งขึ้นมาตอนเมาส์ชี้ (Tooltip) */}
-                <div className="absolute -top-8 bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
-                  {day.views} ครั้ง
-                </div>
+                return (
+                  <g key={day.date} className="group/dot cursor-pointer">
+                    {/* เส้นประแนวดิ่ง */}
+                    <line 
+                      x1={x} y1={y} x2={x} y2="170" 
+                      className="stroke-slate-200 stroke-2 stroke-dashed opacity-0 group-hover/dot:opacity-100 transition-opacity" 
+                    />
 
-                {/* แท่งกราฟยืดหดตามสัดส่วนข้อมูลจริง */}
-                <div 
-                  className={`w-full bg-gradient-to-t ${barGradients[index % 7]} rounded-t-lg transition-all duration-500 shadow-sm group-hover:brightness-95`}
-                  style={{ height: `${finalHeight}%` }}
-                />
+                    {/* ตุ่มวงกลม - เพิ่มขนาดให้ใหญ่ขึ้นนิดนึงเพื่อมือถือ */}
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="6"
+                      className="fill-white stroke-indigo-600 stroke-[3px] group-hover/dot:r-8 transition-all duration-150"
+                    />
 
-                {/* ชื่อย่อวันภาษาไทย จ, อ, พ จากหลังบ้าน */}
-                <span className="text-xs font-bold text-slate-400 mt-2 block group-hover:text-slate-600 transition-colors">
-                  {day.day_name}
-                </span>
-              </div>
-            );
-          })}
+                    {/* ตัวเลขบอกยอดวิว - เพิ่มขนาด font ให้ชัดขึ้น */}
+                    <text
+                      x={x}
+                      y={y - 16}
+                      textAnchor="middle"
+                      className="text-[14px] font-extrabold fill-slate-700"
+                    >
+                      {day.views}
+                    </text>
+
+                    {/* ตัวอักษรชื่อย่อวัน */}
+                    <text
+                      x={x}
+                      y="200"
+                      textAnchor="middle"
+                      className="text-[14px] font-bold fill-slate-400 group-hover/dot:fill-slate-600 transition-colors"
+                    >
+                      {day.day_name}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          )}
         </div>
       </div>
 
