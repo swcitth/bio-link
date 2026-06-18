@@ -1,3 +1,7 @@
+// ============================================================
+// src/pages/PreviewPage.jsx
+// ============================================================
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"; 
 import { FaArrowLeft } from "react-icons/fa";
@@ -5,7 +9,7 @@ import { MOCK_PROFILE, MOCK_LINKS, MOCK_DESIGN } from "../data/mockData";
 import Header from "../components/Layout/Header";
 import { THEME_LIST } from "../constants/themes";
 import BioContent from "../components/Editors/BioContent"; 
-import axios from "axios"; // 1. Import Axios สำหรับยิง API
+import axios from "axios"; 
 
 const FONT_MAP = {
   kanit: "'Kanit', sans-serif",
@@ -22,14 +26,14 @@ const PreviewPage = () => {
   const [searchParams] = useSearchParams();
   const isFromAdmin = searchParams.get('source') === 'admin';
 
-  // 2. สร้าง State สำหรับจัดการสถานะและการเก็บข้อมูลจาก Backend
+  // สร้าง State สำหรับจัดการสถานะและการเก็บข้อมูลจาก Backend
   const [profile, setProfile] = useState(MOCK_PROFILE);
   const [links, setLinks] = useState(MOCK_LINKS);
   const [design, setDesign] = useState(MOCK_DESIGN);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 3. ใช้ useEffect ยิง API ไปหา Laravel ทันทีที่เปิดหน้านี้ขึ้นมา
+  // ใช้ useEffect ยิง API ไปหา Laravel ทันทีที่เปิดหน้านี้ขึ้นมา
   useEffect(() => {
     // ดึงข้อมูลจาก localStorage เผื่อกรณีเปิดจากหน้า Dashboard หลังบ้านชั่วคราว
     const savedProfile = JSON.parse(localStorage.getItem("preview_profile"));
@@ -40,8 +44,8 @@ const PreviewPage = () => {
       setIsLoading(true);
       setError(null);
       
-      // ยิง GET Request ไปที่ Backend ยืดหยุ่นตามชื่อบน URL
-      axios.get(`http://127.0.0.1:8000/api/profiles/${username}`)
+      // ⭐️ เปลี่ยนจากการฝัง URL ตรงๆ เป็นการดึงตัวแปรจากไฟล์ .env ⭐️
+      axios.get(`${import.meta.env.VITE_API_URL}/profiles/${username}`)
         .then((response) => {
           const apiData = response.data.data;
           
@@ -108,7 +112,7 @@ const PreviewPage = () => {
     ? (design.bgColor || "#f0f2ff") 
     : (activeTheme?.cfg?.bgGradient || "#f0f2ff");
 
-  // 4. หน้าจอระหว่างโหลดข้อมูล (Loading)
+  // หน้าจอระหว่างโหลดข้อมูล (Loading)
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100 font-sans">
@@ -117,7 +121,7 @@ const PreviewPage = () => {
     );
   }
 
-  // 5. หน้าจอเมื่อเกิดข้อผิดพลาด เช่น หาชื่อผู้ใช้ไม่เจอ (404)
+  // หน้าจอเมื่อเกิดข้อผิดพลาด เช่น หาชื่อผู้ใช้ไม่เจอ (404)
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-100 p-6 text-center font-sans">
