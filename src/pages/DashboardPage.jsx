@@ -371,7 +371,8 @@ const DashboardPage = () => {
                         onClick={() => setIsModalOpen(true)}
                         className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-6 py-3 rounded-full font-semibold text-sm shadow-lg shadow-indigo-200 hover:opacity-90 transition-opacity"
                       >
-                        <FaPlus size={16} /> เพิ่มรูปแบบ
+                      <FaPlus size={16} /> 
+                        เพิ่มรูปแบบ
                       </button>
                       <button
                         onClick={handleSave}
