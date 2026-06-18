@@ -31,9 +31,14 @@ const DashboardPage = () => {
   const location = useLocation();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
-  // ดึงข้อมูล User ตัวจริงที่เพิ่ง Login หรือ Register เข้ามา
+  // ⭐️ ดึงข้อมูล User ตัวจริงและเจาะเข้าไปใน object `user`
   const realUserStr = localStorage.getItem('user');
-  const realUser = realUserStr ? JSON.parse(realUserStr) : null;
+  let realUser = realUserStr ? JSON.parse(realUserStr) : null;
+  
+  // ถ้าข้อมูลที่เก็บไว้มีหน้าตาเป็น { status: 'success', user: {...} } ให้เจาะเอาแค่ user มาใช้
+  if (realUser && realUser.user) {
+    realUser = realUser.user;
+  }
 
   // ถ้าไม่มีข้อมูล User แปลว่ายังไม่ Login ให้เตะกลับหน้า Login ทันที
   useEffect(() => {
@@ -87,49 +92,59 @@ const DashboardPage = () => {
   const [links,   setLinks]   = useState(() => loadData("bio_links", []));
   const [design,  setDesign]  = useState(() => loadData("bio_design", MOCK_DESIGN));
 
-  // ⭐️ 1. แยกฟังก์ชัน fetchMyProfile ออกมาข้างนอก เพื่อให้เรียกใช้ได้ทุกที่ ⭐️
+  // ⭐️ ฟังก์ชัน fetchMyProfile สำหรับดึงข้อมูลจาก Database ⭐️
   const fetchMyProfile = async () => {
-    if (!realUser?.username) return;
+    console.log("👉 User ที่กำลังใช้งานอยู่คือ:", realUser);
+
+    if (!realUser?.username) {
+        console.log("❌ ไม่พบ username ในระบบ (หา realUser.username ไม่เจอ)");
+        return;
+    }
 
     try {
+      console.log(`📡 กำลังดึงข้อมูลจาก: http://127.0.0.1:8000/api/profiles/${realUser.username}`);
       const response = await axios.get(`http://127.0.0.1:8000/api/profiles/${realUser.username}`);
       
-      if (response.status === 200 && response.data.data) {
-        const dbData = response.data.data;
-        
+      console.log("✅ ข้อมูลที่ดึงได้จาก DB:", response.data);
+
+      const dbData = response.data.data || response.data; 
+
+      if (response.status === 200 && dbData) {
         setProfile(prev => ({
           ...prev,
           username: dbData.username || realUser.username,
           name: dbData.display_name || prev.name,
           bio: dbData.bio || prev.bio,
-          // ใช้ URL จริงจากหลังบ้าน
-          avatar: dbData.avatar_url ? `http://127.0.0.1:8000${dbData.avatar_url}` : prev.avatar,
-          cover: dbData.cover_url ? `http://127.0.0.1:8000${dbData.cover_url}` : prev.cover,
-          avatarFile: null, // เคลียร์ไฟล์ชั่วคราวทิ้งหลังดึงข้อมูลเสร็จ
-          coverFile: null,  // เคลียร์ไฟล์ชั่วคราวทิ้งหลังดึงข้อมูลเสร็จ
-          contactName: dbData.contact_name || "",
-          phone: dbData.contact_phone || "",
-          email: dbData.contact_email || "",
-          company: dbData.contact_company || "",
-          title: dbData.contact_job_title || "",
-          website: dbData.contact_website || "",
-          showSaveContact: dbData.show_save_contact === 1
+          
+          // ⭐️ แก้ไขให้ตรงกับโครงสร้าง ProfileResource (images และ contact) ⭐️
+          avatar: dbData.images?.avatar ? `http://127.0.0.1:8000${dbData.images.avatar}` : prev.avatar,
+          cover: dbData.images?.cover ? `http://127.0.0.1:8000${dbData.images.cover}` : prev.cover,
+          avatarFile: null,
+          coverFile: null,
+          
+          contactName: dbData.contact?.name || "",
+          phone: dbData.contact?.phone || "",
+          email: dbData.contact?.email || "",
+          company: dbData.contact?.company || "",
+          title: dbData.contact?.job_title || "",
+          website: dbData.contact?.website || "",
+          showSaveContact: dbData.contact?.is_enabled === 1 || dbData.contact?.is_enabled === true
         }));
 
-        if (dbData.bg_image_url) {
+        if (dbData.images?.background) {
           setDesign(prev => ({ 
             ...prev, 
-            bgImage: `http://127.0.0.1:8000${dbData.bg_image_url}`,
-            bgImageFile: null // เคลียร์ไฟล์ชั่วคราวทิ้งหลังดึงข้อมูลเสร็จ
+            bgImage: `http://127.0.0.1:8000${dbData.images.background}`,
+            bgImageFile: null
           }));
         }
       }
     } catch (error) {
-      console.error("ไม่พบข้อมูล Profile เดิม หรือผู้ใช้ยังไม่เคยบันทึกข้อมูล:", error);
+      console.error("❌ ไม่พบข้อมูล Profile เดิม หรือเกิดข้อผิดพลาด:", error);
     }
   };
 
-  // ⭐️ 2. เรียกใช้ fetchMyProfile ตอนเปิดหน้าเว็บครั้งแรก ⭐️
+  // ⭐️ เรียกใช้ fetchMyProfile ตอนเปิดหน้าเว็บครั้งแรก ⭐️
   useEffect(() => {
     fetchMyProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -244,6 +259,12 @@ const DashboardPage = () => {
 
     if (response.status === 200) {
       alert("💾 บันทึกข้อมูลและรูปภาพลงฐานข้อมูล MySQL จริงสำเร็จเรียบร้อยแล้วครับ!");
+      
+      // อัปเดต Username ในระบบจำล็อกอิน เผื่อผู้ใช้เปลี่ยนชื่อบนหน้าเว็บ
+      const updatedUser = { ...realUser, username: profile.username };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      realUser.username = profile.username; // อัปเดตตัวแปรปัจจุบันทันที
+
       // เรียกใช้ฟังก์ชัน fetchMyProfile เพื่อดึงรูปจริงและเคลียร์ไฟล์ออกจาก state
       if (typeof fetchMyProfile === 'function') {
         fetchMyProfile();
