@@ -192,7 +192,7 @@ const DashboardPage = () => {
 
           return {
             id: block.id,
-            title: block.title || "รูปแบบใหม่", // ถ้า title เป็น NULL ให้โชว์คำว่า "รูปแบบใหม่"
+            title: block.title || "", // ถ้า title เป็น NULL ให้โชว์คำว่า ""
             icon: iconName,
             visible: block.is_visible === 1 || block.is_visible === true, // แปลง 1/0 เป็น true/false
             clicks: 0,

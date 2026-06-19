@@ -95,8 +95,51 @@ const PreviewPage = () => {
              setDesign({ theme: "t1", font: "kanit" });
           }
 
-          // ⭐️ แก้ไข: ดึงข้อมูลลิงก์ไปใช้เลย ถ้าไม่มีให้เป็น Array ว่าง ([])
-          setLinks(apiData.blocks || []);
+          // ============================================================
+          // ⭐️ ตัวดักจับและจัดระเบียบข้อมูลลิงก์ (เพิ่มระบบ Auto-Detect สแกน URL)
+          // ============================================================
+          const rawBlocks = apiData.blocks || [];
+          
+          const formattedBlocks = rawBlocks.map(block => {
+            // 1. เช็คจาก type ของฐานข้อมูลเผื่อไว้ก่อน (ดักทั้งตัวพิมพ์เล็กและพิมพ์ใหญ่)
+            let typeStr = String(block.type || '').toUpperCase();
+            let correctIcon = block.icon || "Link";
+
+            if (typeStr === 'YOUTUBE' || typeStr === 'VIDEO') correctIcon = 'Youtube';
+            else if (typeStr === 'TIKTOK') correctIcon = 'TikTok';
+            else if (typeStr === 'IMAGE') correctIcon = 'Image';
+            else if (typeStr === 'SHOP') correctIcon = 'Shop';
+
+            // 2. จัดระเบียบ items ดึงข้อมูลลิงก์ที่ซ่อนอยู่ออกมา
+            let correctItems = block.items || (block.content_data && block.content_data.items) || [];
+            if (typeof correctItems === 'string') {
+              try { correctItems = JSON.parse(correctItems); } 
+              catch(e) { correctItems = []; }
+            }
+
+            // ⭐️ 3. ไม้ตายสุดยอด! Auto-detect จาก URL โดยตรง
+            // ถ้าเป็นกล่องลิงก์ธรรมดา แต่ URL ข้างในเป็น Youtube ให้บังคับแปลงเป็นวิดีโอทันที!
+            if (correctIcon === 'Link' && correctItems.length > 0) {
+              const checkUrl = String(correctItems[0]?.url || correctItems[0]?.link || "").toLowerCase();
+              if (checkUrl.includes('youtube.com') || checkUrl.includes('youtu.be')) {
+                correctIcon = 'Youtube'; // บังคับให้เป็นคลิป Youtube
+              } else if (checkUrl.includes('tiktok.com')) {
+                correctIcon = 'TikTok'; // บังคับให้เป็นคลิป TikTok
+              }
+            }
+
+            return {
+              ...block,                     
+              ...(block.content_data || {}), 
+              items: correctItems,          
+              icon: correctIcon,            
+              isVisible: block.is_visible !== undefined ? block.is_visible : true, 
+            };
+          });
+
+          // นำข้อมูลที่จัดระเบียบแล้วไปใช้งาน
+          setLinks(formattedBlocks);
+          // ============================================================
 
           setIsLoading(false);
 
