@@ -6,6 +6,21 @@ import React, { useRef } from "react";
 import { Sparkles, Type, UploadCloud, Trash2 } from "lucide-react";
 import { THEME_LIST } from "../../constants/themes";
 
+const parseColorToHex = (color) => {
+  if (!color) return "#ffffff";
+  if (/^#[0-9A-F]{6}$/i.test(color)) return color; // ถ้าเป็น HEX 6 หลักอยู่แล้วให้ใช้ได้เลย
+  
+  // ถ้าเป็น rgba หรือ rgb ให้แปลงเป็น HEX
+  const match = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (match) {
+    const r = parseInt(match[1]).toString(16).padStart(2, '0');
+    const g = parseInt(match[2]).toString(16).padStart(2, '0');
+    const b = parseInt(match[3]).toString(16).padStart(2, '0');
+    return `#${r}${g}${b}`;
+  }
+  return "#ffffff"; // ถ้าผิดรูปแบบให้คืนค่าสีขาวไปก่อน
+};
+
 const FONT_OPTIONS = [
   { id: "kanit", name: "Kanit (ทันสมัย)", family: "'Kanit', sans-serif" },
   { id: "sarabun", name: "Sarabun (อ่านง่าย)", family: "'Sarabun', sans-serif" },
@@ -216,10 +231,12 @@ const SectionTitle = ({ icon, children }) => (
 );
 
 const ColorInput = ({ label, disabled, disabledText, value, onChange }) => {
-  const [localColor, setLocalColor] = React.useState(value || "#ffffff");
+  // นำค่าที่รับเข้ามาผ่านฟังก์ชัน parseColorToHex เพื่อแปลงเป็น HEX ทันที
+  const [localColor, setLocalColor] = React.useState(parseColorToHex(value));
 
   React.useEffect(() => {
-    setLocalColor(value || "#ffffff");
+    // อัปเดต state ใหม่เมื่อค่า value มีการเปลี่ยนแปลงจากภายนอก
+    setLocalColor(parseColorToHex(value));
   }, [value]);
 
   const debouncedOnChange = React.useCallback(

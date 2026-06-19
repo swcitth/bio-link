@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"; 
 import { FaArrowLeft } from "react-icons/fa";
-import { MOCK_PROFILE, MOCK_LINKS, MOCK_DESIGN } from "../data/mockData";
+// ❌ เอาบรรทัด MOCK_DATA ออกไปเลย จะได้ไม่มีสิทธิ์โผล่มาอีก
 import Header from "../components/Layout/Header";
 import { THEME_LIST } from "../constants/themes";
 import BioContent from "../components/Editors/BioContent"; 
@@ -25,9 +25,11 @@ const PreviewPage = () => {
   const [searchParams] = useSearchParams();
   const isFromAdmin = searchParams.get('source') === 'admin';
 
-  const [profile, setProfile] = useState(MOCK_PROFILE);
-  const [links, setLinks] = useState(MOCK_LINKS);
-  const [design, setDesign] = useState(MOCK_DESIGN);
+  // ⭐️ แก้ไข: ตั้งค่าเริ่มต้นเป็นค่าว่างๆ แทน (ลบ MOCK ทิ้ง)
+  const [profile, setProfile] = useState({});
+  const [links, setLinks] = useState([]);
+  const [design, setDesign] = useState({ theme: "t1", font: "kanit" });
+  
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -64,13 +66,13 @@ const PreviewPage = () => {
         .then((response) => {
           const apiData = response.data.data || response.data;
           
+          // ⭐️ แก้ไข: เอา ...MOCK_PROFILE หรือตัวแปร MOCK ออกทั้งหมด
           setProfile({
-            ...MOCK_PROFILE,
             username: apiData.username,
             name: apiData.display_name || "",
             bio: apiData.bio || "",
-            avatar: apiData.images?.avatar ? `http://127.0.0.1:8000${apiData.images.avatar}` : MOCK_PROFILE.avatar,
-            cover: apiData.images?.cover ? `http://127.0.0.1:8000${apiData.images.cover}` : MOCK_PROFILE.cover,
+            avatar: apiData.images?.avatar ? `http://127.0.0.1:8000${apiData.images.avatar}` : "",
+            cover: apiData.images?.cover ? `http://127.0.0.1:8000${apiData.images.cover}` : "",
             contactName: apiData.contact?.name || "",
             phone: apiData.contact?.phone || "",
             email: apiData.contact?.email || "",
@@ -80,23 +82,21 @@ const PreviewPage = () => {
             showSaveContact: apiData.contact?.is_enabled === 1 || apiData.contact?.is_enabled === true
           });
 
+          // จัดการ ธีม/ดีไซน์
           const themeData = apiData.theme || apiData.theme_config;
           if (themeData) {
             const themeCfg = typeof themeData === 'string' ? JSON.parse(themeData) : themeData;
             setDesign({
-              ...MOCK_DESIGN,
+              theme: "t1", font: "kanit", // ค่าพื้นฐาน
               ...themeCfg,
               bgImage: apiData.images?.background ? `http://127.0.0.1:8000${apiData.images.background}` : null,
             });
-          } else if (savedDesign) {
-            setDesign(savedDesign);
+          } else {
+             setDesign({ theme: "t1", font: "kanit" });
           }
 
-          if (apiData.blocks && apiData.blocks.length > 0) {
-            setLinks(apiData.blocks);
-          } else if (savedLinks) {
-            setLinks(savedLinks);
-          }
+          // ⭐️ แก้ไข: ดึงข้อมูลลิงก์ไปใช้เลย ถ้าไม่มีให้เป็น Array ว่าง ([])
+          setLinks(apiData.blocks || []);
 
           setIsLoading(false);
 
@@ -109,9 +109,10 @@ const PreviewPage = () => {
           setIsLoading(false);
         });
     } else {
-      setProfile(savedProfile || MOCK_PROFILE);
-      setLinks(savedLinks || MOCK_LINKS);
-      setDesign(savedDesign || MOCK_DESIGN);
+      // ⭐️ โหมด Preview ในหน้าแก้ไข (เอา || MOCK ออกให้หมด)
+      setProfile(savedProfile || {});
+      setLinks(savedLinks || []);
+      setDesign(savedDesign || { theme: "t1", font: "kanit" });
       setIsLoading(false);
     }
   }, [username]);
