@@ -10,34 +10,92 @@ import {
   Draggable,
 } from "@hello-pangea/dnd";
 
+import { useForm , useFieldArray } from "react-hook-form";
+import axios from "axios";
+
 export default function EditShop() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
   const linkId = parseInt(searchParams.get("id"));
 
-  const [headerText, setHeaderText] = useState("");
-  const [items, setItems] = useState([]);
+  const { register, control, handleSubmit, setValue, watch, reset } = useForm({
+        defaultValues: {
+          title: "",
+          type: "IMAGE",
+          items: []
+        }
+  });
 
-  // โหลดข้อมูลเดิม
+  // จัดการ array
+  const { fields, append, remove, move } = useFieldArray({
+        control,
+        name: "items", 
+  });
+
+  const watchedItems = watch("items");
+
   useEffect(() => {
-    const savedLinks = JSON.parse(
-      localStorage.getItem("bio_links") || "[]"
-    );
+    const fetchShopData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/blocks/${linkId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
-    const currentLink = savedLinks.find(
-      (l) => l.id === linkId
-    );
+        const blockData = response.data.data;
+        if (blockData) {
+          // นำข้อมูลเทใส่ฟอร์ม
+          reset({
+            title: blockData.title || "",
+            type: blockData.type || "IMAGE",
+            items: blockData.content_data || []
+          });
+        }
+      } catch (error) {
+        console.error("ดึงข้อมูลร้านค้าไม่สำเร็จ:", error);
+      }
+    };
 
-    if (currentLink) {
-      setHeaderText(currentLink.title || "");
-      setItems(currentLink.items || []);
+    if (linkId) {
+      fetchShopData();
     }
-  }, [linkId]);
+  }, [linkId, reset]);
+
+  const onSubmit = async (data) => {
+    try {
+      const payload = {
+        title: data.title,
+        type: "IMAGE", // ยืนยันว่าเป็นประเภท IMAGE
+        content_data: data.items 
+      };
+
+      const token = localStorage.getItem("token");
+      const config = {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
+      };
+
+      let response;
+      if (linkId) {
+        response = await axios.put(`${import.meta.env.VITE_API_URL}/blocks/${linkId}`, payload, config);
+      } else {
+        response = await axios.post(`${import.meta.env.VITE_API_URL}/blocks`, payload, config);
+      }
+
+      if (response.status === 200 || response.status === 201) {
+        window.dispatchEvent(new Event("db_updated")); // กระตุกให้ Preview รีเฟรช
+        alert("บันทึกข้อมูลสำเร็จ!");
+        navigate("/dd");
+      }
+    } catch (error) {
+      console.error("บันทึกไม่สำเร็จ:", error);
+      alert("ไม่สามารถบันทึกได้ โปรดลองอีกครั้ง");
+    }
+  };
+
 
   // เพิ่มสินค้า
   const handleAddItem = () => {
-    const newItem = {
+    append({
       id: Date.now(),
       image: "",
       name: "",
@@ -45,9 +103,7 @@ export default function EditShop() {
       link: "",
       price: "",
       isVisible: true,
-    };
-
-    setItems((prev) => [...prev, newItem]);
+    });
   };
 
   // ลบสินค้า
@@ -58,103 +114,20 @@ export default function EditShop() {
   };
 
   // ซ่อน/แสดง
-  const handleToggleVisibility = (id) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              isVisible: !item.isVisible,
-            }
-          : item
-      )
-    );
-  };
-
-  // แก้ไขข้อมูล
-  const handleItemChange = (
-    id,
-    field,
-    value
-  ) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              [field]: value,
-            }
-          : item
-      )
-    );
-  };
-
-  // อัปโหลดรูป
-  const handleImageUpload = (id, file) => {
-    if (!file) return;
-
-    const reader = new FileReader();
-
-    reader.onloadend = () => {
-      handleItemChange(
-        id,
-        "image",
-        reader.result
-      );
-    };
-
-    reader.readAsDataURL(file);
+  const handleToggleVisibility = (index) => {
+    if (!watchedItems || !watchedItems[index]) return;
+    const currentValue = watchedItems[index].isVisible;
+    setValue(`items.${index}.isVisible`, !currentValue);
   };
 
   // Drag & Drop
   const handleDragEnd = (result) => {
     if (!result.destination) return;
-
-    const reorderedItems = Array.from(items);
-
-    const [movedItem] =
-      reorderedItems.splice(
-        result.source.index,
-        1
-      );
-
-    reorderedItems.splice(
-      result.destination.index,
-      0,
-      movedItem
-    );
-
-    setItems(reorderedItems);
-  };
-
-  // Save
-  const handleSave = () => {
-    const savedLinks = JSON.parse(
-      localStorage.getItem("bio_links") || "[]"
-    );
-
-    const updatedLinks = savedLinks.map((link) =>
-      link.id === linkId
-        ? {
-            ...link,
-            title: headerText,
-            items: items,
-          }
-        : link
-    );
-
-    localStorage.setItem(
-      "bio_links",
-      JSON.stringify(updatedLinks)
-    );
-
-    alert("บันทึกข้อมูลสำเร็จ");
-
-    navigate("/dd");
+    move(result.source.index, result.destination.index);
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] font-sans pb-20 flex flex-col">
+    <form onSubmit={handleSubmit(onSubmit)} className="min-h-screen bg-[#f8f9fa] font-sans pb-20 flex flex-col">
       <Header
         onLogoClick={() => navigate("/dd")}
         showBackButton={true}
@@ -178,84 +151,37 @@ export default function EditShop() {
               type="text"
               placeholder="Shop"
               className="w-full text-slate-700 bg-transparent border-none focus:outline-none focus:ring-0 placeholder:text-slate-300 text-lg font-medium"
-              value={headerText}
-              onChange={(e) =>
-                setHeaderText(e.target.value)
-              }
+              {...register("title")}
             />
           </div>
         </div>
 
         {/* Product List */}
-        <DragDropContext
-          onDragEnd={handleDragEnd}
-        >
+        <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="shop-items-list">
             {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="flex flex-col gap-4"
-              >
-                {items.map(
-                  (item, index) => (
-                    <Draggable
-                      key={item.id.toString()}
-                      draggableId={item.id.toString()}
-                      index={index}
-                    >
+              <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-4">
+                {fields.map((field, index) => {
+                  const currentItem = watchedItems[index] || field;
+
+                  return (
+                    <Draggable key={field.id} draggableId={field.id.toString()} index={index}>
                       {(provided) => (
-                        <div
-                          ref={
-                            provided.innerRef
-                          }
-                          {...provided.draggableProps}
-                          style={{
-                            ...provided
-                              .draggableProps
-                              .style,
-                          }}
-                        >
+                        <div ref={provided.innerRef} {...provided.draggableProps} style={{ ...provided.draggableProps.style }}>
                           <BlockShop
-                            item={item}
-                            onRemove={() =>
-                              handleRemoveItem(
-                                item.id
-                              )
-                            }
-                            onToggleVisibility={() =>
-                              handleToggleVisibility(
-                                item.id
-                              )
-                            }
-                            onChange={(
-                              field,
-                              value
-                            ) =>
-                              handleItemChange(
-                                item.id,
-                                field,
-                                value
-                              )
-                            }
-                            onImageUpload={(
-                              file
-                            ) =>
-                              handleImageUpload(
-                                item.id,
-                                file
-                              )
-                            }
-                            dragHandleProps={
-                              provided.dragHandleProps
-                            }
+                            item={currentItem}
+                            index={index}
+                            register={register}
+                            setValue={setValue} // ส่ง setValue ไปให้ลูกเพื่อใช้อัปเดตรูป
+                            onRemove={() => remove(index)}
+                            onToggleVisibility={() => handleToggleVisibility(index)}
+                            dragHandleProps={provided.dragHandleProps}
                           />
                         </div>
                       )}
                     </Draggable>
                   )
-                )}
-
+                })}
                 {provided.placeholder}
               </div>
             )}
@@ -270,10 +196,10 @@ export default function EditShop() {
           />
 
           <ButtonSave
-            onClick={handleSave}
+            onClick={handleSubmit(onSubmit)}
           />
         </div>
       </main>
-    </div>
+    </form>
   );
 }

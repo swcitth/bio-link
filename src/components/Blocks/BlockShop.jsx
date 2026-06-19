@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { GripVertical, Eye, EyeOff, Trash2, Plus } from 'lucide-react';
 
-export default function BlockShop({ item, onRemove, onToggleVisibility, onChange, onImageUpload,dragHandleProps }) {
+export default function BlockShop({ item, index, register, setValue, onRemove, onToggleVisibility, dragHandleProps }) {
   const fileInputRef = useRef(null);
 
   const handleImageClick = () => {
@@ -11,8 +11,24 @@ export default function BlockShop({ item, onRemove, onToggleVisibility, onChange
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      onImageUpload(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // อัปเดตค่ารูปลงในฟอร์มของ React Hook Form ทันทีที่แปลงไฟล์เสร็จ
+        setValue(`items.${index}.image`, reader.result, { shouldDirty: true });
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  // ฟังก์ชันเช็ค URL ของรูปภาพ
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    // ถ้าเพิ่งอัปโหลดใหม่ (เป็น Base64) หรือเป็นลิงก์เว็บอื่น ให้โชว์ได้เลย
+    if (imagePath.startsWith('data:') || imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    // ถ้าดึงมาจาก Database (เป็น /storage/...) ให้เติม URL หลังบ้านเข้าไป
+    return `http://127.0.0.1:8000${imagePath}`;
   };
 
   return (
@@ -41,7 +57,7 @@ export default function BlockShop({ item, onRemove, onToggleVisibility, onChange
         >
           {item.image ? (
             <>
-              <img src={item.image} alt="Uploaded" className="w-full h-full object-cover" />
+              <img src={getImageUrl(item.image)} alt="Uploaded" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                  <span className="text-white text-xs font-medium">เปลี่ยนรูป</span>
               </div>
@@ -62,8 +78,7 @@ export default function BlockShop({ item, onRemove, onToggleVisibility, onChange
             type="text"
             placeholder="เช่น เสื้อยืด"
             className="flex-1 border border-slate-200 rounded-md px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 placeholder:text-slate-300 bg-slate-50/50 transition-all"
-            value={item.name}
-            onChange={(e) => onChange('name', e.target.value)}
+            {...register(`items.${index}.name`)}
           />
         </div>
         <div className="flex items-center">
@@ -72,8 +87,7 @@ export default function BlockShop({ item, onRemove, onToggleVisibility, onChange
             type="text"
             placeholder="คำอธิบายเพิ่มเติม..."
             className="flex-1 border border-slate-200 rounded-md px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 placeholder:text-slate-300 bg-slate-50/50 transition-all"
-            value={item.description}
-            onChange={(e) => onChange('description', e.target.value)}
+            {...register(`items.${index}.description`)}
           />
         </div>
         <div className="flex items-center">
@@ -82,8 +96,7 @@ export default function BlockShop({ item, onRemove, onToggleVisibility, onChange
             type="text"
             placeholder="https://"
             className="flex-1 border border-slate-200 rounded-md px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 placeholder:text-slate-300 bg-slate-50/50 transition-all"
-            value={item.link}
-            onChange={(e) => onChange('link', e.target.value)}
+            {...register(`items.${index}.link`)}
           />
         </div>
         <div className="flex items-center">
@@ -92,22 +105,23 @@ export default function BlockShop({ item, onRemove, onToggleVisibility, onChange
             type="text"
             placeholder="0.00"
             className="flex-1 border border-slate-200 rounded-md px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 placeholder:text-slate-300 bg-slate-50/50 transition-all"
-            value={item.price}
-            onChange={(e) => onChange('price', e.target.value)}
+            {...register(`items.${index}.price`)}
           />
         </div>
       </div>
-
+ 
       {/* Actions (Visible Toggle & Delete) */}
       <div className="flex flex-col items-center justify-start gap-4 h-full pt-2">
         <button 
+          type = 'button'
           onClick={onToggleVisibility}
           className="text-slate-400 hover:text-indigo-600 transition-colors focus:outline-none"
           title={item.isVisible ? "ซ่อน" : "แสดง"}
         >
           {item.isVisible ? <Eye size={18} /> : <EyeOff size={18} />}
         </button>
-        <button 
+        <button
+          type = 'button' 
           onClick={onRemove}
           className="text-slate-400 hover:text-red-500 transition-colors focus:outline-none"
           title="ลบ"
