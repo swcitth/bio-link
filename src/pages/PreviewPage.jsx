@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"; 
 import { FaArrowLeft } from "react-icons/fa";
-// ❌ เอาบรรทัด MOCK_DATA ออกไปเลย จะได้ไม่มีสิทธิ์โผล่มาอีก
+
 import Header from "../components/Layout/Header";
 import { THEME_LIST } from "../constants/themes";
 import BioContent from "../components/Editors/BioContent"; 

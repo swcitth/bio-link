@@ -11,37 +11,40 @@ import CookiePolicyPage from './pages/CookiePolicyPage';
 import CookieSettingsPage from './pages/CookieSettingsPage';
 import AdminUserManagement from './pages/Admin';
 import AdminRoute from './components/AdminRoute';
+import { LoadingProvider } from './context/LoadingContext';
 
 function App() {
   return (
-    <Routes>
+    <LoadingProvider>
+      <Routes>
 
-      {/* หน้าแรกและหน้าสำหรับการเข้าสู่ระบบ/สมัครสมาชิก */}
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<AuthPage defaultView="login" />} />
-      <Route path="/signup" element={<AuthPage defaultView="signup" />} />
-      <Route path="/forgot-password" element={<AuthPage defaultView="forgot-password" />} /> 
+        {/* หน้าแรกและหน้าสำหรับการเข้าสู่ระบบ/สมัครสมาชิก */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<AuthPage defaultView="login" />} />
+        <Route path="/signup" element={<AuthPage defaultView="signup" />} />
+        <Route path="/forgot-password" element={<AuthPage defaultView="forgot-password" />} /> 
 
-      {/* หน้าหลักของระบบจัดการและโปรไฟล์ */}
-      <Route path="/dd" element={<DashboardPage />} />
-      <Route path="/preview" element={<PreviewPage />} />
-      <Route path="/edit-link" element={<EditLink />} />
-      <Route path="/edit-shop" element={<EditShop />} />
-      <Route path="/edit-video" element={<EditVideo />} />
+        {/* หน้าหลักของระบบจัดการและโปรไฟล์ */}
+        <Route path="/dd" element={<DashboardPage />} />
+        <Route path="/preview" element={<PreviewPage />} />
+        <Route path="/edit-link" element={<EditLink />} />
+        <Route path="/edit-shop" element={<EditShop />} />
+        <Route path="/edit-video" element={<EditVideo />} />
 
-      {/* นโยบายคุกกี้และการตั้งค่าคุกกี้ */}
-      <Route path="/cookie-policy" element={<CookiePolicyPage />} />  
-      <Route path="/cookie-settings" element={<CookieSettingsPage />} />
+        {/* นโยบายคุกกี้และการตั้งค่าคุกกี้ */}
+        <Route path="/cookie-policy" element={<CookiePolicyPage />} />  
+        <Route path="/cookie-settings" element={<CookieSettingsPage />} />
 
-      {/* Admin */}
-      <Route element={<AdminRoute />}>
-        <Route path="/admin" element={<AdminUserManagement />} />
-      </Route>
+        {/* Admin */}
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<AdminUserManagement />} />
+        </Route>
 
-      {/* แชร์ */}
-      <Route path="/:username" element={<PreviewPage />} />
+        {/* แชร์ */}
+        <Route path="/:username" element={<PreviewPage />} />
 
-    </Routes>
+      </Routes>
+    </LoadingProvider>
   );
 }
 
