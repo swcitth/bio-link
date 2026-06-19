@@ -4,69 +4,118 @@ import Header from "../components/Layout/Header";
 import ButtonAdd from '../components/UI/Button/ButtonAdd'; 
 import ButtonSave from '../components/UI/Button/ButtonSave'; 
 import BlockVideo from '../components/Blocks/BlockVideo'; 
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'; 
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { useForm , useFieldArray } from 'react-hook-form'; 
+import axios from 'axios';
 
 export default function EditVideo() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const linkId = parseInt(searchParams.get("id")); // 2. ดึง ID มาจาก URL
+  const linkId = parseInt(searchParams.get("id"));
 
-  const [headerText, setHeaderText] = useState('');
-  const [items, setItems] = useState([]);
-  const [blockIcon, setBlockIcon] = useState('Youtube');
+  const [platformMode, setPlatformMode] = useState(searchParams.get("platform") || "Youtube");
+  // ติดตั้ง RHF
+  const { register, control, handleSubmit, setValue, watch, reset } = useForm({
+      defaultValues: {
+        title: "",
+        type: "VIDEO",
+        items: []
+      }
+  });
 
-  // 3. โหลดข้อมูลจาก localStorage เมื่อเปิดหน้า
+  // จัดการ array 
+  const { fields, append, remove, move } = useFieldArray({
+      control,
+      name: "items", 
+  });
+
+  const watchedItems = watch("items");
+
+  // ดึงข้อมูลจาก Laravel (GET) เมื่อเปิดหน้านี้
   useEffect(() => {
-    const savedLinks = JSON.parse(localStorage.getItem("bio_links") || "[]");
-    const currentLink = savedLinks.find(l => l.id === linkId);
-    
-    if (currentLink) {
-      setHeaderText(currentLink.title || '');
-      // ถ้ามีข้อมูลใน items (กรณีมีหลายวิดีโอในบล็อกเดียว) ให้ดึงมา ถ้าไม่มีให้เริ่มที่ว่างๆ
-      setBlockIcon(currentLink.icon || 'Youtube');
-      setItems(currentLink.items || [{ id: Date.now(), name: '', link: '', isVisible: true }]);
-    }
-  }, [linkId]);
+    const fetchVideoData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/blocks/${linkId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
-  // 4. ฟังก์ชันบันทึกข้อมูล
-  const handleSave = () => {
-    const savedLinks = JSON.parse(localStorage.getItem("bio_links") || "[]");
-    
-    // อัปเดตข้อมูลของ link id นี้
-    const updatedLinks = savedLinks.map(l => 
-      l.id === linkId ? { ...l, title: headerText, items: items } : l
-    );
-    
-    localStorage.setItem("bio_links", JSON.stringify(updatedLinks));
-    alert("บันทึกการเปลี่ยนแปลงสำเร็จ!");
-    navigate('/dd'); // รีไดเรกต์กลับหน้าหลัก
+        const blockData = response.data.data;
+        if (blockData) {
+          // นำข้อมูลที่ได้จาก DB เทใส่ฟอร์ม
+          reset({
+            title: blockData.title || "",
+            type: blockData.type || "VIDEO",
+            items: blockData.content_data || []
+          });
+
+          const firstLink = blockData.content_data?.[0]?.link || "";
+          if (firstLink.includes("tiktok.com")) {
+            setPlatformMode("TikTok");
+        }
+      }
+      } catch (error) {
+        console.error("ดึงข้อมูลวิดีโอไม่สำเร็จ:", error);
+      }
+    };
+
+    if (linkId) {
+      fetchVideoData();
+    }
+  }, [linkId, reset]);
+ 
+  // ฟังก์ชันบันทึกข้อมูล
+  const onSubmit = async (data) => {
+    try {
+      const payload = {
+        title: data.title,
+        type: data.type, // ส่งคำว่า YOUTUBE ไปบอกหลังบ้าน
+        content_data: data.items 
+      };
+
+      const token = localStorage.getItem("token");
+      const config = {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
+      };
+
+      let response;
+      if (linkId) {
+        response = await axios.put(`${import.meta.env.VITE_API_URL}/blocks/${linkId}`, payload, config);
+      } else {
+        response = await axios.post(`${import.meta.env.VITE_API_URL}/blocks`, payload, config);
+      }
+
+      if (response.status === 200 || response.status === 201) {
+        window.dispatchEvent(new Event("db_updated")); // กระตุกให้ Preview รีเฟรช
+        alert("บันทึกการเปลี่ยนแปลงสำเร็จ!");
+        navigate('/dd'); 
+      }
+    } catch (error) {
+      console.error("บันทึกไม่สำเร็จ:", error);
+      alert("ไม่สามารถบันทึกได้ กรุณาลองใหม่อีกครั้ง");
+    }
   };
 
   const handleAddItem = () => {
-    const newItem = { id: Date.now(), name: '', link: '', isVisible: true };
-    setItems([...items, newItem]);
+    // ใช้ append ของ RHF แทน setItems
+    append({ id: Date.now(), name: '', link: '', isVisible: true });
   };
 
-  const handleRemoveItem = (id) => setItems(items.filter((item) => item.id !== id));
-
-  const handleToggleVisibility = (id) => {
-    setItems(items.map((item) => item.id === id ? { ...item, isVisible: !item.isVisible } : item));
-  };
-
-  const handleItemChange = (id, field, value) => {
-    setItems(items.map((item) => item.id === id ? { ...item, [field]: value } : item));
+  const handleToggleVisibility = (index) => {
+    if (!watchedItems || !watchedItems[index]) return;
+    const currentValue = watchedItems[index].isVisible;
+    // สลับค่าการมองเห็นด้วย setValue
+    setValue(`items.${index}.isVisible`, !currentValue);
   };
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
-    const reorderedItems = Array.from(items);
-    const [movedItem] = reorderedItems.splice(result.source.index, 1);
-    reorderedItems.splice(result.destination.index, 0, movedItem);
-    setItems(reorderedItems);
+    // ใช้คำสั่ง move ของ RHF ช่วยสลับที่
+    move(result.source.index, result.destination.index);
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] font-sans pb-20 flex flex-col">
+    <form onSubmit={handleSubmit(onSubmit)} className="min-h-screen bg-[#f8f9fa] font-sans pb-20 flex flex-col">
       <Header 
         onLogoClick={() => navigate('/dd')} 
         showBackButton={true} 
@@ -83,8 +132,7 @@ export default function EditVideo() {
               type="text"
               placeholder="Your Channels"
               className="w-full text-slate-700 bg-transparent border-none focus:outline-none focus:ring-0 placeholder:text-slate-300 text-lg font-medium"
-              value={headerText}
-              onChange={(e) => setHeaderText(e.target.value)}
+              {...register("title")}
             />
           </div>
         </div>
@@ -93,22 +141,27 @@ export default function EditVideo() {
           <Droppable droppableId="video-items-list">
             {(provided) => (
               <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-4">
-                {items.map((item, index) => (
-                  <Draggable key={item.id.toString()} draggableId={item.id.toString()} index={index}>
-                    {(provided) => (
-                      <div ref={provided.innerRef} {...provided.draggableProps} style={{ ...provided.draggableProps.style }}>
-                        <BlockVideo
-                          item={item}
-                          blockIcon={blockIcon}
-                          onRemove={() => handleRemoveItem(item.id)}
-                          onToggleVisibility={() => handleToggleVisibility(item.id)}
-                          onChange={(field, value) => handleItemChange(item.id, field, value)}
-                          dragHandleProps={provided.dragHandleProps}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
+                {fields.map((field, index) => {
+                  const currentItem = watchedItems[index] || field;
+
+                  return (
+                    <Draggable key={field.id} draggableId={field.id} index={index}>
+                      {(provided) => (
+                        <div ref={provided.innerRef} {...provided.draggableProps} style={{ ...provided.draggableProps.style }}>
+                          <BlockVideo
+                            item={currentItem} // ส่งข้อมูลปัจจุบันให้คอมโพเนนต์ลูก
+                            index={index}
+                            register={register} 
+                            onRemove={() => remove(index)} 
+                            onToggleVisibility={() => handleToggleVisibility(index)}
+                            dragHandleProps={provided.dragHandleProps}
+                            platform={platformMode}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  )
+                })}
                 {provided.placeholder}
               </div>
             )}
@@ -117,9 +170,9 @@ export default function EditVideo() {
 
         <div className="mt-8 flex flex-col items-center gap-6">
           <ButtonAdd onClick={handleAddItem} text="เพิ่มวิดีโอ" />
-          <ButtonSave onClick={handleSave} />
+          <ButtonSave onClick={handleSubmit(onSubmit)} />
         </div>
       </main>
-    </div>
+    </form>
   );
 }

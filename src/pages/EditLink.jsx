@@ -14,6 +14,7 @@ export default function EditLink() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const linkId = parseInt(searchParams.get("id")); // ดึง ID จาก URL (ถ้ามี)
+  console.log("linkId ที่ได้จาก URL คือ:", searchParams.get("id"));
 
   // State สำหรับเปิด/ปิดหน้าต่างเลือกไอคอน
   const [isIconPopupOpen, setIsIconPopupOpen] = useState(false);
@@ -52,6 +53,7 @@ export default function EditLink() {
         });
 
         const blockData = response.data.data;
+        console.log(blockData);
 
         if (blockData) {
           // เอาข้อมูลที่ได้มา ยัดใส่ฟอร์ม
@@ -120,6 +122,7 @@ export default function EditLink() {
       // เตรียมข้อมูลให้ตรงกับที่ Laravel ต้องการ (title และ content_data)
       const payload = {
         title: data.title,
+        type: "LINK",
         content_data: data.items 
       };
 

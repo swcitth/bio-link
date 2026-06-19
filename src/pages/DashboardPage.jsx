@@ -69,14 +69,19 @@ const DashboardPage = () => {
   };
 
   const handleEditClick = (link) => {
+    // แยกเอาเฉพาะเลขตัวหน้า
+    const cleanId = String(link.id).split(':')[0]; 
+    
+    console.log("ID ที่ส่งไปหน้า Edit คือ:", cleanId);
+
     if (link.icon === "Image") {
-      navigate(`/edit-shop?id=${link.id}`);
+      navigate(`/edit-shop?id=${cleanId}`);
     } 
     else if (link.icon === "Youtube" || link.icon === "TikTok") {
-      navigate(`/edit-video?id=${link.id}`); 
+      navigate(`/edit-video?id=${cleanId}`); 
     } 
     else {
-      navigate(`/edit-link?id=${link.id}`);
+      navigate(`/edit-link?id=${cleanId}`);
     }
   };
 
@@ -164,11 +169,51 @@ const DashboardPage = () => {
     }
   };
 
-  // ⭐️ เรียกใช้ fetchMyProfile ตอนเปิดหน้าเว็บครั้งแรก ⭐️
+
+  const fetchMyBlocks = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/blocks`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.status === 200) {
+        const dbBlocks = response.data.data || [];
+        
+        // (Data Mapping) แปลงหน้าตาข้อมูล DB ให้ React เข้าใจ
+        const formattedBlocks = dbBlocks.map((block) => {
+          
+          // แปลง 'type' จากหลังบ้าน ให้กลายเป็น 'icon' เพื่อให้ React โชว์รูปถูก
+          let iconName = "Link"; // ค่าเริ่มต้น
+          if (block.type === "VIDEO") iconName = "Youtube"; // วิดีโอใช้เงื่อนไข Youtube นำทาง
+          if (block.type === "IMAGE") iconName = "Image";
+
+          return {
+            id: block.id,
+            title: block.title || "รูปแบบใหม่", // ถ้า title เป็น NULL ให้โชว์คำว่า "รูปแบบใหม่"
+            icon: iconName,
+            visible: block.is_visible === 1 || block.is_visible === true, // แปลง 1/0 เป็น true/false
+            clicks: 0,
+            items: block.content_data || [] // ย้าย content_data มาใส่กล่อง items
+          };
+        });
+
+        // เอาข้อมูลที่แปลภาษาแล้ว ไปใส่ในหน้าจอ
+        setLinks(formattedBlocks); 
+        localStorage.setItem("bio_links", JSON.stringify(formattedBlocks)); 
+      }
+    } catch (error) {
+      console.error("❌ ดึงข้อมูลบล็อกทั้งหมดไม่สำเร็จ:", error);
+    }
+  };
+
+  // 
   useEffect(() => {
     fetchMyProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+    fetchMyBlocks(); 
+  }, []);
 
   // 🟢 บันทึกข้อมูลลง localStorage ทุกครั้งที่มีการเปลี่ยนแปลง เพื่อให้ Preview แสดงผลเรียลไทม์
   useEffect(() => {
@@ -185,8 +230,34 @@ const DashboardPage = () => {
   const handleUpdateLink = (updatedLink) =>
     setLinks((prev) => prev.map((l) => (l.id === updatedLink.id ? updatedLink : l)));
 
-  const handleDeleteLink = (id) =>
-    setLinks((prev) => prev.filter((l) => l.id !== id));
+  const handleDeleteLink = async (id) => {
+    // ถามเพื่อความชัวร์ก่อนลบ
+    const isConfirm = window.confirm("แน่ใจหรือไม่ว่าต้องการลบบล็อกนี้?");
+    if (!isConfirm) return;
+
+    try {
+      // ยิง API แบบ DELETE ไปหา Laravel
+      const token = localStorage.getItem("token");
+      await axios.delete(`${import.meta.env.VITE_API_URL}/blocks/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // ถ้า Laravel ลบสำเร็จ ค่อยมาลบออกจากหน้าจอ (State)
+      const updatedLinks = links.filter((l) => l.id !== id);
+      setLinks(updatedLinks);
+
+      // อัปเดต LocalStorage ให้ตรงกัน
+      localStorage.setItem("bio_links", JSON.stringify(updatedLinks));
+      
+      // ให้หน้า Preview รีเฟรชตัวเอง
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("db_updated")); 
+
+    } catch (error) {
+      console.error("ลบข้อมูลไม่สำเร็จ:", error);
+      alert("เกิดข้อผิดพลาดในการลบข้อมูลที่ฐานข้อมูลค่ะ");
+    }
+  };
 
   const handleToggleVisibility = (id) =>
     setLinks((prev) =>
@@ -216,13 +287,13 @@ const DashboardPage = () => {
     setIsModalOpen(false);
     
     if (defaultIcon === "Image") {
-      navigate(`/edit-shop?id=${newId}`);
+      navigate(`/edit-shop`); 
     } 
     else if (defaultIcon === "Youtube" || defaultIcon === "TikTok") {
-      navigate(`/edit-video?id=${newId}`);
+      navigate(`/edit-video?platform=${defaultIcon}`); 
     } 
     else {
-      navigate(`/edit-link?id=${newId}`);
+      navigate(`/edit-link`); 
     }
   };
   

@@ -11,7 +11,7 @@ const getYoutubeThumbnail = (url) => {
     return `https://img.youtube.com/vi/${match[2]}/hqdefault.jpg`;
   }
   return null;
-};
+}; 
 
 //ฟังก์ชันตรวจสอบว่าเป็นลิงก์ TikTok หรือไม่
 const isTikTokLink = (url) => {
@@ -19,10 +19,10 @@ const isTikTokLink = (url) => {
   return url.includes('tiktok.com');
 };
 
-export default function BlockVideo({ item, blockIcon,onRemove, onToggleVisibility, onChange,dragHandleProps }) {
+export default function BlockVideo({ item, index, register, onRemove, onToggleVisibility, dragHandleProps ,platform }) {
   const thumbnailUrl = getYoutubeThumbnail(item.link);
-  const isTikTok = isTikTokLink(item.link);
-  const isTikTokMode = blockIcon && blockIcon.toLowerCase().includes('tiktok');
+
+  const isTikTok = isTikTokLink(item.link) || (!item.link && platform === "TikTok");
 
   return (
     <div className={`bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center gap-3 md:gap-5 transition-opacity ${item.isVisible ? 'opacity-100' : 'opacity-50'}`}>
@@ -40,7 +40,7 @@ export default function BlockVideo({ item, blockIcon,onRemove, onToggleVisibilit
         {thumbnailUrl ? (
           // ถ้าเป็นลิงก์ YouTube และมีรูปปก ให้แสดงรูปปก
           <img src={thumbnailUrl} alt="YouTube Thumbnail" className="w-full h-full object-cover" />
-        ) : isTikTokMode ? (
+        ) : isTikTok ? (
           // ถ้าเป็น TikTok โชว์ฉากหลังดำ + ไอคอน TikTok
           <div className="w-full h-full bg-[#d1d5db]/40 flex items-center justify-center">
             <FaTiktok size={28} className="text-slate-400 opacity-50" />
@@ -61,25 +61,24 @@ export default function BlockVideo({ item, blockIcon,onRemove, onToggleVisibilit
             type="text"
             placeholder="ชื่อวิดีโอ"
             className="flex-1 border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 placeholder:text-slate-300 bg-slate-50/50 transition-all"
-            value={item.name}
-            onChange={(e) => onChange('name', e.target.value)}
+            {...register(`items.${index}.name`)}
           />
         </div>
         <div className="flex items-center">
           <span className="w-10 md:w-12 text-sm font-medium text-slate-700">ลิงก์</span>
           <input
             type="text"
-            placeholder="https://youtu.be/..."
+            placeholder={isTikTok ? "https://www.tiktok.com/@..." : "https://youtu.be/..."}
             className="flex-1 border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 placeholder:text-slate-300 bg-slate-50/50 transition-all"
-            value={item.link}
-            onChange={(e) => onChange('link', e.target.value)}
+            {...register(`items.${index}.link`)}
           />
         </div>
       </div>
 
       {/* Actions (Edit Label, Visible Toggle & Delete) */}
       <div className="flex flex-col items-center justify-center gap-3 px-1 md:px-2">
-        <button 
+        <button
+          type="button" 
           onClick={onToggleVisibility}
           className="text-slate-500 hover:text-indigo-600 transition-colors focus:outline-none"
           title={item.isVisible ? "ซ่อน" : "แสดง"}
@@ -87,6 +86,7 @@ export default function BlockVideo({ item, blockIcon,onRemove, onToggleVisibilit
           {item.isVisible ? <Eye size={18} strokeWidth={2.5} /> : <EyeOff size={18} strokeWidth={2.5} />}
         </button>
         <button 
+          type="button"
           onClick={onRemove}
           className="text-slate-500 hover:text-red-600 transition-colors focus:outline-none"
           title="ลบ"
