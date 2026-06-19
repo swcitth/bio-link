@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { THEME_LIST } from "../../constants/themes";
 import BioContent from "../Editors/BioContent";
+import axios from 'axios';
 
 const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
   const activeTheme = THEME_LIST.find((t) => t.id === design.theme) || THEME_LIST[0];
