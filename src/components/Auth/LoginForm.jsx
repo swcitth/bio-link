@@ -149,6 +149,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
       localStorage.setItem('token', response.data.access_token);
       localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('token', response.data.access_token);
 
       alert("เข้าสู่ระบบสำเร็จ!");
 

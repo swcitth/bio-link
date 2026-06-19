@@ -109,7 +109,7 @@ const DashboardPage = () => {
     try {
       // url จะไม่มี %20 แน่นอนเพราะโดน trim() ไปแล้วด้านบน
       console.log(`📡 กำลังดึงข้อมูลจาก: http://127.0.0.1:8000/api/profiles/${realUser.username}`);
-      const response = await axios.get(`http://127.0.0.1:8000/api/profiles/${realUser.username}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/profiles/${realUser.username}`);
       
       console.log("✅ ข้อมูลที่ดึงได้จาก DB:", response.data);
 

@@ -1,4 +1,5 @@
 import React from "react";
+import axios from "axios"; // 1. นำเข้า axios
 
 const getTextColorBasedOnBg = (bgColor) => {
   if (!bgColor) return "#000000"; 
@@ -19,7 +20,24 @@ const getTextColorBasedOnBg = (bgColor) => {
 const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false }) => {
   const profile = profileData || {};
   
+  // ⭐️ 2. ฟังก์ชันเก็บสถิติการกดปุ่ม Save Contact
+  const trackSaveContact = async () => {
+    try {
+      const sessionId = sessionStorage.getItem("analytics_session");
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/analytics/track/${profile.username}`, {
+        session_id: sessionId,
+        block_id: 999999, // รหัสพิเศษสำหรับปุ่ม Save Contact
+        referrer_url: document.referrer
+      });
+    } catch (err) {
+      console.log("Analytics Save Contact Error:", err);
+    }
+  };
+
   const handleSaveContact = () => {
+    // ⭐️ เก็บสถิติก่อนเริ่มทำงาน
+    trackSaveContact();
+
     let photoData = "";
     if (profile.avatar && profile.avatar.includes("base64,")) {
       const base64String = profile.avatar.split("base64,")[1];
@@ -30,7 +48,7 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
       photoData = `\nPHOTO;ENCODING=b;TYPE=${ext}:${base64String}`;
     }
 
-    // ⭐️ แก้ไข: ลบการดึงเว็บไซต์ออกจาก Note เหลือแค่บริษัทและตำแหน่ง ⭐️
+    // ⭐️ โค้ดเดิม: ดึงบริษัทและตำแหน่งเข้า Note
     let noteData = "";
     if (profile.company || profile.title) {
       const companyText = profile.company ? `บริษัท: ${profile.company}` : "";
@@ -44,10 +62,9 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
 
     const finalName = profile.contactName || profile.name || "ไม่มีชื่อ";
 
-    // ⭐️ แท็ก URL จะเป็นตัวสร้างช่อง "โฮมเพจ" ในมือถือ ⭐️
+    // ⭐️ โค้ดเดิม: แท็ก URL สำหรับโฮมเพจ
     const websiteData = profile.website ? `\nURL:${profile.website}` : "";
 
-    // นำตัวแปร websiteData มารวมใน vCard ตามปกติ
     const vcardContent = `BEGIN:VCARD\nVERSION:3.0\nFN:${finalName}${noteData}\nTEL;TYPE=CELL:${profile.phone || ""}\nEMAIL:${profile.email || ""}${websiteData}${photoData}\nEND:VCARD`;
 
     const blob = new Blob([vcardContent], { type: "text/vcard;charset=utf-8" });
@@ -63,7 +80,6 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
     URL.revokeObjectURL(url);
   };
 
-  // แสดงปุ่มก็ต่อเมื่อมีข้อมูลติดต่ออย่างน้อย 1 อย่าง
   if (!profile.phone && !profile.email && !profile.website) return null;
 
   const btnRadius = { square: isCompact ? "6px" : "8px", rounded: "14px", pill: "999px" }[design.btnRounded] || "999px";

@@ -1,3 +1,7 @@
+// ============================================================
+// src/pages/PreviewPage.jsx
+// ============================================================
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"; 
 import { FaArrowLeft } from "react-icons/fa";
@@ -5,7 +9,7 @@ import { MOCK_PROFILE, MOCK_LINKS, MOCK_DESIGN } from "../data/mockData";
 import Header from "../components/Layout/Header";
 import { THEME_LIST } from "../constants/themes";
 import BioContent from "../components/Editors/BioContent"; 
-import axios from "axios"; // 1. Import Axios สำหรับยิง API
+import axios from "axios"; 
 
 const FONT_MAP = {
   kanit: "'Kanit', sans-serif",
@@ -18,20 +22,36 @@ const PreviewPage = () => {
   const navigate = useNavigate();
   const { username } = useParams(); 
 
-  // เพิ่มระบบเช็คเส้นทาง 
   const [searchParams] = useSearchParams();
   const isFromAdmin = searchParams.get('source') === 'admin';
 
-  // 2. สร้าง State สำหรับจัดการสถานะและการเก็บข้อมูลจาก Backend
   const [profile, setProfile] = useState(MOCK_PROFILE);
   const [links, setLinks] = useState(MOCK_LINKS);
   const [design, setDesign] = useState(MOCK_DESIGN);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 3. ใช้ useEffect ยิง API ไปหา Laravel ทันทีที่เปิดหน้านี้ขึ้นมา
+  // ⭐️ 1. ฟังก์ชันแอบยิง API เก็บสถิติ (ทำงานอยู่เบื้องหลัง) ⭐️
+  const trackAnalytics = (targetUsername, blockId = null) => {
+    // ถ้านี่คือการเปิดพรีวิวจากหน้าแอดมินหรือหน้าแก้ไข จะไม่นับยอดวิวเพื่อไม่ให้สถิติเพี้ยน
+    if (isFromAdmin || !targetUsername) return; 
+
+    // สร้างหรือดึง Session ID ของคนที่เข้ามาดู (ใช้ Session Storage เพื่อกันการ F5 ปั่นวิว)
+    let sessionId = sessionStorage.getItem("analytics_session");
+    if (!sessionId) {
+      sessionId = "sess_" + Math.random().toString(36).substr(2, 9) + Date.now();
+      sessionStorage.setItem("analytics_session", sessionId);
+    }
+
+    // ยิง API ไปหลังบ้านแบบเงียบๆ (ไม่ต้องใช้ await เพราะไม่ต้องการให้หน้าเว็บรอ)
+    axios.post(`${import.meta.env.VITE_API_URL}/api/analytics/track/${targetUsername}`, {
+      session_id: sessionId,
+      block_id: blockId, // ถ้าเป็น null = ยอดเข้าชมหน้าเว็บ / ถ้ามีไอดี = ยอดคลิกลิงก์
+      referrer_url: document.referrer // เก็บข้อมูลว่าเข้ามาจากแอปไหน (FB, IG, LINE)
+    }).catch(err => console.log("Analytics Tracking Error:", err));
+  };
+
   useEffect(() => {
-    // ดึงข้อมูลจาก localStorage เผื่อกรณีเปิดจากหน้า Dashboard หลังบ้านชั่วคราว
     const savedProfile = JSON.parse(localStorage.getItem("preview_profile"));
     const savedLinks   = JSON.parse(localStorage.getItem("preview_links"));
     const savedDesign  = JSON.parse(localStorage.getItem("preview_design"));
@@ -40,34 +60,48 @@ const PreviewPage = () => {
       setIsLoading(true);
       setError(null);
       
-      // ยิง GET Request ไปที่ Backend ยืดหยุ่นตามชื่อบน URL
-      axios.get(`http://127.0.0.1:8000/api/profiles/${username}`)
+      axios.get(`${import.meta.env.VITE_API_URL}/api/profiles/${username}`)
         .then((response) => {
-          const apiData = response.data.data;
+          const apiData = response.data.data || response.data;
           
-          // ทำการ Map จับคู่โครงสร้างข้อมูลของ Laravel JSON เข้ากับ Props ของหน้าบ้าน
           setProfile({
             ...MOCK_PROFILE,
             username: apiData.username,
-            display_name: apiData.display_name || "",
+            name: apiData.display_name || "",
             bio: apiData.bio || "",
-            avatar_url: apiData.images?.avatar || null,
-            cover_url: apiData.images?.cover || null,
-            bg_image_url: apiData.images?.background || null,
-            contact_name: apiData.contact?.name || null,
-            contact_phone: apiData.contact?.phone || null,
-            contact_email: apiData.contact?.email || null,
-            contact_company: apiData.contact?.company || null,
-            contact_job_title: apiData.contact?.job_title || null,
-            contact_website: apiData.contact?.website || null,
-            show_save_contact: apiData.contact?.is_enabled || false,
+            avatar: apiData.images?.avatar ? `http://127.0.0.1:8000${apiData.images.avatar}` : MOCK_PROFILE.avatar,
+            cover: apiData.images?.cover ? `http://127.0.0.1:8000${apiData.images.cover}` : MOCK_PROFILE.cover,
+            contactName: apiData.contact?.name || "",
+            phone: apiData.contact?.phone || "",
+            email: apiData.contact?.email || "",
+            company: apiData.contact?.company || "",
+            title: apiData.contact?.job_title || "",
+            website: apiData.contact?.website || "",
+            showSaveContact: apiData.contact?.is_enabled === 1 || apiData.contact?.is_enabled === true
           });
 
-          // ถ้าดึงข้อมูลสำเร็จและมีเซฟ Links/Design อยู่ ให้ดึงตามมา
-          if (savedLinks) setLinks(savedLinks);
-          if (savedDesign) setDesign(savedDesign);
+          const themeData = apiData.theme || apiData.theme_config;
+          if (themeData) {
+            const themeCfg = typeof themeData === 'string' ? JSON.parse(themeData) : themeData;
+            setDesign({
+              ...MOCK_DESIGN,
+              ...themeCfg,
+              bgImage: apiData.images?.background ? `http://127.0.0.1:8000${apiData.images.background}` : null,
+            });
+          } else if (savedDesign) {
+            setDesign(savedDesign);
+          }
+
+          if (apiData.blocks && apiData.blocks.length > 0) {
+            setLinks(apiData.blocks);
+          } else if (savedLinks) {
+            setLinks(savedLinks);
+          }
 
           setIsLoading(false);
+
+          // ⭐️ 2. เรียกใช้งานฟังก์ชันเก็บสถิติ "ยอดเข้าชม" เมื่อโหลดข้อมูลสำเร็จ
+          trackAnalytics(apiData.username, null);
         })
         .catch((err) => {
           console.error("Error fetching profile:", err);
@@ -75,7 +109,6 @@ const PreviewPage = () => {
           setIsLoading(false);
         });
     } else {
-      // หากไม่มี username บน URL ให้ดึงจาก LocalStorage/Mock ตามปกติ (เช่น โหมดพรีวิวด่วน)
       setProfile(savedProfile || MOCK_PROFILE);
       setLinks(savedLinks || MOCK_LINKS);
       setDesign(savedDesign || MOCK_DESIGN);
@@ -83,7 +116,6 @@ const PreviewPage = () => {
     }
   }, [username]);
 
-  // ฟังก์ชันจัดการเมื่อกด Logo
   const handleLogoClick = () => {
     if (isFromAdmin) {
       navigate('/admin'); 
@@ -92,7 +124,6 @@ const PreviewPage = () => {
     }
   };
 
-  // ฟังก์ชันจัดการเมื่อกดปุ่มย้อนกลับ
   const handleBackClick = () => {
     if (isFromAdmin) {
       window.close(); 
@@ -101,14 +132,12 @@ const PreviewPage = () => {
     }
   };
 
-  // ตัวแปรเหล่านี้จะประมวลผลใหม่โดยอัตโนมัติเมื่อ State ข้อมูลเปลี่ยนไป
   const activeTheme = THEME_LIST.find((t) => t.id === design.theme) || THEME_LIST[0];
   const selectedFont = FONT_MAP[design.font] || FONT_MAP.kanit;
   const screenBackground = design.theme === "custom" 
     ? (design.bgColor || "#f0f2ff") 
     : (activeTheme?.cfg?.bgGradient || "#f0f2ff");
 
-  // 4. หน้าจอระหว่างโหลดข้อมูล (Loading)
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100 font-sans">
@@ -117,7 +146,6 @@ const PreviewPage = () => {
     );
   }
 
-  // 5. หน้าจอเมื่อเกิดข้อผิดพลาด เช่น หาชื่อผู้ใช้ไม่เจอ (404)
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-100 p-6 text-center font-sans">
@@ -136,7 +164,6 @@ const PreviewPage = () => {
   return (
     <div className="min-h-screen relative bg-slate-100" style={{ fontFamily: selectedFont }}>
       
-      {/* Header */}
       <div className="relative z-30">
         <Header onLogoClick={handleLogoClick}>
           <button 
@@ -148,21 +175,20 @@ const PreviewPage = () => {
         </Header>
       </div>
 
-      {/* Main Container */}
       <div className="max-w-xl mx-auto min-h-screen relative shadow-2xl pt-[72px]">
        
-        {/* Background Layer */}
         <div className="fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-0 overflow-hidden" style={{ background: screenBackground }}>
           {design.bgImage && (
             <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${design.bgImage})`, opacity: 0.6 }} />
           )}
         </div>
 
-        {/* ⭐️ เรียกใช้งาน BioContent โดยส่งข้อมูลจริงที่ได้จาก API */}
+        {/* ⭐️ 3. ส่ง Props ฟังก์ชันจับการคลิกไปให้ BioContent ใช้งาน */}
         <BioContent 
           profile={profile} 
           links={links} 
           design={design} 
+          onLinkClick={(blockId) => trackAnalytics(profile.username, blockId)}
         />
        
       </div>
