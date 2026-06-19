@@ -44,7 +44,7 @@ const PreviewPage = () => {
     }
 
     // ยิง API ไปหลังบ้านแบบเงียบๆ (ไม่ต้องใช้ await เพราะไม่ต้องการให้หน้าเว็บรอ)
-    axios.post(`${import.meta.env.VITE_API_URL}/api/analytics/track/${targetUsername}`, {
+    axios.post(`${import.meta.env.VITE_API_URL}/analytics/track/${targetUsername}`, {
       session_id: sessionId,
       block_id: blockId, // ถ้าเป็น null = ยอดเข้าชมหน้าเว็บ / ถ้ามีไอดี = ยอดคลิกลิงก์
       referrer_url: document.referrer // เก็บข้อมูลว่าเข้ามาจากแอปไหน (FB, IG, LINE)
@@ -60,7 +60,7 @@ const PreviewPage = () => {
       setIsLoading(true);
       setError(null);
       
-      axios.get(`${import.meta.env.VITE_API_URL}/api/profiles/${username}`)
+      axios.get(`${import.meta.env.VITE_API_URL}/profiles/${username}`)
         .then((response) => {
           const apiData = response.data.data || response.data;
           

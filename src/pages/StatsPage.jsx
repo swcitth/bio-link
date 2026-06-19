@@ -24,7 +24,7 @@ const StatsPage = () => {
           return;
         }
 
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/analytics`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/user/analytics`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json'

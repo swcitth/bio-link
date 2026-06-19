@@ -24,7 +24,7 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
   const trackSaveContact = async () => {
     try {
       const sessionId = sessionStorage.getItem("analytics_session");
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/analytics/track/${profile.username}`, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/analytics/track/${profile.username}`, {
         session_id: sessionId,
         block_id: 999999, // รหัสพิเศษสำหรับปุ่ม Save Contact
         referrer_url: document.referrer
