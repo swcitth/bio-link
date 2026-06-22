@@ -9,6 +9,7 @@ import { Eye } from "lucide-react";
 
 // 🟢 นำเข้า Header จากไฟล์ของคุณมาใช้งาน
 import Header from "./Header"; 
+import api from "../../api/axios";
 
 const Navbar = ({ activeTab, setActiveTab, onShare }) => {
   const navigate = useNavigate();
@@ -20,9 +21,27 @@ const Navbar = ({ activeTab, setActiveTab, onShare }) => {
   ];
 
   // 🟢 สร้างฟังก์ชันออกจากระบบ และกลับไปหน้า Landing Page
-  const handleLogout = () => {
-    // (Optional) หากมีระบบ Login สามารถเพิ่มโค้ดลบ Token หรือ Session ได้ที่นี่
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      // 1. ยิง API ไปบอก Laravel ให้ลบ Token ทิ้งจาก Database
+      // (ระบบจะดึง Token จาก Local/Session ไปแนบ Header ให้อัตโนมัติจากไฟล์ axios.js)
+      await api.post('/logout'); 
+    } catch (error) {
+      console.error("Logout Backend Error:", error);
+    } finally {
+      // 2. finally หมายความว่า ไม่ว่าข้อ 1 จะสำเร็จหรือพัง ก็ต้องทำคำสั่งด้านล่างนี้เสมอ
+      // ลบข้อมูลออกให้หมดจดเพื่อความปลอดภัย ทั้งแบบชั่วคราวและถาวร
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+
+      // แจ้งระบบว่าข้อมูลใน Storage มีการเปลี่ยนแปลงแล้ว
+      window.dispatchEvent(new Event("storage"));
+
+      // กลับไปหน้าแรก (Landing Page) 
+      navigate("/");
+    }
   };
 
   return (

@@ -65,7 +65,7 @@ export default function SignupForm({ onSwitchView }) {
     // try คือกรลองส่งถ้าเกิดพังจะไปทำงานต่อที่ catch แล้วเว็บก็จะยังไม่พัง 
     // await ให้โปรแกรมรอจนกว่า laravel จะทำงานเสร็จ
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL/register}/`, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/register`,{
         // คีย์ฝั่งซ้าย (ชื่อที่ส่งไปหา Laravel) ต้องเหมือนกับที่ Laravel รอรับใน Controller
         // ตัวแปรฝั่งขวา (ชื่อแปรใน React)
         display_name: displayName,
