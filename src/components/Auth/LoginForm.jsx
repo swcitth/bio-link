@@ -41,64 +41,56 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
     setCaptchaValue(value);
   };
 
-  const syncUserToAdminDatabase = (newUser) => {
-    const savedUsersStr = localStorage.getItem("system_users");
-    let existingUsers = savedUsersStr ? JSON.parse(savedUsersStr) : [];
-    const isUserExist = existingUsers.find(u => u.email === newUser.email);
-
-    if (!isUserExist && newUser.email) {
-      const newUserForAdmin = {
-        id: Date.now(), 
-        name: newUser.name || "Unknown User",
-        email: newUser.email,
-        role: newUser.role.toUpperCase(), 
-        date: new Date().toISOString().split('T')[0], 
-        status: "Active",
-        avatar: newUser.avatar || `https://ui-avatars.com/api/?name=${newUser.username}&background=random&color=fff`
-      };
-      existingUsers.push(newUserForAdmin);
-      localStorage.setItem("system_users", JSON.stringify(existingUsers));
-    }
-  };
-
+  // Login with google
+  // useGoogleLogin is hook for popup login google
   const loginWithGoogle = useGoogleLogin({
+    // tokenResponse ตัวแปรที่ google ส่งกลับไปหา react access_token เพื่อเอาไปใช้ต่อ
     onSuccess: async (tokenResponse) => {
-      setIsLoading(true); 
-      try {
-        const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        }).then(res => res.json());
+      setIsLoading(true);
+      try{
+        // การส่งข้อมูลกลับหลังบ้าน
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/google`, {
+          // ดึงค่า Access Token จาก Google ส่งไปในกล่องที่ชื่อว่า token 
+          // ฝั่ง Laravel จะแกะกล่องนี้อ่านด้วยคำสั่ง $request->token
+          token: tokenResponse.access_token
+        });
 
-        const userSession = {
-          name: userInfo.name,
-          email: userInfo.email,
-          avatar: userInfo.picture,
-          isLoggedIn: true,
-          role: 'user' 
-        };
-        localStorage.setItem("user_session", JSON.stringify(userSession)); 
-        
-        const defaultProfile = {
-          name: userInfo.name,
-          bio: "ยินดีต้อนรับสู่ MyBioLink ของฉัน ✨",
-          avatar: userInfo.picture,
-          username: userInfo.email.split('@')[0] 
-        };
-        localStorage.setItem("bio_profile", JSON.stringify(defaultProfile));
+        // case ที่หลังบ้านตอบกลับมาว่าสำเร็จ
+        if (response.status === 200) {
 
-        syncUserToAdminDatabase(userSession);
+          // ดึงข้อมูลโปรไฟล์ผู้ใช้ในระบบเรา (ตัวแปร $user จากฝั่ง Laravel) ออกมาเก็บไว้
+          const userData = response.data.user;
+          const apiToken = response.data.token;
 
-        alert(`ยินดีต้อนรับคุณ ${userInfo.name}!`);
-        navigate('/dd'); 
-        
-      } catch (error) {
-        alert("ไม่สามารถเข้าถึงข้อมูลสิทธิ์ของผู้ใช้งานได้ กรุณาลองใหม่อีกครั้ง");
-      } finally {
+          // เคลียร์ความจำเก่า และเก็บข้อมูลใหม่ลง LocalStorage ให้รูปแบบเดียวกับการล็อกอินปกติ
+          localStorage.clear();
+          localStorage.setItem('token', apiToken); // เก็บ Token ของ Sanctum
+          localStorage.setItem('user', JSON.stringify(userData)); // เก็บข้อมูล User
+          
+          window.dispatchEvent(new Event("storage")); // แจ้งเตือนระบบว่าล็อกอินแล้ว
+
+          alert(`เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับคุณ ${userData.name}`);
+
+          // ตรวจสอบ role
+          if (userData.role === "admin") {
+            navigate('/admin'); 
+          } else {
+            navigate('/dd'); 
+          }
+        }
+      } 
+      catch (error){
+        console.error("Google Login Backend Error:", error);
+        alert("เข้าสู่ระบบด้วย Google ไม่สำเร็จกรุณาลองใหม่อีกครั้งค่ะ");
+      } 
+      // ไม่ว่าจะทำงานสำเร็จหรือไม่การใช้ finally เป็นการบอกว่าใต้สิ่งนี้จะต้องทำงานเสมอ
+      finally {
         setIsLoading(false); 
       }
     },
     onError: (error) => {
-      alert("การเข้าสู่ระบบผ่าน Google ถูกยกเลิกหรือล้มเหลว");
+      console.log('Google Popup Error:', error);
+      alert("การเข้าสู่ระบบผ่าน Google ถูกยกเลิก");
     }
   });
 
@@ -133,7 +125,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
       // ยิง API ไปหา Laravel Backend
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/login`, payload);
-
+ 
       
       console.log("API Response Data:", response.data);
 
