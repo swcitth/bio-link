@@ -25,13 +25,27 @@ import {
   MOCK_STATS,
 } from "../data/mockData";
 
+// ⭐️ 1. เพิ่มฟังก์ชัน Image Preloading (ผู้ช่วยดาวน์โหลดรูปลง RAM) ⭐️
+const preloadImage = (url) => {
+  return new Promise((resolve) => {
+    if (!url) {
+      resolve();
+      return;
+    }
+    const img = new Image();
+    img.src = url;
+    img.onload = () => resolve();  // แจ้งเตือนเมื่อโหลดเสร็จ
+    img.onerror = () => resolve(); // ถ้าไฟล์เสียให้ข้ามไป ระบบจะได้ไม่ค้าง
+  });
+};
+
 const DashboardPage = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
-  // ⭐️ ดึงข้อมูล User ตัวจริงและเจาะเข้าไปใน object `user`
+  // ดึงข้อมูล User ตัวจริงและเจาะเข้าไปใน object `user`
   const realUserStr = localStorage.getItem('user');
   let realUser = realUserStr ? JSON.parse(realUserStr) : null;
   
@@ -40,7 +54,7 @@ const DashboardPage = () => {
     realUser = realUser.user;
   }
 
-  // ⭐️ ดักจับและลบช่องว่าง (Spacebar) ออกจาก username ทันทีที่โหลดข้อมูลมา
+  // ดักจับและลบช่องว่าง (Spacebar) ออกจาก username ทันทีที่โหลดข้อมูลมา
   if (realUser && typeof realUser.username === 'string') {
     realUser.username = realUser.username.trim();
   }
@@ -101,8 +115,11 @@ const DashboardPage = () => {
   const [profile, setProfile] = useState(() => loadData("bio_profile", INITIAL_PROFILE));
   const [links,   setLinks]   = useState(() => loadData("bio_links", []));
   const [design,  setDesign]  = useState(() => loadData("bio_design", MOCK_DESIGN));
+  
+  // ⭐️ 2. เพิ่ม State สำหรับจัดการหน้าจอ Loading ⭐️
+  const [isLoading, setIsLoading] = useState(true); 
 
-  // ⭐️ ฟังก์ชัน fetchMyProfile สำหรับดึงข้อมูลจาก Database ⭐️
+  // ฟังก์ชัน fetchMyProfile สำหรับดึงข้อมูลจาก Database
   const fetchMyProfile = async () => {
     console.log("👉 User ที่กำลังใช้งานอยู่คือ:", realUser);
 
@@ -112,7 +129,6 @@ const DashboardPage = () => {
     }
 
     try {
-      // url จะไม่มี %20 แน่นอนเพราะโดน trim() ไปแล้วด้านบน
       console.log(`📡 กำลังดึงข้อมูลจาก: http://127.0.0.1:8000/api/profiles/${realUser.username}`);
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/profiles/${realUser.username}`);
       
@@ -121,15 +137,27 @@ const DashboardPage = () => {
       const dbData = response.data.data || response.data; 
 
       if (response.status === 200 && dbData) {
+        
+        // ⭐️ 3. เตรียม URL ของรูปภาพ และส่งให้เบราว์เซอร์โหลดล่วงหน้า (Preload) ⭐️
+        const avatarUrlToLoad = dbData.images?.avatar ? `http://127.0.0.1:8000${dbData.images.avatar}` : null;
+        const coverUrlToLoad = dbData.images?.cover ? `http://127.0.0.1:8000${dbData.images.cover}` : null;
+        const bgImageUrlToLoad = dbData.images?.background ? `http://127.0.0.1:8000${dbData.images.background}` : null;
+
+        await Promise.all([
+          preloadImage(avatarUrlToLoad),
+          preloadImage(coverUrlToLoad),
+          preloadImage(bgImageUrlToLoad)
+        ]);
+
+        // ⭐️ 4. อัปเดตข้อมูลใส่ State โดยใช้ URL ที่โหลดเสร็จแล้ว ⭐️
         setProfile(prev => ({
           ...prev,
           username: dbData.username || realUser.username,
           name: dbData.display_name || prev.name,
           bio: dbData.bio || prev.bio,
           
-          // ⭐️ แก้ไขให้ตรงกับโครงสร้าง ProfileResource (images และ contact) ⭐️
-          avatar: dbData.images?.avatar ? `http://127.0.0.1:8000${dbData.images.avatar}` : prev.avatar,
-          cover: dbData.images?.cover ? `http://127.0.0.1:8000${dbData.images.cover}` : prev.cover,
+          avatar: avatarUrlToLoad || prev.avatar,
+          cover: coverUrlToLoad || prev.cover,
           avatarFile: null,
           coverFile: null,
           
@@ -143,7 +171,6 @@ const DashboardPage = () => {
         }));
 
         if (dbData.theme) {
-          // ตรวจสอบว่าข้อมูลที่ส่งกลับมาต้องทำการแปลงรูปวัตถุหรือไม่
           const themeCfg = typeof dbData.theme === 'string' ? JSON.parse(dbData.theme) : dbData.theme;
           
           setDesign(prev => ({ 
@@ -158,8 +185,8 @@ const DashboardPage = () => {
             btnBorderColor: themeCfg.btnBorderColor || prev.btnBorderColor,
             btnRounded: themeCfg.btnRounded || prev.btnRounded,
             btnStyle: themeCfg.btnStyle || prev.btnStyle,
-            // คงค่ารูปภาพพื้นหลังเดิมไว้
-            bgImage: dbData.images?.background ? `http://127.0.0.1:8000${dbData.images.background}` : prev.bgImage,
+            
+            bgImage: bgImageUrlToLoad || prev.bgImage,
             bgImageFile: null
           }));
         }
@@ -168,7 +195,6 @@ const DashboardPage = () => {
       console.error("❌ ไม่พบข้อมูล Profile เดิม หรือเกิดข้อผิดพลาด:", error);
     }
   };
-
 
   const fetchMyBlocks = async () => {
     try {
@@ -182,25 +208,21 @@ const DashboardPage = () => {
       if (response.status === 200) {
         const dbBlocks = response.data.data || [];
         
-        // (Data Mapping) แปลงหน้าตาข้อมูล DB ให้ React เข้าใจ
         const formattedBlocks = dbBlocks.map((block) => {
-          
-          // แปลง 'type' จากหลังบ้าน ให้กลายเป็น 'icon' เพื่อให้ React โชว์รูปถูก
-          let iconName = "Link"; // ค่าเริ่มต้น
-          if (block.type === "VIDEO") iconName = "Youtube"; // วิดีโอใช้เงื่อนไข Youtube นำทาง
+          let iconName = "Link"; 
+          if (block.type === "VIDEO") iconName = "Youtube"; 
           if (block.type === "IMAGE") iconName = "Image";
 
           return {
             id: block.id,
-            title: block.title || "", // ถ้า title เป็น NULL ให้โชว์คำว่า ""
+            title: block.title || "", 
             icon: iconName,
-            visible: block.is_visible === 1 || block.is_visible === true, // แปลง 1/0 เป็น true/false
+            visible: block.is_visible === 1 || block.is_visible === true, 
             clicks: 0,
-            items: block.content_data || [] // ย้าย content_data มาใส่กล่อง items
+            items: block.content_data || [] 
           };
         });
 
-        // เอาข้อมูลที่แปลภาษาแล้ว ไปใส่ในหน้าจอ
         setLinks(formattedBlocks); 
         localStorage.setItem("bio_links", JSON.stringify(formattedBlocks)); 
       }
@@ -209,13 +231,18 @@ const DashboardPage = () => {
     }
   };
 
-  // 
+  // ⭐️ 5. ปรับ useEffect ให้รอดาวน์โหลดทั้ง Data และ Image จนครบ ค่อยปิดหน้า Loading ⭐️
   useEffect(() => {
-    fetchMyProfile();
-    fetchMyBlocks(); 
+    const initializeData = async () => {
+      setIsLoading(true);
+      await Promise.all([fetchMyProfile(), fetchMyBlocks()]);
+      setIsLoading(false); // ปิด Loading ตรงนี้ (เมื่อเสร็จหมดแล้ว)
+    };
+    
+    initializeData();
   }, []);
 
-  // 🟢 บันทึกข้อมูลลง localStorage ทุกครั้งที่มีการเปลี่ยนแปลง เพื่อให้ Preview แสดงผลเรียลไทม์
+  // บันทึกข้อมูลลง localStorage ทุกครั้งที่มีการเปลี่ยนแปลง
   useEffect(() => {
     localStorage.setItem("preview_profile", JSON.stringify(profile));
     localStorage.setItem("preview_links", JSON.stringify(links));
@@ -231,25 +258,20 @@ const DashboardPage = () => {
     setLinks((prev) => prev.map((l) => (l.id === updatedLink.id ? updatedLink : l)));
 
   const handleDeleteLink = async (id) => {
-    // ถามเพื่อความชัวร์ก่อนลบ
     const isConfirm = window.confirm("แน่ใจหรือไม่ว่าต้องการลบบล็อกนี้?");
     if (!isConfirm) return;
 
     try {
-      // ยิง API แบบ DELETE ไปหา Laravel
       const token = localStorage.getItem("token");
       await axios.delete(`${import.meta.env.VITE_API_URL}/blocks/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // ถ้า Laravel ลบสำเร็จ ค่อยมาลบออกจากหน้าจอ (State)
       const updatedLinks = links.filter((l) => l.id !== id);
       setLinks(updatedLinks);
 
-      // อัปเดต LocalStorage ให้ตรงกัน
       localStorage.setItem("bio_links", JSON.stringify(updatedLinks));
       
-      // ให้หน้า Preview รีเฟรชตัวเอง
       window.dispatchEvent(new Event("storage"));
       window.dispatchEvent(new Event("db_updated")); 
 
@@ -297,10 +319,8 @@ const DashboardPage = () => {
     }
   };
   
-  // ⭐️ ฟังก์ชันบันทึกข้อมูลและอัปโหลดไฟล์ไปที่ Laravel ⭐️
   const handleSave = async () => {
   try {
-    // ⭐️ ลบช่องว่างส่วนเกินออกจาก username ที่ผู้ใช้กรอกบนหน้าเว็บ
     const cleanProfileUsername = profile.username ? profile.username.trim() : "";
 
     if (!cleanProfileUsername) {
@@ -308,17 +328,14 @@ const DashboardPage = () => {
       return;
     }
 
-    // 1. บันทึกใน localStorage ด้วยชื่อที่ไม่มีช่องว่าง
     localStorage.setItem("bio_profile", JSON.stringify({ ...profile, username: cleanProfileUsername }));
     localStorage.setItem("bio_links", JSON.stringify(links));
     localStorage.setItem("bio_design", JSON.stringify(design));
 
-    // 2. สร้าง FormData สำหรับส่งข้อมูลและไฟล์รูปภาพ
     const formData = new FormData();
-    formData.append("_method", "PUT"); // หลอก Laravel ว่าเป็น PUT request
+    formData.append("_method", "PUT"); 
 
-    // เพิ่มข้อมูล Text เข้าไปใน FormData
-    formData.append("username", cleanProfileUsername); // ส่งชื่อที่ไม่มีช่องว่างไปฐานข้อมูล
+    formData.append("username", cleanProfileUsername); 
     formData.append("display_name", profile.name || "");
     formData.append("bio", profile.bio || "");
     formData.append("contact_name", profile.contactName || "");
@@ -329,7 +346,6 @@ const DashboardPage = () => {
     formData.append("contact_website", profile.website || "");
     formData.append("show_save_contact", profile.showSaveContact !== false ? 1 : 0);
 
-    // ─── ⭐️ เพิ่มโค้ดส่วนนี้เพื่อมัดรวมข้อมูลดีไซน์ส่งไปหลังบ้าน ⭐️ ───
     const themeConfigData = {
       theme: design.theme || "custom",
       font: design.font || "kanit",
@@ -344,7 +360,6 @@ const DashboardPage = () => {
     };
     formData.append("theme_config", JSON.stringify(themeConfigData));
 
-    // 3. แนบไฟล์รูปภาพของจริง (ถ้ามีไฟล์ใหม่เลือกเข้ามา)
     if (profile.avatarFile) {
       formData.append("avatar", profile.avatarFile);
     }
@@ -355,7 +370,6 @@ const DashboardPage = () => {
       formData.append("bg_image", design.bgImageFile);
     }
 
-    // 4. ยิง API ด้วย POST โดยอ้างอิงจาก username เดิม
     const response = await axios.post(
       `http://127.0.0.1:8000/api/profiles/${realUser.username}/test-update`,
       formData,
@@ -369,15 +383,12 @@ const DashboardPage = () => {
     if (response.status === 200) {
       alert("💾 บันทึกข้อมูลและรูปภาพลงฐานข้อมูล MySQL จริงสำเร็จเรียบร้อยแล้วครับ!");
       
-      // อัปเดต state ให้หน้าจอโชว์ชื่อที่ลบช่องว่างแล้ว
       setProfile(prev => ({ ...prev, username: cleanProfileUsername }));
 
-      // อัปเดต Username ในระบบจำล็อกอิน เผื่อผู้ใช้เปลี่ยนชื่อบนหน้าเว็บ
       const updatedUser = { ...realUser, username: cleanProfileUsername };
       localStorage.setItem('user', JSON.stringify(updatedUser));
-      realUser.username = cleanProfileUsername; // อัปเดตตัวแปรปัจจุบันทันที
+      realUser.username = cleanProfileUsername; 
 
-      // เรียกใช้ฟังก์ชัน fetchMyProfile เพื่อดึงรูปจริงและเคลียร์ไฟล์ออกจาก state
       if (typeof fetchMyProfile === 'function') {
         fetchMyProfile();
       }
@@ -397,6 +408,16 @@ const DashboardPage = () => {
   const handleShare = () => {
     setIsShareModalOpen(true); 
   };
+
+  // ⭐️ 6. เช็คสถานะ Loading ถ้ากำลังโหลดอยู่ จะแสดงหน้านี้บังไว้ ⭐️
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#eef0f8] flex flex-col items-center justify-center relative z-50">
+        <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin shadow-md"></div>
+        <p className="mt-4 text-indigo-600 font-semibold animate-pulse">กำลังโหลดข้อมูลและรูปภาพ...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#eef0f8] font-sans overflow-x-hidden relative">

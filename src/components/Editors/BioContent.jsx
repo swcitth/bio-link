@@ -183,9 +183,25 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                             </div>
                           )}
                           
-                          <h4 className={`${isCompact ? "text-[13px]" : "text-sm"} font-bold px-1`} style={{ color: safeDesign.textColor || "#000" }}>{item?.name || item?.title || "สินค้า"}</h4>
-                          {isCompact && <p className="text-[10px] opacity-70 px-1 mt-0.5" style={{ color: safeDesign.textColor }}>{item?.description || "รายละเอียดสินค้า"}</p>}
-                          {isCompact && <p className="text-[11px] font-bold px-1 mt-1" style={{ color: safeDesign.textColor }}>{item?.price ? `${item.price} THB` : "0 THB"}</p>}
+                          {/* ⭐️ แก้ไขเงื่อนไขการแสดงผล (ซ่อนค่า Fallback ขยะ) ⭐️ */}
+                          {(item?.name || item?.title) && (
+                            <h4 className={`${isCompact ? "text-[13px]" : "text-sm"} font-bold px-1`} style={{ color: safeDesign.textColor || "#000" }}>
+                              {item?.name || item?.title}
+                            </h4>
+                          )}
+                          
+                          {(isCompact && item?.description) && (
+                            <p className="text-[10px] opacity-70 px-1 mt-0.5" style={{ color: safeDesign.textColor }}>
+                              {item.description}
+                            </p>
+                          )}
+                          
+                          {(isCompact && item?.price) && (
+                            <p className="text-[11px] font-bold px-1 mt-1" style={{ color: safeDesign.textColor }}>
+                              {item.price} THB
+                            </p>
+                          )}
+                          
                         </WrapperTag>
                       );
                     })}

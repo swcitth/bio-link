@@ -2,6 +2,13 @@ import React, { useRef, useState } from "react";
 // นำเข้าไอคอน User เพิ่มเติมสำหรับช่องกรอกชื่อ
 import { Pencil, Camera, UploadCloud, Trash2, Phone, Mail, Building, Briefcase, User, Globe } from "lucide-react";
 
+// ⭐️ เพิ่มฟังก์ชันผู้ช่วยแปลง URL เพื่อให้ดึงรูปจาก Laravel ได้ถูกต้อง
+const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith("http") || path.startsWith("blob:") || path.startsWith("data:")) return path;
+  return `http://127.0.0.1:8000${path}`;
+};
+
 const ProfileEditor = ({ profile, setProfile }) => {
   const avatarRef = useRef(null);
   const coverRef  = useRef(null);
@@ -43,16 +50,17 @@ const ProfileEditor = ({ profile, setProfile }) => {
         <div 
           onClick={() => coverRef.current.click()}
           className={`relative border-2 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all group overflow-hidden ${
-            profile.cover ? "border-transparent shadow-sm" : "border-dashed border-slate-300 bg-slate-50/50 hover:border-indigo-400 hover:bg-indigo-50/50"
+            (profile.cover || profile.cover_url) ? "border-transparent shadow-sm" : "border-dashed border-slate-300 bg-slate-50/50 hover:border-indigo-400 hover:bg-indigo-50/50"
           }`}
-          style={profile.cover ? { backgroundImage: `url(${profile.cover})`, backgroundSize: "cover", backgroundPosition: "center" } : {}}
+          // ⭐️ ครอบด้วย getImageUrl() และเช็คตัวแปร cover_url
+          style={(profile.cover || profile.cover_url) ? { backgroundImage: `url(${getImageUrl(profile.cover || profile.cover_url)})`, backgroundSize: "cover", backgroundPosition: "center" } : {}}
         >
-          {profile.cover && <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all" />}
+          {(profile.cover || profile.cover_url) && <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all" />}
           <div className="relative z-10 flex flex-col items-center">
             <div className="bg-white p-3 rounded-full shadow-sm mb-2 group-hover:scale-110 transition-transform">
               <UploadCloud size={24} className="text-indigo-500" />
             </div>
-            {profile.cover ? (
+            {(profile.cover || profile.cover_url) ? (
               <p className="text-sm font-bold text-white drop-shadow-md">คลิกเพื่อเปลี่ยนรูปหน้าปกใหม่</p>
             ) : (
               <>
@@ -64,13 +72,13 @@ const ProfileEditor = ({ profile, setProfile }) => {
             )}
           </div>
         </div>
-        {profile.cover && (
+        {(profile.cover || profile.cover_url) && (
           <div className="flex justify-end mt-3">
             <button 
-              // ✨ อัปเดตตอนกดลบรูปปก ให้ลียร์ไฟล์จริง (coverFile) ทิ้งด้วย
+              // ✨ อัปเดตตอนกดลบรูปปก ให้ล้าง cover_url ของเดิมทิ้งด้วย
               onClick={(e) => { 
                 e.stopPropagation(); 
-                setProfile({ ...profile, cover: "", coverFile: null }); 
+                setProfile({ ...profile, cover: "", cover_url: "", coverFile: null }); 
               }} 
               className="text-sm text-red-500 hover:text-red-600 font-medium flex items-center gap-1.5 transition-colors"
             >
@@ -92,8 +100,9 @@ const ProfileEditor = ({ profile, setProfile }) => {
           onMouseOut={() => setHoverAvatar(false)}
         >
           <div className="w-[72px] h-[72px] rounded-full border-4 border-white shadow-lg overflow-hidden">
+            {/* ⭐️ ครอบด้วย getImageUrl() และเช็คตัวแปร avatar_url */}
             <img
-              src={profile.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"} alt="avatar"
+              src={getImageUrl(profile.avatar || profile.avatar_url) || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"} alt="avatar"
               className="w-full h-full object-cover"
             />
           </div>
@@ -143,7 +152,7 @@ const ProfileEditor = ({ profile, setProfile }) => {
             />
           </div>
 
-          {/* ⭐️ ข้อมูลติดต่อ (เพิ่มช่องกรอก "ชื่อสำหรับการบันทึก") ⭐️ */}
+          {/* ข้อมูลติดต่อ (เพิ่มช่องกรอก "ชื่อสำหรับการบันทึก") */}
           <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
             <p className="text-xs font-bold text-slate-500">ข้อมูลติดต่อ (สำหรับปุ่ม Save Contact)</p>
             
@@ -205,7 +214,7 @@ const ProfileEditor = ({ profile, setProfile }) => {
               </div>
             </div>
 
-            {/* ⭐️ ช่องกรอกเว็บไซต์ ⭐️ */}
+            {/* ช่องกรอกเว็บไซต์ */}
             <div className="relative">
               <input
                 type="url"
@@ -219,7 +228,7 @@ const ProfileEditor = ({ profile, setProfile }) => {
 
           </div>
 
-          {/* ⭐️ สวิตช์เปิด-ปิด ปุ่ม Save Contact ⭐️ */}
+          {/* สวิตช์เปิด-ปิด ปุ่ม Save Contact */}
           <div className="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-slate-700">แสดงปุ่ม Save Contact</p>
