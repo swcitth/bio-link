@@ -1,5 +1,5 @@
 import React from "react";
-import axios from "axios"; // 1. นำเข้า axios
+import axios from "axios";
 
 const getTextColorBasedOnBg = (bgColor) => {
   if (!bgColor) return "#000000"; 
@@ -17,38 +17,102 @@ const getTextColorBasedOnBg = (bgColor) => {
   return yiq >= 128 ? "#000000" : "#ffffff"; 
 };
 
+// ⭐️ ฟังก์ชันตัวช่วย: แปลง WebP/PNG เป็น JPEG ขนาดเล็กสำหรับ iOS โดยเฉพาะ ⭐️
+const processImageForVCF = (dataUrl) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      // ย่อขนาดไม่ให้เกิน 300px ป้องกัน iOS ดีดรูปทิ้งเพราะไฟล์ใหญ่ไป
+      const MAX_SIZE = 300; 
+      let width = img.width;
+      let height = img.height;
+
+      if (width > MAX_SIZE || height > MAX_SIZE) {
+        if (width > height) {
+          height = Math.round((height * MAX_SIZE) / width);
+          width = MAX_SIZE;
+        } else {
+          width = Math.round((width * MAX_SIZE) / height);
+          height = MAX_SIZE;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      
+      // เทพื้นหลังสีขาวทับ (ป้องกันพื้นหลังดำในกรณีที่เป็นรูปใส PNG/WebP)
+      ctx.fillStyle = "#FFFFFF"; 
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // บังคับแปลงเป็น JPEG เท่านั้น
+      const jpegBase64 = canvas.toDataURL("image/jpeg", 0.8).split(",")[1];
+      resolve(jpegBase64);
+    };
+    img.onerror = () => reject(new Error("Failed to process image"));
+    img.src = dataUrl;
+  });
+};
+
 const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false }) => {
   const profile = profileData || {};
   
-  // ⭐️ 2. ฟังก์ชันเก็บสถิติการกดปุ่ม Save Contact
   const trackSaveContact = async () => {
     try {
-      const sessionId = sessionStorage.getItem("analytics_session");
+      let sessionId = sessionStorage.getItem("analytics_session");
+      if (!sessionId) {
+        sessionId = 'session_' + Math.random().toString(36).substr(2, 9);
+        sessionStorage.setItem("analytics_session", sessionId);
+      }
+
       await axios.post(`${import.meta.env.VITE_API_URL}/analytics/track/${profile.username}`, {
-        session_id: sessionId,
-        block_id: 999999, // รหัสพิเศษสำหรับปุ่ม Save Contact
-        referrer_url: document.referrer
+        session_id: sessionId, 
+        block_id: 999999,
+        referrer_url: document.referrer || "direct" 
       });
     } catch (err) {
-      console.log("Analytics Save Contact Error:", err);
+      console.log("Analytics Error:", err);
     }
   };
 
-  const handleSaveContact = () => {
-    // ⭐️ เก็บสถิติก่อนเริ่มทำงาน
+  const handleSaveContact = async () => {
     trackSaveContact();
 
     let photoData = "";
-    if (profile.avatar && profile.avatar.includes("base64,")) {
-      const base64String = profile.avatar.split("base64,")[1];
-      const mimeType = profile.avatar.substring(5, profile.avatar.indexOf(";"));
-      let ext = mimeType.split("/")[1]?.toUpperCase() || "JPEG";
-      if (ext === "JPG") ext = "JPEG";
-      
-      photoData = `\nPHOTO;ENCODING=b;TYPE=${ext}:${base64String}`;
+    if (profile.avatar) {
+      try {
+        let dataUrlToProcess = profile.avatar;
+
+        // ถ้าเป็น URL ให้ Fetch มาเป็น Base64 ก่อน
+        if (profile.avatar.startsWith("http")) {
+          const filenameRaw = profile.avatar.split('/').pop();
+          const filename = filenameRaw.split('?')[0]; 
+
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/get-avatar/${filename}`);
+          const blob = await response.blob();
+          
+          dataUrlToProcess = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        }
+
+        // ⭐️ โยนเข้าฟังก์ชันแปลง WebP เป็น JPEG ⭐️
+        if (dataUrlToProcess) {
+          const cleanJpegBase64 = await processImageForVCF(dataUrlToProcess);
+          if (cleanJpegBase64) {
+            photoData = `PHOTO;ENCODING=b;TYPE=JPEG:${cleanJpegBase64}`;
+          }
+        }
+      } catch (e) {
+        console.error("Error processing avatar image for VCF:", e);
+      }
     }
 
-    // ⭐️ โค้ดเดิม: ดึงบริษัทและตำแหน่งเข้า Note
     let noteData = "";
     if (profile.company || profile.title) {
       const companyText = profile.company ? `บริษัท: ${profile.company}` : "";
@@ -56,23 +120,32 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
       
       const combinedNote = [companyText, titleText].filter(Boolean).join("  ");
       if (combinedNote) {
-        noteData = `\nNOTE:${combinedNote}`;
+        noteData = `NOTE:${combinedNote}`;
       }
     }
 
     const finalName = profile.contactName || profile.name || "ไม่มีชื่อ";
+    const websiteData = profile.website ? `URL:${profile.website}` : "";
 
-    // ⭐️ โค้ดเดิม: แท็ก URL สำหรับโฮมเพจ
-    const websiteData = profile.website ? `\nURL:${profile.website}` : "";
-
-    const vcardContent = `BEGIN:VCARD\nVERSION:3.0\nFN:${finalName}${noteData}\nTEL;TYPE=CELL:${profile.phone || ""}\nEMAIL:${profile.email || ""}${websiteData}${photoData}\nEND:VCARD`;
+    // ต่อสตริงด้วย \r\n (CRLF) ซึ่งเป็นข้อบังคับของ iOS 
+    const vcardContent = [
+      "BEGIN:VCARD",
+      "VERSION:3.0",
+      `FN:${finalName}`,
+      noteData ? noteData.trim() : "",
+      `TEL;TYPE=CELL:${profile.phone || ""}`,
+      `EMAIL:${profile.email || ""}`,
+      websiteData ? websiteData.trim() : "",
+      photoData ? photoData.trim() : "",
+      "END:VCARD"
+    ].filter(Boolean).join("\r\n");
 
     const blob = new Blob([vcardContent], { type: "text/vcard;charset=utf-8" });
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${finalName}.vcf`;
+    link.download = `${finalName.replace(/\s+/g, '_')}.vcf`;
     document.body.appendChild(link);
     link.click();
 
