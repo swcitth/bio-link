@@ -17,7 +17,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import ShareModal    from "../components/Modals/ShareModal";
 
 // 🌟 นำเข้าแค่ api กลางตัวเดียวพอ (ลบ import axios ธรรมดาทิ้งแล้ว)
-import api           from "../api/axios"; 
+import axios           from "../api/axios";
+import api           from "../api/axios";
 
 // Hooks
 import { useDragSort } from "../hooks/useDragSort";
