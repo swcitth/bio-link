@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, Lock } from 'lucide-react'; 
 import ButtonBig from '../UI/Button/ButtonBig';
 import InputField from './InputField'; 
@@ -21,6 +21,12 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
   // จัดการในส่วนของ การจดจำการเข้าสู่ระบบ
   const [rememberMe, setRememberMe] = useState(false);
+
+  // สร้างตู้เซฟ Ref เพื่อเก็บค่าล่าสุดแบบ Real-time ไม่ให้ Google ลืม
+  const rememberMeRef = useRef(rememberMe);
+  useEffect(() => {
+    rememberMeRef.current = rememberMe;
+  }, [rememberMe]);
 
   // ฟังก์ชันตรวจสอบอีเมลแบบ Real-time
   const handleIdentifierChange = (e) => {
@@ -69,7 +75,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           localStorage.clear();
           sessionStorage.clear();
 
-          const storage = rememberMe ? localStorage : sessionStorage;
+          const storage = rememberMeRef.current ? localStorage : sessionStorage;
 
           storage.setItem('token', apiToken); // เก็บ Token ของ Sanctum
           storage.setItem('user', JSON.stringify(userData)); // เก็บข้อมูล User
@@ -145,7 +151,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
       localStorage.clear();
       sessionStorage.clear();
 
-      const storage = rememberMe ? localStorage : sessionStorage;
+      const storage = rememberMeRef.current ? localStorage : sessionStorage;
 
       storage.setItem('token', response.data.access_token);
       storage.setItem('user', JSON.stringify(userData));
@@ -165,8 +171,12 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
       console.error("Catch Error:", error);
       
       if (error.response) {
+        // ดักจับ Status 429 โดนบล็อกเพราะกรอกผิด 5 ครั้ง
+        if (error.response.status === 429) {
+          alert(error.response.data.message); // ดึงข้อความ "กรุณารอ X นาที" จาก Laravel มาโชว์
+        } 
         // ถ้าเข้าเงื่อนไขนี้ แปลว่าเป็น Error จากฝั่ง Laravel ตอบกลับมา
-        if (error.response.status === 401) {
+        else if (error.response.status === 401) {
           alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้งค่ะ");
         } else if (error.response.status === 422) {
           alert("รูปแบบข้อมูลไม่ถูกต้อง กรุณาใช้อีเมลในการเข้าสู่ระบบ");
@@ -174,7 +184,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           alert("เซิร์ฟเวอร์เกิดข้อผิดพลาด (Status: " + error.response.status + ")");
         }
       } else {
-        // ถ้าเข้าเงื่อนไขนี้ แปลว่าโค้ด React ของเราเองที่ทำงานผิดพลาด (เช่น พิมพ์ชื่อตัวแปรผิด)
+        // ถ้าเข้าเงื่อนไขนี้ แปลว่าโค้ด React ของเราเองที่ทำงานผิดพลาด
         alert("เกิดข้อผิดพลาดในหน้าเว็บ: " + error.message);
       }
     }
