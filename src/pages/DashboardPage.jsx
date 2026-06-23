@@ -16,6 +16,7 @@ import StatsPage     from "../pages/StatsPage";
 import { useNavigate, useLocation } from "react-router-dom";
 import ShareModal    from "../components/Modals/ShareModal";
 import api         from "../api/axios"; 
+import axios from "axios";
 
 // Hooks
 import { useDragSort } from "../hooks/useDragSort";
@@ -198,16 +199,41 @@ const DashboardPage = () => {
 
   const fetchMyBlocks = async () => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
-      const response = await api.get('/blocks');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/blocks`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
       if (response.status === 200) {
         const dbBlocks = response.data.data || [];
         
         const formattedBlocks = dbBlocks.map((block) => {
           let iconName = "Link"; 
-          if (block.type === "VIDEO") iconName = "Youtube"; 
-          if (block.type === "IMAGE") iconName = "Image";
+          
+          if (block.type === "IMAGE") {
+            iconName = "Image";
+          } 
+          else if (block.type === "VIDEO") {
+            // ดักจับจากชื่อหัวข้อ (เผื่อไว้)
+            const isTikTokTitle = block.title && block.title.toLowerCase().includes("tiktok");
+            
+            // ⭐️ ดักจับจาก "ลิงก์" ที่แนบมา (เช็คให้ครอบคลุมทั้ง item.link และ item.url) ⭐️
+            const isTikTokLink = Array.isArray(block.content_data) && block.content_data.some(item => {
+              const videoStr = item.link || item.url || "";
+              return videoStr.toLowerCase().includes("tiktok");
+            });
+
+            // ถ้าชื่อมีคำว่า tiktok หรือ "ลิงก์" มีคำว่า tiktok ให้เปลี่ยนเป็นโลโก้ TikTok ทันที!
+            iconName = (isTikTokTitle || isTikTokLink) ? "TikTok" : "Youtube";
+          } 
+          else if (block.type === "TIKTOK" || block.type === "TikTok") {
+            iconName = "TikTok";
+          }
+          else if (block.type === "YOUTUBE" || block.type === "Youtube") {
+            iconName = "Youtube";
+          }
 
           return {
             id: block.id,
@@ -275,10 +301,34 @@ const DashboardPage = () => {
     }
   };
 
-  const handleToggleVisibility = (id) =>
-    setLinks((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, visible: !l.visible } : l))
+  const handleToggleVisibility = async (id) => {
+    // 1. อัปเดต State ให้หน้าจอ (ปุ่มตา) เปลี่ยนทันที
+    const updatedLinks = links.map((l) =>
+      l.id === id ? { ...l, visible: !l.visible } : l
     );
+    setLinks(updatedLinks);
+
+    // 2. ซิงค์ข้อมูลลง LocalStorage ทันที ป้องกันบั๊กรูปหายตอนหน้าจอรีเฟรช
+    localStorage.setItem("bio_links", JSON.stringify(updatedLinks));
+    window.dispatchEvent(new Event("storage"));
+
+    // 3. ยิง API ไปบอกหลังบ้านทันทีเลยว่า "ซ่อน/แสดง" บล็อกนี้ (ไม่ต้องรอกดปุ่มบันทึกใหญ่)
+    try {
+      const targetLink = updatedLinks.find(l => l.id === id);
+      const token = localStorage.getItem("token");
+      
+      if (token) {
+        await axios.put(
+          `${import.meta.env.VITE_API_URL}/blocks/${id}`,
+          { is_visible: targetLink.visible ? 1 : 0 }, // ส่งค่าไปอัปเดต
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        console.log("อัปเดตสถานะการซ่อนบล็อกสำเร็จ!");
+      }
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาดในการอัปเดตสถานะ:", error);
+    }
+  };
 
   const handleAddNewBlock = (type, defaultTitle, defaultIcon) => {
     const newId = links.length > 0 ? Math.max(...links.map((l) => l.id)) + 1 : 1;
