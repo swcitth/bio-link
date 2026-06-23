@@ -125,7 +125,6 @@ const StatsPage = () => {
           <FaChartBar className="text-indigo-600" size={15} /> ยอดเข้าชม 7 วันล่าสุด
         </h3>
 
-        {/* ⭐️ แก้ไข: เอา h-64 ออก เพื่อไม่ให้เกิดที่ว่าง และปรับสัดส่วนกราฟให้กระชับขึ้น */}
         <div className="relative w-full mt-6">
           {stats?.chart_data?.length > 0 && (
             <svg viewBox="0 0 500 220" className="w-full h-auto overflow-visible">
@@ -184,20 +183,21 @@ const StatsPage = () => {
                       className="stroke-slate-200 stroke-2 stroke-dashed opacity-0 group-hover/dot:opacity-100 transition-opacity" 
                     />
 
-                    {/* ตุ่มวงกลม - เพิ่มขนาดให้ใหญ่ขึ้นนิดนึงเพื่อมือถือ */}
+                    {/* ตุ่มวงกลม */}
                     <circle
                       cx={x}
                       cy={y}
-                      r="6"
-                      className="fill-white stroke-indigo-600 stroke-[3px] group-hover/dot:r-8 transition-all duration-150"
+                      r="5" // ⭐️ ลดรัศมีวงกลมให้เล็กลงนิดนึง
+                      className="fill-white stroke-indigo-600 stroke-[3px] group-hover/dot:r-7 transition-all duration-150"
                     />
 
-                    {/* ตัวเลขบอกยอดวิว - เพิ่มขนาด font ให้ชัดขึ้น */}
+                    {/* ตัวเลขบอกยอดวิว */}
                     <text
                       x={x}
-                      y={y - 16}
+                      y={y - 12} // ⭐️ ปรับระยะห่างให้ใกล้ตุ่มมากขึ้น
                       textAnchor="middle"
-                      className="text-[14px] font-extrabold fill-slate-700"
+                      // ⭐️ ลดขนาด font จาก 14px เป็น 11px และปรับจาก extrabold เป็น bold
+                      className="text-[10px] font-bold fill-slate-600" 
                     >
                       {day.views}
                     </text>
@@ -205,9 +205,10 @@ const StatsPage = () => {
                     {/* ตัวอักษรชื่อย่อวัน */}
                     <text
                       x={x}
-                      y="200"
+                      y="190" // ⭐️ ขยับให้ชิดแกน x ขึ้นมาหน่อย
                       textAnchor="middle"
-                      className="text-[14px] font-bold fill-slate-400 group-hover/dot:fill-slate-600 transition-colors"
+                      // ⭐️ ลดขนาด font วันที่ลงด้วย
+                      className="text-[10px] font-semibold fill-slate-400 group-hover/dot:fill-slate-600 transition-colors"
                     >
                       {day.day_name}
                     </text>

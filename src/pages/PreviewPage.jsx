@@ -18,7 +18,8 @@ const FONT_MAP = {
   prompt: "'Prompt', sans-serif"
 };
 
-const PreviewPage = () => {
+// ⭐️ รับค่า isPublic มาจาก Route ใน App.jsx
+const PreviewPage = ({ isPublic }) => {
   const navigate = useNavigate();
   const { username } = useParams(); 
 
@@ -208,18 +209,22 @@ const PreviewPage = () => {
   return (
     <div className="min-h-screen relative bg-slate-100" style={{ fontFamily: selectedFont }}>
       
-      <div className="relative z-30">
-        <Header onLogoClick={handleLogoClick}>
-          <button 
-            onClick={handleBackClick} 
-            className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors underline underline-offset-2"
-          >
-            <FaArrowLeft size={14} /> ย้อนกลับ
-          </button>
-        </Header>
-      </div>
+      {/* ⭐️ ถ้า ไม่ใช่หน้า Public ค่อยโชว์ Header (Navbar) */}
+      {!isPublic && (
+        <div className="relative z-30">
+          <Header onLogoClick={handleLogoClick}>
+            <button 
+              onClick={handleBackClick} 
+              className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors underline underline-offset-2"
+            >
+              <FaArrowLeft size={14} /> ย้อนกลับ
+            </button>
+          </Header>
+        </div>
+      )}
 
-      <div className="max-w-xl mx-auto min-h-screen relative shadow-2xl pt-[72px]">
+      {/* ⭐️ ปรับ pt ให้สัมพันธ์กับการมีหรือไม่มี Header */}
+      <div className={`max-w-xl mx-auto min-h-screen relative shadow-2xl ${!isPublic ? 'pt-[72px]' : 'pt-0'}`}>
        
         <div className="fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-0 overflow-hidden" style={{ background: screenBackground }}>
           {design.bgImage && (

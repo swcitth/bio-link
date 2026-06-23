@@ -26,7 +26,7 @@ function App() {
 
         {/* หน้าหลักของระบบจัดการและโปรไฟล์ */}
         <Route path="/dd" element={<DashboardPage />} />
-        <Route path="/preview" element={<PreviewPage />} />
+        <Route path="/preview" element={<PreviewPage isPublic={false} />} />
         <Route path="/edit-link" element={<EditLink />} />
         <Route path="/edit-shop" element={<EditShop />} />
         <Route path="/edit-video" element={<EditVideo />} />
@@ -41,7 +41,7 @@ function App() {
         </Route>
 
         {/* แชร์ */}
-        <Route path="/:username" element={<PreviewPage />} />
+        <Route path="/:username" element={<PreviewPage isPublic={true} />} />
 
       </Routes>
     </LoadingProvider>
