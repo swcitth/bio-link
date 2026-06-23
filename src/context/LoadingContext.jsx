@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/axios'; // ⭐️ เปลี่ยนมาใช้ api ของเราแทน axios เดิม
 import LoadingScreen from '../components/UI/LoadingScreen';
 
 const LoadingContext = createContext();
@@ -9,7 +9,8 @@ export const LoadingProvider = ({ children }) => {
 
   useEffect(() => {
     // 1. ดักจับ "ขาไป" (Request): เมื่อมีการยิง API ออกไป
-    const requestInterceptor = axios.interceptors.request.use(
+    // ⭐️ ใช้ api.interceptors แทน axios
+    const requestInterceptor = api.interceptors.request.use(
       (config) => {
         // เช็คว่าถ้ามีการส่งค่า hideLoading: true มา ให้แอบยิงเงียบๆ ไม่ต้องโชว์ Loading
         if (!config.hideLoading) {
@@ -24,7 +25,8 @@ export const LoadingProvider = ({ children }) => {
     );
 
     // 2. ดักจับ "ขากลับ" (Response): เมื่อ API โหลดข้อมูลเสร็จ หรือเกิด Error
-    const responseInterceptor = axios.interceptors.response.use(
+    // ⭐️ ใช้ api.interceptors แทน axios
+    const responseInterceptor = api.interceptors.response.use(
       (response) => {
         setGlobalLoading(false);
         return response;
@@ -37,8 +39,9 @@ export const LoadingProvider = ({ children }) => {
 
     // Cleanup เมื่อออกจากระบบ
     return () => {
-      axios.interceptors.request.eject(requestInterceptor);
-      axios.interceptors.response.eject(responseInterceptor);
+      // ⭐️ ใช้ api.interceptors ในการ eject
+      api.interceptors.request.eject(requestInterceptor);
+      api.interceptors.response.eject(responseInterceptor);
     };
   }, []);
 
