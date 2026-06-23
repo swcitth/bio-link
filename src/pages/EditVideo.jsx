@@ -6,7 +6,7 @@ import ButtonSave from '../components/UI/Button/ButtonSave';
 import BlockVideo from '../components/Blocks/BlockVideo'; 
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useForm , useFieldArray } from 'react-hook-form'; 
-import axios from 'axios';
+import api from '../api/axios';
 
 export default function EditVideo() {
   const navigate = useNavigate();
@@ -35,10 +35,8 @@ export default function EditVideo() {
   useEffect(() => {
     const fetchVideoData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/blocks/${linkId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        
+        const response = await api.get(`/blocks/${linkId}`);
 
         const blockData = response.data.data;
         if (blockData) {
@@ -73,16 +71,13 @@ export default function EditVideo() {
         content_data: data.items 
       };
 
-      const token = localStorage.getItem("token");
-      const config = {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
-      };
+      
 
       let response;
       if (linkId) {
-        response = await axios.put(`${import.meta.env.VITE_API_URL}/blocks/${linkId}`, payload, config);
+        response = await api.put(`/blocks/${linkId}`, payload);
       } else {
-        response = await axios.post(`${import.meta.env.VITE_API_URL}/blocks`, payload, config);
+        response = await api.post(`/blocks`, payload);
       }
 
       if (response.status === 200 || response.status === 201) {

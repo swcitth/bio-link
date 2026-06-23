@@ -8,7 +8,7 @@ import ButtonSave from "../components/UI/Button/ButtonSave";
 import BlockLink from "../components/Blocks/Blocklink";
 import IconModal, { getIconComponent } from "../components/Modals/IconModal";
 import { useForm, useFieldArray } from "react-hook-form";
-import axios from 'axios';
+import api from '../api/axios';
 
 export default function EditLink() {
   const navigate = useNavigate();
@@ -41,17 +41,9 @@ export default function EditLink() {
   useEffect(() => {
     const fetchBlockData = async () => {
       try {
-        // ดึงกุญแจ Token จากเบราว์เซอร์
-        const token = localStorage.getItem("token"); 
 
-        // แนบ Token ไปขอข้อมูลจาก Laravel (GET)
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/blocks/${linkId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json"
-          }
-        });
-
+        const response = await api.get(`/blocks/${linkId}`);
+      
         const blockData = response.data.data;
         console.log(blockData);
 
@@ -126,24 +118,16 @@ export default function EditLink() {
         content_data: data.items 
       };
 
-      // ดึง Token เตรียมยื่นให้ยามหน้าประตู Laravel
-      const token = localStorage.getItem("token"); 
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json"
-        }
-      };
 
       let response; 
 
       // เช็คเงื่อนไขพระเอก: มี ID = แก้ไข / ไม่มี ID = สร้างใหม่
       if (linkId) {
         // โหมดแก้ไข (PUT)
-        response = await axios.put(`${import.meta.env.VITE_API_URL}/blocks/${linkId}`, payload, config);
+        response = await api.put(`/blocks/${linkId}`, payload);
       } else {
         // โหมดสร้างใหม่ (POST)
-        response = await axios.post(`${import.meta.env.VITE_API_URL}/blocks`, payload, config);
+        response = await api.post(`/blocks`, payload);
       }
 
       // ถ้ายิงผ่านฉลุย (200 = OK, 201 = Created)

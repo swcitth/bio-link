@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import ReCAPTCHA from "react-google-recaptcha";
 
-import axios from 'axios';
+import api from "../../api/axios";
 
 export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
@@ -18,6 +18,9 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [identifierError, setIdentifierError] = useState('');
+
+  // จัดการในส่วนของ การจดจำการเข้าสู่ระบบ
+  const [rememberMe, setRememberMe] = useState(false);
 
   // ฟังก์ชันตรวจสอบอีเมลแบบ Real-time
   const handleIdentifierChange = (e) => {
@@ -49,7 +52,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
       setIsLoading(true);
       try{
         // การส่งข้อมูลกลับหลังบ้าน
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/google`, {
+        const response = await api.post(`/auth/google`, {
           // ดึงค่า Access Token จาก Google ส่งไปในกล่องที่ชื่อว่า token 
           // ฝั่ง Laravel จะแกะกล่องนี้อ่านด้วยคำสั่ง $request->token
           token: tokenResponse.access_token
@@ -64,8 +67,12 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
           // เคลียร์ความจำเก่า และเก็บข้อมูลใหม่ลง LocalStorage ให้รูปแบบเดียวกับการล็อกอินปกติ
           localStorage.clear();
-          localStorage.setItem('token', apiToken); // เก็บ Token ของ Sanctum
-          localStorage.setItem('user', JSON.stringify(userData)); // เก็บข้อมูล User
+          sessionStorage.clear();
+
+          const storage = rememberMe ? localStorage : sessionStorage;
+
+          storage.setItem('token', apiToken); // เก็บ Token ของ Sanctum
+          storage.setItem('user', JSON.stringify(userData)); // เก็บข้อมูล User
           
           window.dispatchEvent(new Event("storage")); // แจ้งเตือนระบบว่าล็อกอินแล้ว
 
@@ -124,7 +131,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
       : { username: identifier, password: password};
 
       // ยิง API ไปหา Laravel Backend
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/login`, payload);
+      const response = await api.post(`/login`, payload);
  
       
       console.log("API Response Data:", response.data);
@@ -136,12 +143,14 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
       }
 
       localStorage.clear();
+      sessionStorage.clear();
 
-      // ถ้าสำเร็จ เก็บ Token และข้อมูล User ลง LocalStorage(จดจำสถานะการล็อกอิน (Session))
+      const storage = rememberMe ? localStorage : sessionStorage;
 
-      localStorage.setItem('token', response.data.access_token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('token', response.data.access_token);
+      storage.setItem('token', response.data.access_token);
+      storage.setItem('user', JSON.stringify(userData));
+      
+      window.dispatchEvent(new Event("storage"));
 
       alert("เข้าสู่ระบบสำเร็จ!");
 
@@ -209,6 +218,8 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
             <input 
               type="checkbox" 
               className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 focus:ring-offset-0 cursor-pointer"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
             />
             <span className="text-sm text-slate-600">จดจำฉันไว้ในระบบ</span>
           </label>

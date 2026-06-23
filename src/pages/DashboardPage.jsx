@@ -15,7 +15,7 @@ import PhonePreview  from "../components/Previews/PhonePreview";
 import StatsPage     from "../pages/StatsPage";
 import { useNavigate, useLocation } from "react-router-dom";
 import ShareModal    from "../components/Modals/ShareModal";
-import axios         from "axios"; 
+import api         from "../api/axios"; 
 
 // Hooks
 import { useDragSort } from "../hooks/useDragSort";
@@ -46,7 +46,7 @@ const DashboardPage = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // ดึงข้อมูล User ตัวจริงและเจาะเข้าไปใน object `user`
-  const realUserStr = localStorage.getItem('user');
+  const realUserStr = sessionStorage.getItem('user') || localStorage.getItem('user');
   let realUser = realUserStr ? JSON.parse(realUserStr) : null;
   
   // ถ้าข้อมูลที่เก็บไว้มีหน้าตาเป็น { status: 'success', user: {...} } ให้เจาะเอาแค่ user มาใช้
@@ -129,8 +129,8 @@ const DashboardPage = () => {
     }
 
     try {
-      console.log(`📡 กำลังดึงข้อมูลจาก: http://127.0.0.1:8000/api/profiles/${realUser.username}`);
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/profiles/${realUser.username}`);
+      console.log(`กำลังดึงข้อมูลจาก: http://127.0.0.1:8000/api/profiles/${realUser.username}`);
+      const response = await api.get(`/profiles/${realUser.username}`);
       
       console.log("✅ ข้อมูลที่ดึงได้จาก DB:", response.data);
 
@@ -198,12 +198,8 @@ const DashboardPage = () => {
 
   const fetchMyBlocks = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
 
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/blocks`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/blocks');
       
       if (response.status === 200) {
         const dbBlocks = response.data.data || [];
@@ -262,10 +258,8 @@ const DashboardPage = () => {
     if (!isConfirm) return;
 
     try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`${import.meta.env.VITE_API_URL}/blocks/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+
+      await api.delete(`/blocks/${id}`);
 
       const updatedLinks = links.filter((l) => l.id !== id);
       setLinks(updatedLinks);
@@ -370,8 +364,8 @@ const DashboardPage = () => {
       formData.append("bg_image", design.bgImageFile);
     }
 
-    const response = await axios.post(
-      `http://127.0.0.1:8000/api/profiles/${realUser.username}/test-update`,
+    const response = await api.post(
+      `/profiles/${realUser.username}/test-update`,
       formData,
       {
         headers: {
