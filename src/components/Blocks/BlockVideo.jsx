@@ -16,13 +16,14 @@ const getYoutubeThumbnail = (url) => {
 //ฟังก์ชันตรวจสอบว่าเป็นลิงก์ TikTok หรือไม่
 const isTikTokLink = (url) => {
   if (!url) return false;
-  return url.includes('tiktok.com');
+  return url.toLowerCase().includes('tiktok');
 };
 
 export default function BlockVideo({ item, index, register, onRemove, onToggleVisibility, dragHandleProps ,platform }) {
   const thumbnailUrl = getYoutubeThumbnail(item.link);
 
-  const isTikTok = isTikTokLink(item.link) || (!item.link && platform === "TikTok");
+  // ⭐️ แก้ไข: เช็คให้แม่นยำขึ้น ถ้ามีลิงก์ TikTok หรืออยู่ในโหมด TikTok แล้วไม่ใช่ลิงก์ Youtube ให้เป็น TikTok ทันที
+  const isTikTok = isTikTokLink(item.link) || (platform === "TikTok" && !thumbnailUrl);
 
   return (
     <div className={`bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center gap-3 md:gap-5 transition-opacity ${item.isVisible ? 'opacity-100' : 'opacity-50'}`}>
@@ -41,9 +42,9 @@ export default function BlockVideo({ item, index, register, onRemove, onToggleVi
           // ถ้าเป็นลิงก์ YouTube และมีรูปปก ให้แสดงรูปปก
           <img src={thumbnailUrl} alt="YouTube Thumbnail" className="w-full h-full object-cover" />
         ) : isTikTok ? (
-          // ถ้าเป็น TikTok โชว์ฉากหลังดำ + ไอคอน TikTok
-          <div className="w-full h-full bg-[#d1d5db]/40 flex items-center justify-center">
-            <FaTiktok size={28} className="text-slate-400 opacity-50" />
+          // ถ้าเป็น TikTok โชว์ฉากหลังดำ + ไอคอน TikTok (ปรับให้เข้ากับธีม TikTok)
+          <div className="w-full h-full bg-black flex items-center justify-center">
+            <FaTiktok size={32} className="text-white opacity-80" />
           </div>
         ) : (
           // ถ้ายังไม่มีลิงก์ + อยู่ในโหมด YouTube -> โชว์ไอคอน YouTube กลางกล่องเทา

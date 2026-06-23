@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom'; // 1. นำเข้า useSearchParams
+import { useNavigate, useSearchParams } from 'react-router-dom'; 
 import Header from "../components/Layout/Header"; 
 import ButtonAdd from '../components/UI/Button/ButtonAdd'; 
 import ButtonSave from '../components/UI/Button/ButtonSave'; 
 import BlockVideo from '../components/Blocks/BlockVideo'; 
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useForm , useFieldArray } from 'react-hook-form'; 
-import api from '../api/axios';
+import axios from 'axios';
 
 export default function EditVideo() {
   const navigate = useNavigate();
@@ -35,8 +35,10 @@ export default function EditVideo() {
   useEffect(() => {
     const fetchVideoData = async () => {
       try {
-        
-        const response = await api.get(`/blocks/${linkId}`);
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/blocks/${linkId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
         const blockData = response.data.data;
         if (blockData) {
@@ -47,11 +49,16 @@ export default function EditVideo() {
             items: blockData.content_data || []
           });
 
-          const firstLink = blockData.content_data?.[0]?.link || "";
-          if (firstLink.includes("tiktok.com")) {
+          // แก้ไข: ดักจับทั้งชื่อ title และลิงก์ข้างในว่าเป็น TikTok หรือไม่
+          const isTikTokTitle = blockData.title && blockData.title.toLowerCase().includes("tiktok");
+          const hasTikTokLink = blockData.content_data && blockData.content_data.some(item => item.link && item.link.toLowerCase().includes("tiktok"));
+          
+          if (isTikTokTitle || hasTikTokLink) {
             setPlatformMode("TikTok");
+          } else {
+            setPlatformMode("Youtube");
+          }
         }
-      }
       } catch (error) {
         console.error("ดึงข้อมูลวิดีโอไม่สำเร็จ:", error);
       }
@@ -67,17 +74,20 @@ export default function EditVideo() {
     try {
       const payload = {
         title: data.title,
-        type: data.type, // ส่งคำว่า YOUTUBE ไปบอกหลังบ้าน
+        type: data.type, 
         content_data: data.items 
       };
 
-      
+      const token = localStorage.getItem("token");
+      const config = {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
+      };
 
       let response;
       if (linkId) {
-        response = await api.put(`/blocks/${linkId}`, payload);
+        response = await axios.put(`${import.meta.env.VITE_API_URL}/blocks/${linkId}`, payload, config);
       } else {
-        response = await api.post(`/blocks`, payload);
+        response = await axios.post(`${import.meta.env.VITE_API_URL}/blocks`, payload, config);
       }
 
       if (response.status === 200 || response.status === 201) {

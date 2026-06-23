@@ -17,13 +17,14 @@ const getYoutubeId = (url) => {
   return (match && match[2].length === 11) ? match[2] : null;
 };
 
+// ⭐️ อัปเกรด Regex ให้ดักจับ TikTok ID ได้แม่นยำขึ้น
 const getTiktokId = (url) => {
   if (!url) return null;
-  const match = url.match(/video\/(\d+)/);
+  const match = url.match(/(?:video|v)\/(\d+)/);
   return match ? match[1] : null;
 };
 
-// ⭐️ เพิ่ม onLinkClick รับฟังก์ชันยิงสถิติมาจาก PreviewPage
+// เพิ่ม onLinkClick รับฟังก์ชันยิงสถิติมาจาก PreviewPage
 const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, onLinkClick }) => {
   const safeLinks = Array.isArray(links) ? links : [];
   const safeProfile = profile || {};
@@ -100,56 +101,62 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
             const titleClass = `${isCompact ? "text-[13px]" : "text-base"} font-bold px-2`;
             const nameClass = `${isCompact ? "text-[11px]" : "text-sm"} font-medium px-2 mt-1`;
 
-            // 1. Youtube
-            if (link?.icon === "Youtube") {
+            // ⭐️ 1 & 2. Video Block (รวมศูนย์ YouTube และ TikTok เช็คแยกตามแต่ละคลิป) ⭐️
+            if (link?.icon === "Youtube" || link?.icon === "TikTok" || link?.type === "VIDEO") {
               return (
                 <div key={link.id || Math.random()} className={`flex flex-col ${isCompact ? "gap-2 mb-2" : "gap-3 mb-4"} w-full`}>
                   {link.items && link.title && <h3 className={titleClass} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
                   {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
                     const videoUrl = item?.link || item?.url || "";
-                    let videoId = getYoutubeId(videoUrl); 
+                    
+                    // เช็คว่าลิงก์ใน item นี้เป็น TikTok หรือไม่
+                    const isTikTokItem = videoUrl.toLowerCase().includes("tiktok") || (link?.icon === "TikTok" && !videoUrl);
 
-                    return (
-                      <div key={item?.id || idx} className="flex flex-col gap-1">
-                        <div className="w-full rounded-2xl overflow-hidden shadow-md bg-black aspect-video relative">
-                          {videoId ? (
-                            <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${videoId}?rel=0`} title={item?.name || item?.title || link.title} frameBorder="0" allowFullScreen />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-white text-sm font-bold">ยังไม่มีวิดีโอ</div>
-                          )}
+                    if (isTikTokItem) {
+                      // --- เรนเดอร์ TikTok ---
+                      const tiktokId = getTiktokId(videoUrl);
+                      const TiktokIcon = ICON_MAP["TikTok"] || ICON_MAP["Link"];
+                      return (
+                        <div key={item?.id || idx} className="flex flex-col gap-1">
+                          <div className="w-full rounded-2xl overflow-hidden shadow-md bg-black relative" style={{ aspectRatio: '9/16', maxHeight: isCompact ? '480px' : '600px' }}>
+                            {tiktokId ? (
+                              <iframe 
+                                className="w-full h-full" 
+                                src={`https://www.tiktok.com/embed/v2/${tiktokId}?lang=th-TH`} 
+                                title={item?.name || item?.title || link.title} 
+                                frameBorder="0" 
+                                // ⭐️ เพิ่ม allow ตัวนี้เข้าไป เพื่อปิดแจ้งเตือน Error เรื่องเซนเซอร์ของ TikTok ⭐️
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                allowFullScreen 
+                                scrolling="no" 
+                              />
+                            ) : (
+                              <div className={`w-full h-full flex flex-col items-center justify-center text-white text-center px-2 ${isCompact ? "min-h-[200px]" : "min-h-[300px]"}`}>
+                                {TiktokIcon && <TiktokIcon size={isCompact ? 32 : 40} className="mb-2 opacity-40" />}
+                                <p className={`font-bold ${isCompact ? "text-sm" : "text-base"}`}>ยังไม่มีวิดีโอ TikTok</p>
+                                <p className={`${isCompact ? "text-[10px]" : "text-sm"} opacity-70 mt-1`}>โปรดใส่ลิงก์แบบเต็ม</p>
+                              </div>
+                            )}
+                          </div>
+                          {(item?.name || item?.title) && <p className={nameClass} style={{ color: safeDesign.textColor || "#000" }}>{item?.name || item?.title}</p>}
                         </div>
-                        {(item?.name || item?.title) && <p className={nameClass} style={{ color: safeDesign.textColor || "#000" }}>{item?.name || item?.title}</p>}
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            }
-
-            // 2. TikTok
-            if (link?.icon === "TikTok") {
-              return (
-                <div key={link.id || Math.random()} className={`flex flex-col ${isCompact ? "gap-2 mb-2" : "gap-3 mb-4"} w-full`}>
-                  {link.items && link.title && <h3 className={titleClass} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
-                  {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
-                    const tiktokId = getTiktokId(item?.link || item?.url || "");
-                    const TiktokIcon = ICON_MAP["TikTok"] || ICON_MAP["Link"];
-                    return (
-                      <div key={item?.id || idx} className="flex flex-col gap-1">
-                        <div className="w-full rounded-2xl overflow-hidden shadow-md bg-black relative" style={{ aspectRatio: '9/16', maxHeight: isCompact ? '480px' : '600px' }}>
-                          {tiktokId ? (
-                            <iframe className="w-full h-full" src={`https://www.tiktok.com/embed/v2/${tiktokId}`} title={item?.name || item?.title || link.title} frameBorder="0" allow="encrypted-media;" allowFullScreen scrolling="no" />
-                          ) : (
-                            <div className={`w-full h-full flex flex-col items-center justify-center text-white text-center px-2 ${isCompact ? "min-h-[200px]" : "min-h-[300px]"}`}>
-                              {TiktokIcon && <TiktokIcon size={isCompact ? 32 : 40} className="mb-2 opacity-40" />}
-                              <p className={`font-bold ${isCompact ? "text-sm" : "text-base"}`}>ยังไม่มีวิดีโอ TikTok</p>
-                              <p className={`${isCompact ? "text-[10px]" : "text-sm"} opacity-70 mt-1`}>โปรดใส่ลิงก์แบบเต็ม</p>
-                            </div>
-                          )}
+                      );
+                    } else {
+                      // --- เรนเดอร์ YouTube ---
+                      let videoId = getYoutubeId(videoUrl); 
+                      return (
+                        <div key={item?.id || idx} className="flex flex-col gap-1">
+                          <div className="w-full rounded-2xl overflow-hidden shadow-md bg-black aspect-video relative">
+                            {videoId ? (
+                              <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${videoId}?rel=0`} title={item?.name || item?.title || link.title} frameBorder="0" allowFullScreen />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-white text-sm font-bold">ยังไม่มีวิดีโอ</div>
+                            )}
+                          </div>
+                          {(item?.name || item?.title) && <p className={nameClass} style={{ color: safeDesign.textColor || "#000" }}>{item?.name || item?.title}</p>}
                         </div>
-                        {(item?.name || item?.title) && <p className={nameClass} style={{ color: safeDesign.textColor || "#000" }}>{item?.name || item?.title}</p>}
-                      </div>
-                    );
+                      );
+                    }
                   })}
                 </div>
               );
@@ -172,7 +179,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                           {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})} 
                           className={`flex flex-col group ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} 
                           style={{ textDecoration: 'none' }}
-                          // ⭐️ ผูกฟังก์ชันเก็บสถิติ "ยอดคลิก" 
                           onClick={() => { if(itemUrl && onLinkClick) onLinkClick(item?.id || link?.id) }}
                         >
                           {imageUrl ? (
@@ -183,7 +189,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                             </div>
                           )}
                           
-                          {/* ⭐️ แก้ไขเงื่อนไขการแสดงผล (ซ่อนค่า Fallback ขยะ) ⭐️ */}
                           {(item?.name || item?.title) && (
                             <h4 className={`${isCompact ? "text-[13px]" : "text-sm"} font-bold px-1`} style={{ color: safeDesign.textColor || "#000" }}>
                               {item?.name || item?.title}
@@ -224,7 +229,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                       key={item?.id || idx} 
                       {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})}
                       className={`block w-full flex items-center transition-transform ${itemUrl ? "hover:scale-[1.02] cursor-pointer" : "cursor-default"}`}
-                      // ⭐️ ผูกฟังก์ชันเก็บสถิติ "ยอดคลิก" 
                       onClick={() => { if(itemUrl && onLinkClick) onLinkClick(item?.id || link?.id) }}
                       style={{
                         padding: isCompact ? "8px 12px" : "16px",
