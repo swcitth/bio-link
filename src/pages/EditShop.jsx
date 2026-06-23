@@ -11,7 +11,7 @@ import {
 } from "@hello-pangea/dnd";
 
 import { useForm , useFieldArray } from "react-hook-form";
-import axios from "axios";
+import api from "../api/axios";
 
 export default function EditShop() {
   const navigate = useNavigate();
@@ -37,10 +37,8 @@ export default function EditShop() {
   useEffect(() => {
     const fetchShopData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/blocks/${linkId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        
+        const response = await api.get(`/blocks/${linkId}`);
 
         const blockData = response.data.data;
         if (blockData) {
@@ -69,16 +67,12 @@ export default function EditShop() {
         content_data: data.items 
       };
 
-      const token = localStorage.getItem("token");
-      const config = {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
-      };
 
       let response;
       if (linkId) {
-        response = await axios.put(`${import.meta.env.VITE_API_URL}/blocks/${linkId}`, payload, config);
+        response = await api.put(`/blocks/${linkId}`, payload);
       } else {
-        response = await axios.post(`${import.meta.env.VITE_API_URL}/blocks`, payload, config);
+        response = await api.post(`/blocks`, payload);
       }
 
       if (response.status === 200 || response.status === 201) {
@@ -104,13 +98,6 @@ export default function EditShop() {
       price: "",
       isVisible: true,
     });
-  };
-
-  // ลบสินค้า
-  const handleRemoveItem = (id) => {
-    setItems((prev) =>
-      prev.filter((item) => item.id !== id)
-    );
   };
 
   // ซ่อน/แสดง

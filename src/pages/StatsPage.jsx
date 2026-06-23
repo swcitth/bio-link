@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect } from "react";
 import { FaEye, FaMousePointer, FaChartBar, FaStar } from "react-icons/fa"; 
-import axios from "axios";
+import api from "../api/axios";
 
 const StatsPage = () => {
   const [stats, setStats] = useState(null);
@@ -15,25 +15,13 @@ const StatsPage = () => {
     const fetchAnalytics = async () => {
       try {
         setIsLoading(true);
-        
-        const token = localStorage.getItem('token') || JSON.parse(localStorage.getItem('user'))?.access_token;
 
-        if (!token) {
-          setError("ไม่พบรหัสยืนยันตัวตน กรุณาล็อกอินใหม่อีกครั้ง");
-          setIsLoading(false);
-          return;
-        }
-
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/user/analytics`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          }
-        });
+        const response = await api.get(`/user/analytics`);
 
         if (response.data.success) {
           setStats(response.data.data);
         }
+
         setIsLoading(false);
       } catch (err) {
         console.error("Error fetching analytics:", err);
