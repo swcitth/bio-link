@@ -15,8 +15,9 @@ import PhonePreview  from "../components/Previews/PhonePreview";
 import StatsPage     from "../pages/StatsPage";
 import { useNavigate, useLocation } from "react-router-dom";
 import ShareModal    from "../components/Modals/ShareModal";
-import api         from "../api/axios"; 
-import axios from "axios";
+
+// 🌟 นำเข้าแค่ api กลางตัวเดียวพอ (ลบ import axios ธรรมดาทิ้งแล้ว)
+import api           from "../api/axios"; 
 
 // Hooks
 import { useDragSort } from "../hooks/useDragSort";
@@ -199,12 +200,8 @@ const DashboardPage = () => {
 
   const fetchMyBlocks = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/blocks`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // 🌟 Refactor: เปลี่ยนมาใช้ api.get แบบเพียวๆ ไม่ต้องพ่วง Token แล้ว
+      const response = await api.get(`/blocks`);
       
       if (response.status === 200) {
         const dbBlocks = response.data.data || [];
@@ -284,7 +281,7 @@ const DashboardPage = () => {
     if (!isConfirm) return;
 
     try {
-
+      // 🌟 Refactor: ลบ URL เต็มและ token ออก ใช้ api.delete ตรงๆ
       await api.delete(`/blocks/${id}`);
 
       const updatedLinks = links.filter((l) => l.id !== id);
@@ -315,16 +312,13 @@ const DashboardPage = () => {
     // 3. ยิง API ไปบอกหลังบ้านทันทีเลยว่า "ซ่อน/แสดง" บล็อกนี้ (ไม่ต้องรอกดปุ่มบันทึกใหญ่)
     try {
       const targetLink = updatedLinks.find(l => l.id === id);
-      const token = localStorage.getItem("token");
       
-      if (token) {
-        await axios.put(
-          `${import.meta.env.VITE_API_URL}/blocks/${id}`,
-          { is_visible: targetLink.visible ? 1 : 0 }, // ส่งค่าไปอัปเดต
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        console.log("อัปเดตสถานะการซ่อนบล็อกสำเร็จ!");
-      }
+      // 🌟 Refactor: ลบโค้ดเช็ค Token ออก และใช้ api.put ยิงตรงๆ ได้เลย
+      await api.put(`/blocks/${id}`, { 
+        is_visible: targetLink.visible ? 1 : 0 
+      });
+      console.log("อัปเดตสถานะการซ่อนบล็อกสำเร็จ!");
+      
     } catch (error) {
       console.error("เกิดข้อผิดพลาดในการอัปเดตสถานะ:", error);
     }
@@ -414,6 +408,7 @@ const DashboardPage = () => {
       formData.append("bg_image", design.bgImageFile);
     }
 
+    // 🌟 ส่วนนี้ใช้ api.post ถูกต้องอยู่แล้วค่ะ
     const response = await api.post(
       `/profiles/${realUser.username}/test-update`,
       formData,
