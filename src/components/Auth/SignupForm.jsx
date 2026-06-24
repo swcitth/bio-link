@@ -6,6 +6,7 @@ import InputField from './InputField';
 import { useNavigate } from 'react-router-dom';
 
 import api from "../../api/axios";
+import verifyImage from '../../assets/verify-email.png';
 
 export default function SignupForm({ onSwitchView }) {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ export default function SignupForm({ onSwitchView }) {
   
   // State สำหรับเก็บข้อความ Error ของอีเมล
   const [emailError, setEmailError] = useState('');
+
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   // ฟังก์ชันตรวจสอบอีเมลแบบ Real-time
   // e = event ผู้ใช้กดปุ่ม 1 ทีจะส่งช้อมูลกลับมาให้ react
@@ -83,11 +86,8 @@ export default function SignupForm({ onSwitchView }) {
         setPassword('');
         setEmailError('');
 
-        // 2. แสดงแจ้งเตือนให้ผู้ใช้ทราบว่าต้องไปยืนยันอีเมล
-        alert("สมัครสมาชิกสำเร็จ!\nกรุณาตรวจสอบกล่องจดหมาย (และโฟลเดอร์จดหมายขยะ) ในอีเมลของคุณ เพื่อคลิกลิงก์ยืนยันบัญชีค่ะ");
-
-        // 3. เมื่อกดตกลง (OK) ใน alert เสร็จ ถึงจะสลับกลับไปหน้า Login ให้อัตโนมัติ
-        onSwitchView(); 
+        // การเปิด Popup แจ้งเตือน
+        setShowSuccessPopup(true);
       }
   } catch (error) {
     console.error("เกิดข้อผิดพลาดในการสมัครสมาชิก:", error);
@@ -107,6 +107,48 @@ export default function SignupForm({ onSwitchView }) {
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+
+      {/* 📍 4. Popup Modal สมัครสมาชิกสำเร็จ */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 md:p-8 text-left">
+              
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                สมัครสมาชิกสำเร็จ! กรุณายืนยันอีเมลของท่านก่อนเข้าสู่ระบบ
+              </h3>
+              <p className="text-sm text-slate-600 mb-4">
+                กรุณาตรวจสอบกล่องจดหมาย (และโฟลเดอร์จดหมายขยะ) ในอีเมลของคุณ เพื่อคลิกลิงก์ยืนยันบัญชีค่ะ
+              </p>
+
+              {/* รูปภาพประกอบ */}
+              <div className="w-full rounded-lg overflow-hidden mb-6 flex justify-center items-center bg-slate-50">
+                <img 
+                  src={verifyImage} 
+                  alt="Registration Success" 
+                  className="w-full max-h-48 object-contain" 
+                />
+              </div>
+              
+              {/* ปุ่มกด จัดเรียงชิดขวา */}
+              <div className="flex items-center justify-end mt-2">
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setShowSuccessPopup(false); // ปิด Popup
+                    onSwitchView(); // สลับกลับไปหน้า Login
+                  }}
+                  className="w-full sm:w-auto px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
+                >
+                  ไปหน้าเข้าสู่ระบบ
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )} 
+
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-slate-900 mb-2">สร้างบัญชีใหม่</h1>
         <p className="text-sm text-slate-500">เริ่มต้นสร้างหน้าโปรไฟล์ของคุณ ฟรี!</p>
