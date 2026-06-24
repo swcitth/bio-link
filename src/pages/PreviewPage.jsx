@@ -4,12 +4,14 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"; 
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaHome, FaPalette, FaChartBar, FaSignOutAlt } from "react-icons/fa"; 
+import { Eye, Share2 } from "lucide-react"; 
 
-import Header from "../components/Layout/Header";
+import Header from "../components/Layout/Header"; 
 import { THEME_LIST } from "../constants/themes";
 import BioContent from "../components/Editors/BioContent"; 
-import axios from "axios"; 
+import Navbar from "../components/Layout/NavbarDetail";
+import api from '../api/axios';
 
 const FONT_MAP = {
   kanit: "'Kanit', sans-serif",
@@ -47,7 +49,7 @@ const PreviewPage = ({ isPublic }) => {
     }
 
     // ยิง API ไปหลังบ้านแบบเงียบๆ (ไม่ต้องใช้ await เพราะไม่ต้องการให้หน้าเว็บรอ)
-    axios.post(`${import.meta.env.VITE_API_URL}/analytics/track/${targetUsername}`, {
+    api.post(`/analytics/track/${targetUsername}`, {
       session_id: sessionId,
       block_id: blockId, // ถ้าเป็น null = ยอดเข้าชมหน้าเว็บ / ถ้ามีไอดี = ยอดคลิกลิงก์
       referrer_url: document.referrer // เก็บข้อมูลว่าเข้ามาจากแอปไหน (FB, IG, LINE)
@@ -63,11 +65,10 @@ const PreviewPage = ({ isPublic }) => {
       setIsLoading(true);
       setError(null);
       
-      axios.get(`${import.meta.env.VITE_API_URL}/profiles/${username}`)
+      api.get(`/profiles/${username}`)
         .then((response) => {
           const apiData = response.data.data || response.data;
           
-          // ⭐️ แก้ไข: เอา ...MOCK_PROFILE หรือตัวแปร MOCK ออกทั้งหมด
           setProfile({
             username: apiData.username,
             name: apiData.display_name || "",
@@ -97,12 +98,11 @@ const PreviewPage = ({ isPublic }) => {
           }
 
           // ============================================================
-          // ⭐️ ตัวดักจับและจัดระเบียบข้อมูลลิงก์ (เพิ่มระบบ Auto-Detect สแกน URL)
+          // ⭐️ ตัวดักจับและจัดระเบียบข้อมูลลิงก์
           // ============================================================
           const rawBlocks = apiData.blocks || [];
           
           const formattedBlocks = rawBlocks.map(block => {
-            // 1. เช็คจาก type ของฐานข้อมูลเผื่อไว้ก่อน (ดักทั้งตัวพิมพ์เล็กและพิมพ์ใหญ่)
             let typeStr = String(block.type || '').toUpperCase();
             let correctIcon = block.icon || "Link";
 
@@ -111,40 +111,41 @@ const PreviewPage = ({ isPublic }) => {
             else if (typeStr === 'IMAGE') correctIcon = 'Image';
             else if (typeStr === 'SHOP') correctIcon = 'Shop';
 
-            // 2. จัดระเบียบ items ดึงข้อมูลลิงก์ที่ซ่อนอยู่ออกมา
             let correctItems = block.items || (block.content_data && block.content_data.items) || [];
             if (typeof correctItems === 'string') {
               try { correctItems = JSON.parse(correctItems); } 
               catch(e) { correctItems = []; }
             }
 
-            // ⭐️ 3. ไม้ตายสุดยอด! Auto-detect จาก URL โดยตรง
-            // ถ้าเป็นกล่องลิงก์ธรรมดา แต่ URL ข้างในเป็น Youtube ให้บังคับแปลงเป็นวิดีโอทันที!
+            // ⭐️ จัดการ Mapping iconId ของแต่ละ item ให้ติดตัวไปกับ object
+            const itemsWithIcons = correctItems.map(item => ({
+              ...item,
+              iconId: item.iconId || item.icon || correctIcon
+            }));
+
             if (correctIcon === 'Link' && correctItems.length > 0) {
               const checkUrl = String(correctItems[0]?.url || correctItems[0]?.link || "").toLowerCase();
               if (checkUrl.includes('youtube.com') || checkUrl.includes('youtu.be')) {
-                correctIcon = 'Youtube'; // บังคับให้เป็นคลิป Youtube
+                correctIcon = 'Youtube'; 
               } else if (checkUrl.includes('tiktok.com')) {
-                correctIcon = 'TikTok'; // บังคับให้เป็นคลิป TikTok
+                correctIcon = 'TikTok'; 
               }
             }
 
             return {
-              ...block,                     
-              ...(block.content_data || {}), 
-              items: correctItems,          
+              ...block,                    
+              ...block.content_data,
+              items: (correctItems || []).map(item => ({
+                ...item,
+                iconId: item.iconId || item.icon || block.icon // 👈 ดึงค่าที่ถูกต้องส่งไป
+              })),
               icon: correctIcon,            
               isVisible: block.is_visible !== undefined ? block.is_visible : true, 
             };
           });
 
-          // นำข้อมูลที่จัดระเบียบแล้วไปใช้งาน
           setLinks(formattedBlocks);
-          // ============================================================
-
           setIsLoading(false);
-
-          // ⭐️ 2. เรียกใช้งานฟังก์ชันเก็บสถิติ "ยอดเข้าชม" เมื่อโหลดข้อมูลสำเร็จ
           trackAnalytics(apiData.username, null);
         })
         .catch((err) => {
@@ -153,7 +154,6 @@ const PreviewPage = ({ isPublic }) => {
           setIsLoading(false);
         });
     } else {
-      // ⭐️ โหมด Preview ในหน้าแก้ไข (เอา || MOCK ออกให้หมด)
       setProfile(savedProfile || {});
       setLinks(savedLinks || []);
       setDesign(savedDesign || { theme: "t1", font: "kanit" });
@@ -162,26 +162,33 @@ const PreviewPage = ({ isPublic }) => {
   }, [username]);
 
   const handleLogoClick = () => {
-    if (isFromAdmin) {
-      navigate('/admin'); 
-    } else {
-      navigate('/dd'); 
-    }
+    if (isFromAdmin) navigate('/admin'); 
+    else navigate('/dd'); 
   };
 
   const handleBackClick = () => {
-    if (isFromAdmin) {
-      window.close(); 
-    } else {
-      navigate(-1); 
+    if (isFromAdmin) window.close(); 
+    else navigate(-1); 
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    alert("คัดลอกลิงก์เรียบร้อยแล้ว!");
+  };
+
+  const handleLogout = async () => {
+    try { await api.post('/logout'); } catch (error) { console.error(error); }
+    finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate("/");
     }
   };
 
-  const activeTheme = THEME_LIST.find((t) => t.id === design.theme) || THEME_LIST[0];
   const selectedFont = FONT_MAP[design.font] || FONT_MAP.kanit;
   const screenBackground = design.theme === "custom" 
     ? (design.bgColor || "#f0f2ff") 
-    : (activeTheme?.cfg?.bgGradient || "#f0f2ff");
+    : (THEME_LIST.find((t) => t.id === design.theme)?.cfg?.bgGradient || "#f0f2ff");
 
   if (isLoading) {
     return (
@@ -207,39 +214,64 @@ const PreviewPage = ({ isPublic }) => {
   }
 
   return (
-    <div className="min-h-screen relative bg-slate-100" style={{ fontFamily: selectedFont }}>
+    <div className="min-h-screen relative bg-slate-100 font-sans">
       
-      {/* ⭐️ ถ้า ไม่ใช่หน้า Public ค่อยโชว์ Header (Navbar) */}
       {!isPublic && (
         <div className="relative z-30">
           <Header onLogoClick={handleLogoClick}>
-            <button 
-              onClick={handleBackClick} 
-              className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors underline underline-offset-2"
-            >
-              <FaArrowLeft size={14} /> ย้อนกลับ
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={handleBackClick} className="hidden md:flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors underline underline-offset-2">
+                <FaArrowLeft size={14} /> ย้อนกลับ
+              </button>
+              <button onClick={handleShare} className="flex md:hidden items-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                <Share2 size={15} /> แชร์
+              </button>
+              <button onClick={handleLogout} className="flex md:hidden items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors shadow-md shadow-red-200">
+                <FaSignOutAlt size={15} /> ออกจากระบบ
+              </button>
+            </div>
           </Header>
         </div>
       )}
 
-      {/* ⭐️ ปรับ pt ให้สัมพันธ์กับการมีหรือไม่มี Header */}
-      <div className={`max-w-xl mx-auto min-h-screen relative shadow-2xl ${!isPublic ? 'pt-[72px]' : 'pt-0'}`}>
-       
+      {!isPublic && (
+        <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 flex justify-around items-center px-2 py-3 z-50 pb-safe shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+          <button onClick={handleBackClick} className="flex flex-col items-center gap-1 w-full text-slate-400 hover:text-indigo-600">
+            <FaHome size={18} />
+            <span className="text-[10px] font-bold">ข้อมูล</span>
+          </button>
+          <button onClick={handleBackClick} className="flex flex-col items-center gap-1 w-full text-slate-400 hover:text-indigo-600">
+            <FaPalette size={18} />
+            <span className="text-[10px] font-bold">ออกแบบ</span>
+          </button>
+          <button onClick={handleBackClick} className="flex flex-col items-center gap-1 w-full text-slate-400 hover:text-indigo-600">
+            <FaChartBar size={18} />
+            <span className="text-[10px] font-bold">สถิติ</span>
+          </button>
+          <button className="flex flex-col items-center gap-1 w-full text-indigo-600">
+            <Eye size={18} />
+            <span className="text-[10px] font-bold">ดู</span>
+          </button>
+        </div>
+      )}
+
+      <div 
+        className={`max-w-xl mx-auto min-h-screen relative z-10 shadow-2xl ${!isPublic ? 'pt-[72px] pb-[72px] md:pb-0' : 'pt-0'}`}
+        style={{ fontFamily: selectedFont }}
+      >
         <div className="fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-0 overflow-hidden" style={{ background: screenBackground }}>
           {design.bgImage && (
             <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${design.bgImage})`, opacity: 0.6 }} />
           )}
         </div>
 
-        {/* ⭐️ 3. ส่ง Props ฟังก์ชันจับการคลิกไปให้ BioContent ใช้งาน */}
         <BioContent 
           profile={profile} 
           links={links} 
           design={design} 
           onLinkClick={(blockId) => trackAnalytics(profile.username, blockId)}
         />
-       
+        
       </div>
     </div>
   );

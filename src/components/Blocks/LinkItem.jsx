@@ -1,12 +1,11 @@
 // ============================================================
-// src/components/LinkItem.jsx
+// src/components/LinkItem.jsx (หรือ src/components/Blocks/LinkItem.jsx)
 // ============================================================
 
 import React, { useState } from "react";
 import { FiEdit2, FiEye, FiEyeOff, FiTrash2 } from "react-icons/fi";
 import { FaGripVertical } from "react-icons/fa";
 import { ICON_MAP } from "../../constants/icons";
-
 
 const LinkItem = ({
   link,
@@ -20,7 +19,21 @@ const LinkItem = ({
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const IconComponent = ICON_MAP[link.icon] || ICON_MAP["Link"];
+  // ⭐️ 1. เพิ่มระบบแกะกล่องข้อมูล ป้องกันกรณีที่ฐานข้อมูลส่ง items มาเป็น String 
+  let safeItems = link?.items || [];
+  if (typeof safeItems === 'string') {
+    try {
+      safeItems = JSON.parse(safeItems);
+    } catch (error) {
+      safeItems = [];
+    }
+  }
+
+  // ⭐️ 2. ดึงชื่อไอคอนจากข้อมูลที่แกะกล่องแล้วอย่างปลอดภัย
+  const firstItemIcon = safeItems?.[0]?.iconId || safeItems?.[0]?.icon;
+  
+  // ⭐️ 3. แมปเข้ากับ ICON_MAP (ถ้าหาไม่เจอถึงจะใช้ห่วงโซ่ Link)
+  const IconComponent = ICON_MAP[firstItemIcon] || ICON_MAP[link?.icon] || ICON_MAP["Link"];
 
   return (
     <div

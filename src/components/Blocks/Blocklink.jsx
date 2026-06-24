@@ -1,6 +1,6 @@
 import React from 'react';
-import { GripVertical, Eye, EyeOff, Trash2, Plus } from 'lucide-react';
-import { MdAppRegistration } from 'react-icons/md';
+// ⭐️ เปลี่ยนมาใช้ react-icons/fa
+import { FaGripVertical, FaEye, FaEyeSlash, FaTrashAlt, FaPlus } from 'react-icons/fa';
 
 export default function Blocklink({ 
   link, 
@@ -24,7 +24,7 @@ export default function Blocklink({
         {...dragHandleProps} 
         className="text-slate-300 cursor-grab active:cursor-grabbing mt-3 sm:mt-0 flex flex-col justify-center h-full hover:text-slate-500"
       >
-        <GripVertical size={20} />
+        <FaGripVertical size={20} />
       </div>
 
       {/* Icon Selector Button (รูปสี่เหลี่ยม) */}
@@ -37,7 +37,7 @@ export default function Blocklink({
           <IconComponent size={28} strokeWidth={1.5} />
         ) : (
           <div className="w-8 h-8 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center">
-            <Plus size={16} className="text-slate-300" />
+            <FaPlus size={16} className="text-slate-300" />
           </div>
         )}
       </button>
@@ -46,7 +46,7 @@ export default function Blocklink({
       <div className="flex-1 flex flex-col gap-2.5 w-full">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-slate-600 w-8 shrink-0">ชื่อ</span>
-         
+          
           <input 
             type="text" 
             placeholder="เช่น Facebook"
@@ -56,10 +56,11 @@ export default function Blocklink({
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-slate-600 w-8 shrink-0">ลิงก์</span>
+          {/* ⭐️ แก้ไขให้ถูกต้อง: เปลี่ยนจาก MdAppRegistration เป็น register */}
           <input 
             type="text" 
             placeholder="https://"
-            {...MdAppRegistration(`items.${index}.url`)}
+            {...register(`items.${index}.url`)}
             className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all" 
           />
         </div>
@@ -74,7 +75,7 @@ export default function Blocklink({
           className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-md hover:bg-indigo-50 transition-colors focus:outline-none" 
           title={link.isVisible ? "ซ่อนลิงก์นี้" : "แสดงลิงก์นี้"}
         >
-          {link.isVisible ? <Eye size={18} /> : <EyeOff size={18} />}
+          {link.isVisible ? <FaEye size={18} /> : <FaEyeSlash size={18} />}
         </button>
         <button 
           type="button"
@@ -82,7 +83,7 @@ export default function Blocklink({
           className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors focus:outline-none" 
           title="ลบลิงก์"
         >
-          <Trash2 size={18} />
+          <FaTrashAlt size={18} />
         </button>
       </div>
     </div>
