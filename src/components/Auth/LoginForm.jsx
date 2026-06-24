@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User, Lock } from 'lucide-react'; 
 import ButtonBig from '../UI/Button/ButtonBig';
 import InputField from './InputField'; 
-import { useNavigate } from 'react-router-dom';
+// import useSearchParams เพื่อใช้อ่านค่า ?verified=... จาก URL
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import ReCAPTCHA from "react-google-recaptcha";
 
@@ -11,6 +12,7 @@ import api from "../../api/axios";
 export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
   const navigate = useNavigate(); 
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false); 
   const [captchaValue, setCaptchaValue] = useState(null);
 
@@ -18,15 +20,33 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [identifierError, setIdentifierError] = useState('');
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
 
   // จัดการในส่วนของ การจดจำการเข้าสู่ระบบ
   const [rememberMe, setRememberMe] = useState(false);
 
   // สร้างตู้เซฟ Ref เพื่อเก็บค่าล่าสุดแบบ Real-time ไม่ให้ Google ลืม
   const rememberMeRef = useRef(rememberMe);
+
+
   useEffect(() => {
     rememberMeRef.current = rememberMe;
   }, [rememberMe]);
+
+  // useEffect สำหรับอ่านค่า URL ทันทีที่โหลดหน้าเว็บ
+  useEffect(() => {
+    rememberMeRef.current = rememberMe;
+
+    // เช็คว่าเด้งกลับมาจากอีเมลสำเร็จหรือไม่
+    const status = searchParams.get('verified');
+    if (status === 'success') {
+      alert('✅ ยืนยันอีเมลสำเร็จแล้ว! คุณสามารถเข้าสู่ระบบได้เลยค่ะ');
+    } else if (status === 'expired') {
+      alert('❌ ลิงก์ยืนยันอีเมลหมดอายุหรือไม่ถูกต้อง กรุณาเข้าสู่ระบบเพื่อขอรับลิงก์ใหม่ค่ะ');
+    } else if (status === 'invalid') {
+      alert('❌ ลิงก์ยืนยันไม่ถูกต้อง กรุณาตรวจสอบอีกครั้งค่ะ');
+    }
+  }, [rememberMe, searchParams]);
 
   // ฟังก์ชันตรวจสอบอีเมลแบบ Real-time
   const handleIdentifierChange = (e) => {
@@ -48,6 +68,23 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
   const onCaptchaChange = (value) => {
     setCaptchaValue(value);
+  };
+
+  // ฟังก์ชันสำหรับกดยิง API ขออีเมลยืนยันตัวตนใหม่
+  const handleResendEmail = async () => {
+    try {
+      const response = await api.post('/email/verification-notification', { 
+        email: unverifiedEmail 
+      });
+      alert('' + response.data.message);
+      
+      // ส่งเสร็จแล้วให้เคลียร์ค่าทิ้ง เพื่อซ่อนกล่องแจ้งเตือน
+      setUnverifiedEmail(''); 
+    } catch (error) {
+      if (error.response) {
+         alert(error.response.data.message || "เกิดข้อผิดพลาดในการส่งอีเมล");
+      }
+    }
   };
 
   // Login with google
@@ -171,24 +208,29 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
       console.error("Catch Error:", error);
       
       if (error.response) {
-        // ดักจับ Status 429 โดนบล็อกเพราะกรอกผิด 5 ครั้ง
-        if (error.response.status === 429) {
-          alert(error.response.data.message); // ดึงข้อความ "กรุณารอ X นาที" จาก Laravel มาโชว์
+        
+        // ดักจับ Error 403: บัญชียังไม่ยืนยันอีเมล
+        if (error.response.status === 403 && error.response.data.is_verified === false) {
+          alert(error.response.data.message);
+          // เก็บอีเมลที่กรอกไว้ใน State เพื่อให้ปุ่มส่งอีเมลอีกครั้งโผล่ขึ้นมา
+          setUnverifiedEmail(isEmail ? identifier : error.response.data.email || identifier); 
         } 
-        // ถ้าเข้าเงื่อนไขนี้ แปลว่าเป็น Error จากฝั่ง Laravel ตอบกลับมา
+        else if (error.response.status === 429) {
+          alert(error.response.data.message); 
+        } 
         else if (error.response.status === 401) {
           alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้งค่ะ");
-        } else if (error.response.status === 422) {
+        } 
+        else if (error.response.status === 422) {
           alert("รูปแบบข้อมูลไม่ถูกต้อง กรุณาใช้อีเมลในการเข้าสู่ระบบ");
-        } else {
+        } 
+        else {
           alert("เซิร์ฟเวอร์เกิดข้อผิดพลาด (Status: " + error.response.status + ")");
         }
       } else {
-        // ถ้าเข้าเงื่อนไขนี้ แปลว่าโค้ด React ของเราเองที่ทำงานผิดพลาด
         alert("เกิดข้อผิดพลาดในหน้าเว็บ: " + error.message);
       }
     }
-
   };
 
   return (
@@ -198,6 +240,20 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
         <h1 className="text-2xl font-bold text-slate-900 mb-2">ยินดีต้อนรับกลับมา</h1>
         <p className="text-sm text-slate-500">กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบ</p>
       </div>
+
+      {/* กล่องแจ้งเตือนให้ส่งอีเมลยืนยันอีกครั้ง จะโผล่มาเฉพาะตอนติด Error 403 */}
+      {unverifiedEmail && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-center animate-in fade-in zoom-in-95 duration-300">
+          <p className="text-sm text-amber-800 mb-2 font-medium">คุณยังไม่ได้ยืนยันอีเมลบัญชีนี้ใช่ไหม?</p>
+          <button 
+            type="button" 
+            onClick={handleResendEmail}
+            className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 text-sm font-semibold rounded-md transition-colors"
+          >
+            ส่งลิงก์ยืนยันใหม่อีกครั้ง
+          </button>
+        </div>
+      )}
 
       <form className="flex flex-col gap-5" onSubmit={handleLogin} method="">
         
