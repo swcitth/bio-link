@@ -5,8 +5,7 @@ import ButtonBig from '../UI/Button/ButtonBig';
 import InputField from './InputField'; 
 import { useNavigate } from 'react-router-dom';
 
-// ใช้ axios สำหรับส่งข้อมูลไปยัง API
-import axios from 'axios';
+import api from "../../api/axios";
 
 export default function SignupForm({ onSwitchView }) {
   const navigate = useNavigate();
@@ -65,19 +64,31 @@ export default function SignupForm({ onSwitchView }) {
     // try คือกรลองส่งถ้าเกิดพังจะไปทำงานต่อที่ catch แล้วเว็บก็จะยังไม่พัง 
     // await ให้โปรแกรมรอจนกว่า laravel จะทำงานเสร็จ
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/register`,{
-        // คีย์ฝั่งซ้าย (ชื่อที่ส่งไปหา Laravel) ต้องเหมือนกับที่ Laravel รอรับใน Controller
-        // ตัวแปรฝั่งขวา (ชื่อแปรใน React)
+      const response = await api.post('/register',{
         display_name: displayName,
         username: username,
         email: email,
         password: password
       });
     
-    console.log("บันทึกข้อมูลสมัครสมาชิกสำเร็จ!");
+      // ตรวจสอบว่าระบบหลังบ้านตอบกลับมาว่า success (ตามที่ตั้งไว้ใน AuthController)
+      if (response.data.status === 'success' || response.status === 201) {
+        
+        console.log("บันทึกข้อมูลสมัครสมาชิกสำเร็จ!");
 
-    // เมื่อลงทะเบียนสำเร็จ จะให้เปลี่ยนหน้า
-    onSwitchView(); // อันนี้สลับกลับไปหน้า Login ให้อัตโนมัติ (ตามที่เขียน prop มาจากหน้า Auth)
+        // 1. เคลียร์ค่าในฟอร์มให้ว่างเปล่า
+        setDisplayName('');
+        setUsername('');
+        setEmail('');
+        setPassword('');
+        setEmailError('');
+
+        // 2. แสดงแจ้งเตือนให้ผู้ใช้ทราบว่าต้องไปยืนยันอีเมล
+        alert("สมัครสมาชิกสำเร็จ!\nกรุณาตรวจสอบกล่องจดหมาย (และโฟลเดอร์จดหมายขยะ) ในอีเมลของคุณ เพื่อคลิกลิงก์ยืนยันบัญชีค่ะ");
+
+        // 3. เมื่อกดตกลง (OK) ใน alert เสร็จ ถึงจะสลับกลับไปหน้า Login ให้อัตโนมัติ
+        onSwitchView(); 
+      }
   } catch (error) {
     console.error("เกิดข้อผิดพลาดในการสมัครสมาชิก:", error);
 
