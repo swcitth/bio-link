@@ -8,11 +8,12 @@ import { useGoogleLogin } from '@react-oauth/google';
 import ReCAPTCHA from "react-google-recaptcha";
 
 import api from "../../api/axios";
+import verifyImage from '../../assets/verify-email.png';
 
 export default function LoginForm({ onSwitchView, onForgotPassword }) {
 
   const navigate = useNavigate(); 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false); 
   const [captchaValue, setCaptchaValue] = useState(null);
 
@@ -29,24 +30,37 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
   const rememberMeRef = useRef(rememberMe);
 
 
+  // สร้างตัวแปรดักไว้ว่า "แจ้งเตือนไปหรือยัง?" 
+  const hasAlerted = useRef(false);
+
+  // 1. useEffect สำหรับจำค่าช่องติ๊ก (แยกออกมาให้ทำงานเดี่ยวๆ)
   useEffect(() => {
     rememberMeRef.current = rememberMe;
   }, [rememberMe]);
 
-  // useEffect สำหรับอ่านค่า URL ทันทีที่โหลดหน้าเว็บ
+  // 2. useEffect สำหรับเช็ค URL แจ้งเตือนอีเมลโดยเฉพาะ
   useEffect(() => {
-    rememberMeRef.current = rememberMe;
-
-    // เช็คว่าเด้งกลับมาจากอีเมลสำเร็จหรือไม่
     const status = searchParams.get('verified');
-    if (status === 'success') {
-      alert('✅ ยืนยันอีเมลสำเร็จแล้ว! คุณสามารถเข้าสู่ระบบได้เลยค่ะ');
-    } else if (status === 'expired') {
-      alert('❌ ลิงก์ยืนยันอีเมลหมดอายุหรือไม่ถูกต้อง กรุณาเข้าสู่ระบบเพื่อขอรับลิงก์ใหม่ค่ะ');
-    } else if (status === 'invalid') {
-      alert('❌ ลิงก์ยืนยันไม่ถูกต้อง กรุณาตรวจสอบอีกครั้งค่ะ');
+
+    // ถ้ามีสถานะแนบมาใน URL และยังไม่เคยแจ้งเตือน
+    if (status && !hasAlerted.current) {
+      
+      hasAlerted.current = true; // ล็อกปุ่ม! บอกระบบว่า "แจ้งเตือนแล้วนะ ห้ามเด้งอีก"
+
+      // ตรวจสอบสถานะและแสดงข้อความ
+      if (status === 'success') {
+        alert(' ยืนยันอีเมลสำเร็จแล้ว! คุณสามารถเข้าสู่ระบบได้เลยค่ะ');
+      } else if (status === 'expired') {
+        alert(' ลิงก์ยืนยันอีเมลหมดอายุหรือไม่ถูกต้อง กรุณาเข้าสู่ระบบเพื่อขอรับลิงก์ใหม่ค่ะ');
+      } else if (status === 'invalid') {
+        alert(' ลิงก์ยืนยันไม่ถูกต้อง กรุณาตรวจสอบอีกครั้งค่ะ');
+      }
+
+      // ขั้นตอนสุดท้าย: ลบคำว่า ?verified=... ออกจาก URL บนช่องเบราว์เซอร์
+      searchParams.delete('verified');
+      setSearchParams(searchParams, { replace: true });
     }
-  }, [rememberMe, searchParams]);
+  }, [searchParams, setSearchParams]);
 
   // ฟังก์ชันตรวจสอบอีเมลแบบ Real-time
   const handleIdentifierChange = (e) => {
@@ -213,7 +227,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
         if (error.response.status === 403 && error.response.data.is_verified === false) {
           alert(error.response.data.message);
           // เก็บอีเมลที่กรอกไว้ใน State เพื่อให้ปุ่มส่งอีเมลอีกครั้งโผล่ขึ้นมา
-          setUnverifiedEmail(isEmail ? identifier : error.response.data.email || identifier); 
+          setUnverifiedEmail(identifier);
         } 
         else if (error.response.status === 429) {
           alert(error.response.data.message); 
@@ -241,19 +255,56 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
         <p className="text-sm text-slate-500">กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบ</p>
       </div>
 
-      {/* กล่องแจ้งเตือนให้ส่งอีเมลยืนยันอีกครั้ง จะโผล่มาเฉพาะตอนติด Error 403 */}
+      {/* Popup Modal สำหรับแจ้งเตือนให้ยืนยันอีเมล */}
       {unverifiedEmail && (
-        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-center animate-in fade-in zoom-in-95 duration-300">
-          <p className="text-sm text-amber-800 mb-2 font-medium">คุณยังไม่ได้ยืนยันอีเมลบัญชีนี้ใช่ไหม?</p>
-          <button 
-            type="button" 
-            onClick={handleResendEmail}
-            className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 text-sm font-semibold rounded-md transition-colors"
-          >
-            ส่งลิงก์ยืนยันใหม่อีกครั้ง
-          </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 md:p-8 text-left">
+              
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                ไปที่อีเมลของคุณเพื่อยืนยันตัวตน
+              </h3>
+              <p className="text-sm text-slate-600 mb-4">
+                บัญชีของคุณยังไม่ได้ยืนยันอีเมล กรุณาตรวจสอบอีเมลของท่านอีกครั้ง หากยังไม่ได้รับลิงก์ในการยืนยันบัญชีกรุณากดปุ่ม "ส่งอีเมลอีกครั้ง" เพื่อยืนยันบัญชีของท่านก่อนการเข้าสู่ระบบ
+              </p>
+
+              {/* 🖼️ พื้นที่สำหรับใส่รูปภาพประกอบ (Banner) แบบในภาพตัวอย่าง */}
+              <div className="w-full rounded-lg overflow-hidden mb-6 flex justify-center items-center bg-slate-50">
+                <img 
+                  src={verifyImage} 
+                  alt="Email Verification" 
+                  className="w-full max-h-48 object-contain" 
+                />
+              </div>
+              
+              {/* ส่วนของปุ่มกด จัดเรียงชิดขวา (justify-end) */}
+              <div className="flex flex-col sm:flex-row items-center justify-end gap-3 mt-2">
+                
+                {/* ปุ่มสีเทาสำหรับส่งลิงก์ใหม่ */}
+                <button 
+                  type="button" 
+                  onClick={handleResendEmail}
+                  className="w-full sm:w-auto px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-lg transition-colors"
+                >
+                  ส่งอีเมลอีกครั้ง
+                </button>
+                
+                {/* ปุ่มสีน้ำเงินสำหรับปิด Popup (ยืนยันอีเมลแล้ว) */}
+                <button 
+                  type="button" 
+                  onClick={() => setUnverifiedEmail('')}
+                  className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
+                >
+                  ยืนยันอีเมลแล้ว
+                </button>
+
+              </div>
+
+            </div>
+          </div>
         </div>
       )}
+      
 
       <form className="flex flex-col gap-5" onSubmit={handleLogin} method="">
         
