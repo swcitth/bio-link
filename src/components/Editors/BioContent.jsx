@@ -17,14 +17,47 @@ const getYoutubeId = (url) => {
   return (match && match[2].length === 11) ? match[2] : null;
 };
 
-// ⭐️ อัปเกรด Regex ให้ดักจับ TikTok ID ได้แม่นยำขึ้น
 const getTiktokId = (url) => {
   if (!url) return null;
   const match = url.match(/(?:video|v)\/(\d+)/);
   return match ? match[1] : null;
 };
 
-// เพิ่ม onLinkClick รับฟังก์ชันยิงสถิติมาจาก PreviewPage
+const formatUrl = (url) => {
+  if (!url) return "";
+  if (/^(https?:\/\/|mailto:|tel:|line:)/i.test(url)) return url;
+  return `https://${url}`;
+};
+
+// ⭐️ วิธีแก้ปัญหาที่ยั่งยืนที่สุด: Dynamic Auto-Match (อัปเดตคำศัพท์จากฐานข้อมูลจริง)
+// ⭐️ วิธีแก้ปัญหาที่ยั่งยืน: ดึงค่าจาก ICON_MAP ที่มีอยู่จริงโดยอัตโนมัติ
+const normalizeIconName = (name) => {
+  if (!name) return "Link";
+  
+  // 1. ทำให้เป็นตัวพิมพ์เล็กเพื่อเทียบ
+  const cleanName = String(name).toLowerCase().trim();
+  
+  // 2. สร้างตารางเทียบ (Mapping) กรณีชื่อใน DB กับชื่อใน ICON_MAP ต่างกันชัดเจน
+  const mapping = {
+    "mail": "Mail",
+    "message": "Message",
+    "map": "Map",
+    "globe": "Globe",
+    "linkin": "Linkedin",
+    "git": "Github"
+  };
+
+  // 3. หาชื่อที่ถูกต้องโดยเช็คจากตาราง mapping ก่อน ถ้าไม่มีให้ค้นหาใน ICON_MAP ว่ามี Key ไหนที่ตรงกับชื่อที่ส่งมา
+  const targetName = mapping[cleanName] || cleanName;
+  
+  // 4. สแกนหา Key ใน ICON_MAP ที่ตรงกับชื่อที่ได้รับมา แบบไม่สนตัวพิมพ์เล็ก-ใหญ่
+  const matchedKey = Object.keys(ICON_MAP).find(
+    (key) => key.toLowerCase() === targetName.toLowerCase()
+  );
+  
+  return matchedKey || "Link";
+};
+
 const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, onLinkClick }) => {
   const safeLinks = Array.isArray(links) ? links : [];
   const safeProfile = profile || {};
@@ -47,7 +80,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
   return (
     <div className={`relative z-10 ${isCompact ? "pb-5" : "pb-20"}`} style={{ fontFamily: selectedFont }}>
       
-      {/* Cover Image */}
       <div 
         className={`${isCompact ? "h-[90px]" : "h-48"} shrink-0 overflow-hidden bg-slate-200 relative bg-cover bg-center`}
         style={activeTheme?.cfg?.coverImage ? { backgroundImage: activeTheme.cfg.coverImage } : { background: coverBackground }}
@@ -55,45 +87,24 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
         {safeProfile.cover && <img src={safeProfile.cover} alt="Cover" className="w-full h-full object-cover" />}
       </div>
 
-      {/* Profile Section */}
       <div className={`flex flex-col items-center px-4 ${isCompact ? "-mt-7" : "-mt-12"} relative z-10`}>
-        {/* Avatar */}
         <img
           src={safeProfile.avatar || defaultAvatar}
           alt="avatar"
           className={`${isCompact ? "w-14 h-14 border-[3px]" : "w-24 h-24 border-4"} rounded-full border-white shadow-xl object-cover shrink-0 bg-white`}
         />
 
-        {/* Name */}
-        <h1
-          className={`${isCompact ? "mt-2 text-sm" : "mt-4 text-2xl"} font-bold text-center leading-tight`}
-          style={{ color: safeDesign.textColor || "#333" }}
-        >
+        <h1 className={`${isCompact ? "mt-2 text-sm" : "mt-4 text-2xl"} font-bold text-center leading-tight`} style={{ color: safeDesign.textColor || "#333" }}>
           {safeProfile.name || "ชื่อของคุณ"}
         </h1>
 
-        {/* Bio */}
-        <p
-          className={`${isCompact ? "text-[11px] mt-1" : "mt-2 text-sm max-w-sm"} text-center opacity-80 leading-relaxed`}
-          style={{ color: safeDesign.textColor || "#666" }}
-        >
+        <p className={`${isCompact ? "text-[11px] mt-1" : "mt-2 text-sm max-w-sm"} text-center opacity-80 leading-relaxed`} style={{ color: safeDesign.textColor || "#666" }}>
           {safeProfile.bio || "Bio ของคุณ"}
         </p>
 
-        {/* Links List */}
-        <div className={`w-full flex flex-col ${isCompact ? "gap-3 mt-5" : "gap-4 mt-8"}`}>
-          
-            {safeProfile.showSaveContact !== false && (
-            <SaveContactButton 
-                profileData={safeProfile} 
-                design={design} 
-                isCompact={isCompact} 
-            />
-            )}
-          {visibleLinks.length === 0 && (
-            <p className={`text-center ${isCompact ? "text-[11px]" : "text-sm"} text-slate-400 mt-3`} style={{ color: safeDesign.textColor }}>
-              ยังไม่มีลิงก์แสดงผล
-            </p>
+        <div className={`w-full flex flex-col relative z-20 ${isCompact ? "gap-3 mt-5" : "gap-4 mt-8"}`}>
+          {safeProfile.showSaveContact !== false && (
+            <SaveContactButton profileData={safeProfile} design={design} isCompact={isCompact} />
           )}
 
           {visibleLinks.map((link) => {
@@ -101,40 +112,25 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
             const titleClass = `${isCompact ? "text-[13px]" : "text-base"} font-bold px-2`;
             const nameClass = `${isCompact ? "text-[11px]" : "text-sm"} font-medium px-2 mt-1`;
 
-            // ⭐️ 1 & 2. Video Block (รวมศูนย์ YouTube และ TikTok เช็คแยกตามแต่ละคลิป) ⭐️
             if (link?.icon === "Youtube" || link?.icon === "TikTok" || link?.type === "VIDEO") {
               return (
                 <div key={link.id || Math.random()} className={`flex flex-col ${isCompact ? "gap-2 mb-2" : "gap-3 mb-4"} w-full`}>
                   {link.items && link.title && <h3 className={titleClass} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
                   {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
                     const videoUrl = item?.link || item?.url || "";
-                    
-                    // เช็คว่าลิงก์ใน item นี้เป็น TikTok หรือไม่
                     const isTikTokItem = videoUrl.toLowerCase().includes("tiktok") || (link?.icon === "TikTok" && !videoUrl);
-
                     if (isTikTokItem) {
-                      // --- เรนเดอร์ TikTok ---
                       const tiktokId = getTiktokId(videoUrl);
                       const TiktokIcon = ICON_MAP["TikTok"] || ICON_MAP["Link"];
                       return (
                         <div key={item?.id || idx} className="flex flex-col gap-1">
                           <div className="w-full rounded-2xl overflow-hidden shadow-md bg-black relative" style={{ aspectRatio: '9/16', maxHeight: isCompact ? '480px' : '600px' }}>
                             {tiktokId ? (
-                              <iframe 
-                                className="w-full h-full" 
-                                src={`https://www.tiktok.com/embed/v2/${tiktokId}?lang=th-TH`} 
-                                title={item?.name || item?.title || link.title} 
-                                frameBorder="0" 
-                                // ⭐️ เพิ่ม allow ตัวนี้เข้าไป เพื่อปิดแจ้งเตือน Error เรื่องเซนเซอร์ของ TikTok ⭐️
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                                allowFullScreen 
-                                scrolling="no" 
-                              />
+                              <iframe className="absolute inset-0 w-full h-full pointer-events-auto" src={`https://www.tiktok.com/embed/v2/${tiktokId}?lang=th-TH`} frameBorder="0" allowFullScreen scrolling="no" />
                             ) : (
-                              <div className={`w-full h-full flex flex-col items-center justify-center text-white text-center px-2 ${isCompact ? "min-h-[200px]" : "min-h-[300px]"}`}>
-                                {TiktokIcon && <TiktokIcon size={isCompact ? 32 : 40} className="mb-2 opacity-40" />}
-                                <p className={`font-bold ${isCompact ? "text-sm" : "text-base"}`}>ยังไม่มีวิดีโอ TikTok</p>
-                                <p className={`${isCompact ? "text-[10px]" : "text-sm"} opacity-70 mt-1`}>โปรดใส่ลิงก์แบบเต็ม</p>
+                              <div className="w-full h-full flex flex-col items-center justify-center text-white text-center px-2">
+                                {TiktokIcon && <TiktokIcon size={40} className="mb-2 opacity-40" />}
+                                <p className="font-bold">ยังไม่มีวิดีโอ TikTok</p>
                               </div>
                             )}
                           </div>
@@ -142,16 +138,11 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                         </div>
                       );
                     } else {
-                      // --- เรนเดอร์ YouTube ---
                       let videoId = getYoutubeId(videoUrl); 
                       return (
                         <div key={item?.id || idx} className="flex flex-col gap-1">
                           <div className="w-full rounded-2xl overflow-hidden shadow-md bg-black aspect-video relative">
-                            {videoId ? (
-                              <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${videoId}?rel=0`} title={item?.name || item?.title || link.title} frameBorder="0" allowFullScreen />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-white text-sm font-bold">ยังไม่มีวิดีโอ</div>
-                            )}
+                            {videoId ? <iframe className="absolute inset-0 w-full h-full pointer-events-auto" src={`https://www.youtube.com/embed/${videoId}?rel=0`} frameBorder="0" allowFullScreen /> : <div className="w-full h-full flex items-center justify-center text-white">ยังไม่มีวิดีโอ</div>}
                           </div>
                           {(item?.name || item?.title) && <p className={nameClass} style={{ color: safeDesign.textColor || "#000" }}>{item?.name || item?.title}</p>}
                         </div>
@@ -162,51 +153,29 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
               );
             }
 
-            // 3. Image
             if (link?.icon === "Image") {
               return (
                 <div key={link.id || Math.random()} className={`flex flex-col ${isCompact ? "gap-2 mb-2" : "gap-4 mb-4"} w-full`}>
                   {link.items && link.title && <h3 className={titleClass} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
-                  <div className={`grid ${isCompact ? "grid-cols-1" : "grid-cols-2 gap-4"}`}>
+                  <div className="flex flex-col w-full gap-4">
                     {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
                       const itemUrl = item?.url || item?.link;
                       const imageUrl = item?.image || item?.imageUrl; 
                       const WrapperTag = itemUrl ? "a" : "div";
-                      
                       return (
                         <WrapperTag 
                           key={item?.id || idx} 
-                          {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})} 
-                          className={`flex flex-col group ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} 
+                          {...(itemUrl ? { 
+                            href: formatUrl(itemUrl), 
+                            target: "_blank", 
+                            rel: "noopener noreferrer",
+                            onClick: () => { if (onLinkClick) onLinkClick(item?.id || link?.id); }
+                          } : {})} 
+                          className={`flex flex-col group pointer-events-auto w-full mx-auto ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} 
                           style={{ textDecoration: 'none' }}
-                          onClick={() => { if(itemUrl && onLinkClick) onLinkClick(item?.id || link?.id) }}
                         >
-                          {imageUrl ? (
-                            <img src={imageUrl} alt={item?.name || item?.title} className="w-full aspect-square object-cover rounded-2xl shadow-sm mb-2" />
-                          ) : (
-                            <div className="w-full aspect-square bg-slate-200 rounded-2xl shadow-sm mb-2 flex items-center justify-center">
-                              <span className="text-slate-400 text-xs font-bold">ยังไม่มีรูปภาพ</span>
-                            </div>
-                          )}
-                          
-                          {(item?.name || item?.title) && (
-                            <h4 className={`${isCompact ? "text-[13px]" : "text-sm"} font-bold px-1`} style={{ color: safeDesign.textColor || "#000" }}>
-                              {item?.name || item?.title}
-                            </h4>
-                          )}
-                          
-                          {(isCompact && item?.description) && (
-                            <p className="text-[10px] opacity-70 px-1 mt-0.5" style={{ color: safeDesign.textColor }}>
-                              {item.description}
-                            </p>
-                          )}
-                          
-                          {(isCompact && item?.price) && (
-                            <p className="text-[11px] font-bold px-1 mt-1" style={{ color: safeDesign.textColor }}>
-                              {item.price} THB
-                            </p>
-                          )}
-                          
+                          {imageUrl ? <img src={imageUrl} className="w-full h-auto object-contain rounded-2xl shadow-sm mb-2" /> : <div className="w-full aspect-video bg-slate-200 rounded-2xl mb-2 flex items-center justify-center text-slate-400">ไม่มีรูปภาพ</div>}
+                          {(item?.name || item?.title) && <h4 className={`${isCompact ? "text-[13px]" : "text-sm"} font-bold px-1 text-center`} style={{ color: safeDesign.textColor || "#000" }}>{item?.name || item?.title}</h4>}
                         </WrapperTag>
                       );
                     })}
@@ -215,30 +184,23 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
               );
             }
 
-            // 4. Normal Link
             return (
-              <div key={link?.id || Math.random()} className="w-full mb-2 flex flex-col gap-2">
+              <div key={link?.id || Math.random()} className="w-full mb-2 flex flex-col gap-2 relative z-20">
                 {link?.items && link?.title && <h3 className={`${titleClass} mb-1`} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
                 {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
                   const itemUrl = item?.url || item?.link;
-                  const WrapperTag = itemUrl ? "a" : "div";
-                  const ItemIcon = ICON_MAP[item?.iconId] || ICON_MAP[item?.icon] || ICON_MAP[link?.icon] || ICON_MAP["Link"];
+                  const itemIconName = normalizeIconName(item?.iconId || item?.icon || link?.icon);
+                  const ItemIcon = ICON_MAP[itemIconName] || ICON_MAP["Link"];
                   
                   return (
-                    <WrapperTag 
+                    <a 
                       key={item?.id || idx} 
-                      {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})}
-                      className={`block w-full flex items-center transition-transform ${itemUrl ? "hover:scale-[1.02] cursor-pointer" : "cursor-default"}`}
-                      onClick={() => { if(itemUrl && onLinkClick) onLinkClick(item?.id || link?.id) }}
-                      style={{
-                        padding: isCompact ? "8px 12px" : "16px",
-                        backgroundColor: safeDesign.btnStyle === "outline" ? "transparent" : (safeDesign.btnBgColor || "#ffffff"),
-                        color: safeDesign.btnTextColor || "#000000",
-                        borderRadius: btnRadius,
-                        border: btnBorder,
-                        boxShadow: btnBoxShadow,
-                        textDecoration: "none"
-                      }}
+                      href={formatUrl(itemUrl)} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      onClick={() => { if (onLinkClick) onLinkClick(item?.id || link?.id); }}
+                      className="w-full flex items-center transition-transform pointer-events-auto hover:scale-[1.02] cursor-pointer" 
+                      style={{ padding: isCompact ? "8px 12px" : "16px", backgroundColor: safeDesign.btnStyle === "outline" ? "transparent" : (safeDesign.btnBgColor || "#ffffff"), color: safeDesign.btnTextColor || "#000000", borderRadius: btnRadius, border: btnBorder, boxShadow: btnBoxShadow, textDecoration: "none" }}
                     >
                       <div className={`${isCompact ? "w-8 h-8" : "w-10 h-10"} rounded-full flex items-center justify-center shrink-0`} style={{ background: "rgba(0,0,0,0.06)", color: safeDesign.btnTextColor }}>
                         {ItemIcon && <ItemIcon size={isCompact ? 16 : 20} />}
@@ -246,7 +208,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                       <span className={`flex-1 text-center ${isCompact ? "pr-8" : "pr-10"} font-bold`} style={{ fontSize: isCompact ? "13px" : "16px", color: safeDesign.btnTextColor }}>
                         {item?.title || item?.name || "ชื่อลิงก์"}
                       </span>
-                    </WrapperTag>
+                    </a>
                   );
                 })}
               </div>
@@ -254,9 +216,8 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
           })}
         </div>
         
-        {/* URL footer (เฉพาะจอใหญ่ โชว์ด้านล่างสุด) */}
         {!isCompact && (
-          <p className="mt-14 text-sm font-medium opacity-60 text-center" style={{ color: safeDesign.textColor || "#94a3b8" }}>
+          <p className="mt-14 text-sm font-medium opacity-60 text-center relative z-20 pointer-events-none" style={{ color: safeDesign.textColor || "#94a3b8" }}>
             mybiolink.com/{safeProfile.username || "username"}
           </p>
         )}

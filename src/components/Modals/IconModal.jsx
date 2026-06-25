@@ -1,37 +1,42 @@
 import React from 'react';
-// นำเข้าไอคอนจาก react-icons แบ่งตามหมวดหมู่
-import { FiX, FiGlobe, FiMessageCircle, FiMail, FiPhone, FiMapPin, FiShoppingBag } from 'react-icons/fi';
-import { FaFacebook, FaInstagram, FaTwitter, FaYoutube, FaGithub, FaLinkedin } from 'react-icons/fa';
+// ⭐️ นำเข้าไอคอนจากแหล่งเดียว (เน้น Font Awesome เพื่อให้สไตล์ตรงกัน)
+import { FiX } from 'react-icons/fi';
+import { 
+  FaGlobe, FaFacebook, FaInstagram, FaTwitter, FaYoutube, 
+  FaLine, FaEnvelope, FaPhone, FaGithub, FaLinkedin, 
+  FaMapMarkerAlt, FaShoppingBag 
+} from 'react-icons/fa';
 
-
-const ICON_MAP = {
-  Globe: FiGlobe,
+// ⭐️ ICON_MAP ที่ตรงกับหน้าพรีวิวเป๊ะๆ
+export const ICON_MAP = {
+  Globe: FaGlobe,
   Facebook: FaFacebook,
   Instagram: FaInstagram,
   Twitter: FaTwitter,
   Youtube: FaYoutube,
-  Message: FiMessageCircle,
-  Mail: FiMail,
-  Phone: FiPhone,
+  Message: FaLine,       // ⭐️ ตรงกัน: ใช้ FaLine เหมือนที่หน้าพรีวิวใช้
+  Mail: FaEnvelope,
+  Phone: FaPhone,
   Github: FaGithub,
   Linkedin: FaLinkedin,
-  Map: FiMapPin,
-  Shop: FiShoppingBag
+  Map: FaMapMarkerAlt,
+  Shop: FaShoppingBag
 };
 
+// ⭐️ AVAILABLE_ICONS ที่อัปเดตให้ใช้ Icon ชุดเดียวกับ ICON_MAP
 export const AVAILABLE_ICONS = [
-  { id: 'Globe', icon: FiGlobe, name: 'Website' },
+  { id: 'Globe', icon: FaGlobe, name: 'Website' },
   { id: 'Facebook', icon: FaFacebook, name: 'Facebook' },
   { id: 'Instagram', icon: FaInstagram, name: 'Instagram' },
   { id: 'Twitter', icon: FaTwitter, name: 'Twitter' },
   { id: 'Youtube', icon: FaYoutube, name: 'YouTube' },
-  { id: 'Message', icon: FiMessageCircle, name: 'Line/Chat' },
-  { id: 'Mail', icon: FiMail, name: 'Email' },
-  { id: 'Phone', icon: FiPhone, name: 'Phone' },
+  { id: 'Message', icon: FaLine, name: 'Line/Chat' },    // ⭐️ ใช้ FaLine
+  { id: 'Mail', icon: FaEnvelope, name: 'Email' },
+  { id: 'Phone', icon: FaPhone, name: 'Phone' },
   { id: 'Github', icon: FaGithub, name: 'GitHub' },
   { id: 'Linkedin', icon: FaLinkedin, name: 'LinkedIn' },
-  { id: 'Map', icon: FiMapPin, name: 'Location' },
-  { id: 'Shop', icon: FiShoppingBag, name: 'Shop' },
+  { id: 'Map', icon: FaMapMarkerAlt, name: 'Location' },
+  { id: 'Shop', icon: FaShoppingBag, name: 'Shop' },
 ];
 
 export const getIconComponent = (iconId) => {
@@ -60,8 +65,7 @@ export default function IconModal({ isOpen, onClose, onSelectIcon }) {
                 onClick={() => onSelectIcon(item.id)}
                 className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-100 bg-white hover:bg-indigo-50 transition-all"
               >
-                {/* 👈 เอา strokeWidth ออก เพราะ react-icons บางหมวดไม่รองรับ */}
-                {IconComponent ? <IconComponent size={28} /> : null}
+                {IconComponent ? <IconComponent size={28} className="text-slate-700" /> : null}
                 <span className="text-[11px] font-medium text-slate-500">{item.name}</span>
               </button>
             );
