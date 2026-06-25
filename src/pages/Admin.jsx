@@ -1,70 +1,87 @@
 import React, { useState, useEffect } from "react";
-import { 
-  Search, 
-  ChevronDown, 
-  Ban, 
-  Trash2, 
-  ChevronLeft, 
-  ChevronRight,
-  Eye,
-  LogOut
-} from "lucide-react";
+import { Search, ChevronDown, Ban, Trash2, ChevronLeft, ChevronRight, Eye, LogOut } from "lucide-react";
 import Header from "../components/Layout/Header";
 import { useNavigate } from 'react-router-dom';
+import api from "../api/axios"; 
 
 export default function AdminUserManagement() {
   const navigate = useNavigate();
 
-  // State Management
   const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
 
-  // ระบบ LocalStorage Database
-  useEffect(() => {
-    const savedUsers = localStorage.getItem("system_users");
-    if (savedUsers) {
-      setUsers(JSON.parse(savedUsers));
-    } else {
-      localStorage.setItem("system_users", JSON.stringify([]));
-      setUsers([]);
+  // 1. ดึงข้อมูลจาก API แทน LocalStorage
+  const fetchUsers = async () => {
+    try {
+      const response = await api.get('/admin');
+      if (response.data.status === 'success') {
+        setUsers(response.data.users);
+      }
+    } catch (error) {
+      console.error("ดึงข้อมูลผู้ใช้ล้มเหลว:", error);
+      // alert("ไม่สามารถโหลดข้อมูลผู้ใช้งานได้ กรุณาล็อกอินใหม่อีกครั้ง");
     }
+  };
+
+  useEffect(() => {
+    fetchUsers();
   }, []);
 
-  const updateUsersData = (newUsersArray) => {
-    setUsers(newUsersArray);
-    localStorage.setItem("system_users", JSON.stringify(newUsersArray));
-  };
-
-  // Handlers
-  const handleRoleChange = (id, newRole) => {
-    const updatedUsers = users.map(u => u.id === id ? { ...u, role: newRole } : u);
-    updateUsersData(updatedUsers);
-  };
-
-  const toggleBan = (id) => {
-    const updatedUsers = users.map(u => {
-      if (u.id === id) {
-        return { ...u, status: u.status === "Active" ? "Banned" : "Active" };
-      }
-      return u;
-    });
-    updateUsersData(updatedUsers);
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีนี้?")) {
-      const remainingUsers = users.filter(u => u.id !== id);
-      updateUsersData(remainingUsers);
+  // 2. อัปเดตสิทธิ์ (Role) ผ่าน API
+  const handleRoleChange = async (id, newRole) => {
+    // ปรับ UI ให้ดูก่อนทันที
+    setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u));
+    
+    try {
+      await api.put(`/admin/${id}/role`, { role: newRole });
+    } catch (error) {
+      alert("เกิดข้อผิดพลาดในการเปลี่ยนสิทธิ์");
+      fetchUsers(); // ถ้า API พัง ให้ดึงข้อมูลเก่ากลับมาโชว์ใหม่
     }
   };
 
-  // เมื่อกดลูกตาให้รีไดเล้กไปหน้า preview page
+  // 3. สลับสถานะ แบน (Ban) ผ่าน API
+  const toggleBan = async (id) => {
+    const userToUpdate = users.find(u => u.id === id);
+    const isBanning = userToUpdate.status === "active";
+    
+    // กำหนดข้อความแจ้งเตือนตามสถานะปัจจุบัน
+    const confirmMessage = isBanning 
+      ? "คุณแน่ใจหรือไม่ว่าต้องการระงับ (Ban) บัญชีผู้ใช้นี้?" 
+      : "คุณแน่ใจหรือไม่ว่าต้องการยกเลิกระงับ (Unban) บัญชีผู้ใช้นี้?";
+
+    // เงื่อนไข window.confirm เหมือนกับปุ่มลบ
+    if (window.confirm(confirmMessage)) {
+      const newStatus = isBanning ? "banned" : "active";
+      
+      // อัปเดต UI ชั่วคราว
+      setUsers(users.map(u => u.id === id ? { ...u, status: newStatus } : u));
+
+      try {
+        await api.put(`/admin/${id}/status`);
+      } catch (error) {
+        alert("เกิดข้อผิดพลาดในการอัปเดตสถานะ");
+        fetchUsers(); // รีเซ็ตกลับถ้าพัง
+      }
+    }
+  };
+
+  // 4. ลบผู้ใช้ผ่าน API
+  const handleDelete = async (id) => {
+    if (window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีนี้? (การกระทำนี้ไม่สามารถย้อนกลับได้)")) {
+      try {
+        await api.delete(`/admin/${id}`);
+        setUsers(users.filter(u => u.id !== id)); // ลบออกจากหน้าจอ
+      } catch (error) {
+        alert("เกิดข้อผิดพลาดในการลบผู้ใช้งาน");
+      }
+    }
+  };
+
   const handlePreviewProfile = (user) => {
-    // 1. ดึง username ออกมา (ถ้าในข้อมูลไม่มีคีย์ username ให้จำลองด้วยการตัดข้อความหน้า @ ของอีเมล)
     const targetUsername = user.username || user.email.split('@')[0];
-    // 2. ใช้คำสั่ง window.open เพื่อเปิดลิงก์ในแท็บใหม่ ('_blank')
     window.open(`/${targetUsername}?source=admin`, '_blank');
   };
 
@@ -79,16 +96,13 @@ export default function AdminUserManagement() {
   const filteredUsers = users.filter((u) => {
     const matchSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                         u.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchRole = filterRole === "All" ? true : u.role === filterRole;
+    const matchRole = filterRole === "All" ? true : (u.role || '').toLowerCase() === filterRole.toLowerCase();
     const matchStatus = filterStatus === "All" ? true : u.status === filterStatus;
-    
     return matchSearch && matchRole && matchStatus;
   });
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
-      
-      {/* ---------------- Navbar  ---------------- */}
       <Header onLogoClick={() => navigate('/dd')}>
         <button 
           onClick={handleLogout}
@@ -99,19 +113,14 @@ export default function AdminUserManagement() {
         </button>
       </Header>
 
-      {/* ---------------- Main Content ---------------- */}
       <main className="max-w-5xl mx-auto px-4 pt-28">
-        
-        {/* Main Card */}
         <div className="bg-white rounded-[1.5rem] p-8 shadow-sm">
           
-          {/* Header Texts */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-slate-800">จัดการผู้ใช้งาน (User Management)</h1>
             <p className="text-sm text-slate-500 mt-1 font-medium">ดูแลบัญชีผู้ใช้ แบน หรือลบบัญชีที่ทำผิดกฎระบบ</p>
           </div>
 
-          {/* Search Box */}
           <div className="relative mb-8 max-w-sm">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input 
@@ -123,51 +132,49 @@ export default function AdminUserManagement() {
             />
           </div>
 
-          {/* User Table (CSS Grid) */}
           <div className="w-full overflow-x-auto">
             <div className="min-w-[800px]">
               
-              {/* Table Header */}
               <div className="grid grid-cols-[3fr_1.5fr_1.5fr_1.5fr_1fr] gap-4 pb-4 border-b border-slate-100 px-4">
                 <div className="text-xs font-bold text-slate-500">ผู้ใช้งาน</div>
                 
-                {/* Role Header - ⭐️ เปลี่ยนให้จัดกึ่งกลาง (justify-center) */}
                 <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-slate-500 relative cursor-pointer group">
                   <span>สิทธิ์ (Role)</span>
                   <ChevronDown size={14} className="group-hover:text-slate-700" />
+                  
+                  {/* Dropdown กรองสิทธิ์ */}
                   <select 
                     value={filterRole} 
                     onChange={(e) => setFilterRole(e.target.value)}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   >
                     <option value="All">ทั้งหมด</option>
-                    <option value="ADMIN">ADMIN</option>
-                    <option value="USER">USER</option>
+                    <option value="admin">ADMIN</option>
+                    <option value="user">USER</option>
                   </select>
                 </div>
 
-                {/* Date Header - ⭐️ เปลี่ยนให้จัดกึ่งกลาง (text-center) */}
                 <div className="text-xs font-bold text-slate-500 text-center">วันที่สมัคร</div>
                 
-                {/* Status Header - ⭐️ เปลี่ยนให้จัดกึ่งกลาง (justify-center) */}
                 <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-slate-500 relative cursor-pointer group">
                   <span>สถานะ</span>
                   <ChevronDown size={14} className="group-hover:text-slate-700" />
+                  
+                  {/* Dropdown กรองสถานะ */}
                   <select 
                     value={filterStatus} 
                     onChange={(e) => setFilterStatus(e.target.value)}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   >
                     <option value="All">ทั้งหมด</option>
-                    <option value="Active">Active</option>
-                    <option value="Banned">Banned</option>
+                    <option value="active">Active</option>
+                    <option value="banned">Banned</option>
                   </select>
                 </div>
                 
                 <div className="text-xs font-bold text-slate-500 text-right">จัดการ</div>
               </div>
 
-              {/* Table Rows */}
               <div className="flex flex-col divide-y divide-slate-50">
                 {filteredUsers.length === 0 ? (
                   <div className="py-12 text-center text-slate-500 font-medium">
@@ -177,7 +184,6 @@ export default function AdminUserManagement() {
                   filteredUsers.map((user) => (
                     <div key={user.id} className="grid grid-cols-[3fr_1.5fr_1.5fr_1.5fr_1fr] gap-4 py-4 px-4 items-center hover:bg-slate-50/50 transition-colors rounded-xl">
                       
-                      {/* User Info */}
                       <div className="flex items-center gap-3">
                         <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover bg-slate-200" />
                         <div>
@@ -186,57 +192,58 @@ export default function AdminUserManagement() {
                         </div>
                       </div>
 
-                      {/* Role Pill - ⭐️ จัดปุ่มให้อยู่กึ่งกลาง */}
+                      
                       <div className="flex justify-center">
+                        {/* 🌟 Role Pill */}
                         <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border relative ${
-                          user.role === 'ADMIN' ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-slate-50 text-slate-600 border-slate-200'
+                          user.role === 'admin' ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-slate-50 text-slate-600 border-slate-200'
                         }`}>
-                          <span>{user.role}</span>
+                          {/* ใช้ .toUpperCase() เพื่อดันข้อความพิมพ์เล็ก ให้โชว์บนหน้าเว็บเป็นพิมพ์ใหญ่ */}
+                          <span>{user.role.toUpperCase()}</span> 
                           <ChevronDown size={12} />
                           <select 
                             value={user.role}
                             onChange={(e) => handleRoleChange(user.id, e.target.value)}
                             className="absolute inset-0 opacity-0 cursor-pointer"
                           >
-                            <option value="ADMIN">ADMIN</option>
-                            <option value="USER">USER</option>
+                            <option value="admin">ADMIN</option>
+                            <option value="user">USER</option>
                           </select>
                         </div>
                       </div>
 
-                      {/* Date Text - ⭐️ จัดข้อความให้อยู่กึ่งกลาง */}
                       <div className="text-sm text-slate-600 font-medium text-center">
                         {user.date}
                       </div>
 
-                      {/* Status Pill - ⭐️ จัดปุ่มให้อยู่กึ่งกลาง */}
+                      {/* 🌟 Status Pill */}
                       <div className="flex justify-center">
-                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold border ${
-                          user.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'
+                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold border capitalize ${
+                          user.status === 'active' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'
                         }`}>
+                          {/* ใส่คลาส capitalize ด้านบน จะทำให้ตัวแรกเป็นพิมพ์ใหญ่สวยๆ เองค่ะ เช่น active -> Active */}
                           {user.status}
                         </span>
                       </div>
 
-                      {/* Actions */}
                       <div className="flex items-center justify-end gap-2">
                         {user.role !== 'ADMIN' && (
                           <>
                             <button 
                               onClick={() => handlePreviewProfile(user)}
                               className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
-                              title="ตรวจสอบโปรไฟล์ (Preview)"
+                              title="ตรวจสอบโปรไฟล์"
                             >
                               <Eye size={18} strokeWidth={2} />
                             </button>
                             <button 
                               onClick={() => toggleBan(user.id)}
                               className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                                user.status === 'Banned' 
+                                user.status === 'banned' // 🌟 เปลี่ยนเป็นพิมพ์เล็ก
                                   ? 'bg-red-50 text-red-500 hover:bg-red-100' 
                                   : 'bg-emerald-50 text-emerald-500 hover:bg-emerald-100 hover:text-red-500'
                               }`}
-                              title={user.status === 'Banned' ? "ยกเลิกแบน" : "แบนผู้ใช้"}
+                              title={user.status === 'banned' ? "ยกเลิกแบน" : "แบนผู้ใช้"}
                             >
                               <Ban size={16} strokeWidth={2.5} />
                             </button>
@@ -259,7 +266,6 @@ export default function AdminUserManagement() {
             </div>
           </div>
 
-          {/* Pagination Footer */}
           <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-6">
             <span className="text-sm text-slate-500 font-medium">
               แสดงผล 1 ถึง {filteredUsers.length} จากทั้งหมด {users.length}
@@ -275,17 +281,6 @@ export default function AdminUserManagement() {
           </div>
 
         </div>
-
-        {/* Floating Save Button Area */}
-        <div className="flex justify-end mt-6">
-          <button 
-            onClick={() => alert("ระบบได้บันทึกการเปลี่ยนแปลงล่าสุดไว้ในฐานข้อมูลจำลองเรียบร้อยแล้ว!")}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-8 rounded-full transition-all shadow-md shadow-purple-600/20 active:scale-95"
-          >
-            บันทึก
-          </button>
-        </div>
-
       </main>
     </div>
   );
