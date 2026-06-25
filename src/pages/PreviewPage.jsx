@@ -38,24 +38,56 @@ const PreviewPage = ({ isPublic }) => {
 
   // ⭐️ 1. ฟังก์ชันแอบยิง API เก็บสถิติ (ทำงานอยู่เบื้องหลัง) ⭐️
   const trackAnalytics = (targetUsername, blockId = null) => {
-    // ถ้านี่คือการเปิดพรีวิวจากหน้าแอดมินหรือหน้าแก้ไข จะไม่นับยอดวิวเพื่อไม่ให้สถิติเพี้ยน
-    if (isFromAdmin || !targetUsername) return; 
+    // ด่านที่ 1: เช็คว่าเป็นหน้าจอ Preview หรือไม่
+    if (!isPublic || isFromAdmin || !targetUsername) {
+      console.log("🛑 สั่งหยุด: อยู่ในโหมด Preview/Admin");
+      return; 
+    }
 
-    // สร้างหรือดึง Session ID ของคนที่เข้ามาดู (ใช้ Session Storage เพื่อกันการ F5 ปั่นวิว)
+    // ด่านที่ 2: เช็คเจ้าของโปรไฟล์
+    try {
+      const userStr = localStorage.getItem("user");
+      const token = localStorage.getItem("token"); 
+
+      // 1. ดักจับจาก LocalStorage ปกติ (ถ้าข้อมูลมา)
+      if (userStr && token) {
+        const userObj = JSON.parse(userStr);
+        const currentUsername = userObj?.username || userObj?.data?.username || userObj?.user?.username;
+        
+        if (currentUsername && String(currentUsername).toLowerCase() === String(targetUsername).toLowerCase()) {
+          console.log("🛑 สั่งหยุด: เจ้าของโปรไฟล์กดเอง (ตรวจเจอจาก LocalStorage)");
+          return; 
+        }
+      }
+
+      // 2. ⭐️ ดักจับเพิ่ม: ป้องกันกรณีเปิดในแท็บเบราว์เซอร์เดียวกันแต่ LocalStorage ดึงไม่มา 
+      // ถ้าเปิดหน้านี้ขึ้นมาแล้วระบบเช็คว่าประวัติก่อนหน้า (Referrer) เพิ่งมาจากหน้าจัดการเว็บ (/dd หรือ /admin) 
+      // ก็มีความเป็นไปได้สูงว่าเป็นตัวคุณเองที่เพิ่งกดเปิดลิงก์ออกมาดู
+      if (document.referrer && (document.referrer.includes('/dd') || document.referrer.includes('/admin'))) {
+        console.log("🛑 สั่งหยุด: ไม่นับยอดเพราะคุณเพิ่งกดเปิดมาจากหน้าแก้ไขเว็บของคุณเอง");
+        return;
+      }
+
+    } catch (err) {
+      console.error("Error parsing user data:", err);
+    }
+
+    // ด่านที่ 3: ยิง API จริง
+    console.log("✅ ผ่านทุกด่าน: ระบบกำลังยิง API นับยอด...");
+    
     let sessionId = sessionStorage.getItem("analytics_session");
     if (!sessionId) {
       sessionId = "sess_" + Math.random().toString(36).substr(2, 9) + Date.now();
       sessionStorage.setItem("analytics_session", sessionId);
     }
 
-    // ยิง API ไปหลังบ้านแบบเงียบๆ (ไม่ต้องใช้ await เพราะไม่ต้องการให้หน้าเว็บรอ)
     api.post(`/analytics/track/${targetUsername}`, {
       session_id: sessionId,
-      block_id: blockId, // ถ้าเป็น null = ยอดเข้าชมหน้าเว็บ / ถ้ามีไอดี = ยอดคลิกลิงก์
-      referrer_url: document.referrer // เก็บข้อมูลว่าเข้ามาจากแอปไหน (FB, IG, LINE)
+      block_id: blockId, 
+      referrer_url: document.referrer 
     }).catch(err => console.log("Analytics Tracking Error:", err));
   };
-
+  
   useEffect(() => {
     const savedProfile = JSON.parse(localStorage.getItem("preview_profile"));
     const savedLinks   = JSON.parse(localStorage.getItem("preview_links"));
