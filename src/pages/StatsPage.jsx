@@ -3,10 +3,12 @@
 // ============================================================
 
 import React, { useState, useEffect } from "react";
-import { FaEye, FaMousePointer, FaChartBar, FaStar } from "react-icons/fa"; 
+import { FaEye, FaMousePointer, FaChartBar, FaStar, FaLink } from "react-icons/fa";
+import { ICON_MAP } from "../constants/icons";
 import api from "../api/axios";
 
-const StatsPage = () => {
+// รับ links มาด้วยเพื่อเอาไว้ console.log เช็คข้อมูลเปรียบเทียบ
+const StatsPage = ({ links }) => {
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -52,6 +54,26 @@ const StatsPage = () => {
   const maxViewsInChart = stats?.chart_data?.length > 0 
     ? Math.max(...stats.chart_data.map(d => d.views)) 
     : 0;
+
+  // ⭐️ ลองเปิด F12 Console ดูตรงนี้ จะเห็นความต่างของข้อมูลครับ
+  console.log("ลิงก์ที่ได้รับมาจาก Props (ข้อมูลเก่า):", links);
+  console.log("สถิติที่ได้รับมาจาก API (ข้อมูลจริง):", stats?.links);
+
+  // ⭐️ เพิ่มโค้ดส่วนนี้: สั่งให้คัดกรองลิงก์ที่เป็น YouTube และ TikTok ทิ้งไป ไม่ต้องเอามาแสดง
+  const displayLinks = stats?.links ? stats.links.filter(link => {
+    // หาข้อมูลต้นฉบับเพื่อดูว่าเป็นบล็อกประเภทไหน
+    const originalLink = links?.find((l) => l.id === link.id);
+    
+    // ตั้งเงื่อนไขว่าอะไรคือ YouTube / TikTok (ดูจาก Icon, Type หรือ URL)
+    const isVideo = 
+      originalLink?.icon === "Youtube" || 
+      originalLink?.icon === "TikTok" || 
+      originalLink?.type === "VIDEO" || 
+      originalLink?.type === "TIKTOK" ||
+      (link.url && (link.url.includes("youtu") || link.url.includes("youtube.com") || link.url.includes("tiktok.com")));
+    
+    return !isVideo; // 👈 ถ้าไม่ใช่ Video ให้เก็บไว้ (โชว์), ถ้าใช่ให้เตะออก (ไม่โชว์)
+  }) : [];
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-400">
@@ -187,16 +209,16 @@ const StatsPage = () => {
                     <circle
                       cx={x}
                       cy={y}
-                      r="5" // ⭐️ ลดรัศมีวงกลมให้เล็กลงนิดนึง
-                      className="fill-white stroke-indigo-600 stroke-[3px] group-hover/dot:r-7 transition-all duration-150"
+                      r="5"
+                      className="fill-white stroke-indigo-600 stroke-[3px] group-hover/dot:scale-[1.4] transition-transform duration-150"
+                      style={{ transformOrigin: `${x}px ${y}px` }}
                     />
 
                     {/* ตัวเลขบอกยอดวิว */}
                     <text
                       x={x}
-                      y={y - 12} // ⭐️ ปรับระยะห่างให้ใกล้ตุ่มมากขึ้น
+                      y={y - 12}
                       textAnchor="middle"
-                      // ⭐️ ลดขนาด font จาก 14px เป็น 11px และปรับจาก extrabold เป็น bold
                       className="text-[10px] font-bold fill-slate-600" 
                     >
                       {day.views}
@@ -205,9 +227,8 @@ const StatsPage = () => {
                     {/* ตัวอักษรชื่อย่อวัน */}
                     <text
                       x={x}
-                      y="190" // ⭐️ ขยับให้ชิดแกน x ขึ้นมาหน่อย
+                      y="190"
                       textAnchor="middle"
-                      // ⭐️ ลดขนาด font วันที่ลงด้วย
                       className="text-[10px] font-semibold fill-slate-400 group-hover/dot:fill-slate-600 transition-colors"
                     >
                       {day.day_name}
@@ -225,12 +246,63 @@ const StatsPage = () => {
         <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
           📈 ประสิทธิภาพลิงก์
         </h3>
-        <div className="text-center py-6 text-xs text-slate-400 font-medium">
-          ระบบกำลังรวบรวมพฤติกรรมการคลิกของแต่ละปุ่มลิงก์...
-        </div>
-      </div>
+        
+        {/* ⭐️ เปลี่ยนจาก stats.links เป็น displayLinks ที่เรากรองไว้ */}
+        {displayLinks.length > 0 ? (
+          <div className="space-y-3">
+            {displayLinks.map((link) => {
+              const originalLink = links?.find((l) => l.id === link.id);
+              
+              let IconComponent = FaLink; 
+              
+              if (originalLink) {
+                if (originalLink.icon === "Image") {
+                  IconComponent = ICON_MAP["Image"] || FaLink;
+                } else if (originalLink.icon && ICON_MAP[originalLink.icon]) {
+                   // สำหรับลิงก์โซเชียลอื่นๆ เช่น Facebook, Github
+                  IconComponent = ICON_MAP[originalLink.icon];
+                }
+              } 
+              
+              // เดาจาก URL เผื่อหา Icon ไม่เจอ
+              if (IconComponent === FaLink && link.url) {
+                 if (link.url.includes("facebook.com")) IconComponent = ICON_MAP["Facebook"] || FaLink;
+                 else if (link.url.includes("github.com")) IconComponent = ICON_MAP["Github"] || FaLink;
+                 // ไม่ต้องเดา YouTube/TikTok แล้ว เพราะเรากรองออกไปแล้ว
+              }
 
-    </div>
+              return (
+                <div 
+                  key={link.id} 
+                  className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
+                >
+                  <div className="flex items-center min-w-0 mr-4">
+                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center justify-center shrink-0 mr-3 text-slate-600">
+                      <IconComponent size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-700 truncate">
+                        {link.title && link.title !== "ไม่มีชื่อลิงก์" ? link.title : "ลิงก์ของคุณ"}
+                      </p>
+                      <p className="text-[10px] text-slate-400 truncate mt-0.5">{link.url || "ไม่มีลิงก์"}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-extrabold text-indigo-600">{link.clicks || 0}</p>
+                    <p className="text-[10px] text-slate-400 uppercase">คลิก</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-6 text-xs text-slate-400 font-medium">
+            ยังไม่มีข้อมูลการคลิกในขณะนี้
+          </div>
+        )}
+      </div>
+    </div> 
   );
 };
 
