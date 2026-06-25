@@ -29,21 +29,33 @@ const formatUrl = (url) => {
   return `https://${url}`;
 };
 
-// ⭐️ ฟังก์ชันช่วยแปลชื่อไอคอนให้ตรงกับ ICON_MAP (จัดการปัญหาไอคอนไม่แสดงผล)
+// ⭐️ วิธีแก้ปัญหาที่ยั่งยืนที่สุด: Dynamic Auto-Match (อัปเดตคำศัพท์จากฐานข้อมูลจริง)
+// ⭐️ วิธีแก้ปัญหาที่ยั่งยืน: ดึงค่าจาก ICON_MAP ที่มีอยู่จริงโดยอัตโนมัติ
 const normalizeIconName = (name) => {
   if (!name) return "Link";
-  const iconNormalization = {
-    "Chat": "Line/Chat",
-    "chat": "Line/Chat",
-    "Line/Chat": "Line/Chat",
-    "Git": "GitHub",
-    "git": "GitHub",
-    "Github": "GitHub",
-    "github": "GitHub",
-    "Youtube": "YouTube",
-    "youtube": "YouTube"
+  
+  // 1. ทำให้เป็นตัวพิมพ์เล็กเพื่อเทียบ
+  const cleanName = String(name).toLowerCase().trim();
+  
+  // 2. สร้างตารางเทียบ (Mapping) กรณีชื่อใน DB กับชื่อใน ICON_MAP ต่างกันชัดเจน
+  const mapping = {
+    "mail": "Mail",
+    "message": "Message",
+    "map": "Map",
+    "globe": "Globe",
+    "linkin": "Linkedin",
+    "git": "Github"
   };
-  return iconNormalization[name] || name;
+
+  // 3. หาชื่อที่ถูกต้องโดยเช็คจากตาราง mapping ก่อน ถ้าไม่มีให้ค้นหาใน ICON_MAP ว่ามี Key ไหนที่ตรงกับชื่อที่ส่งมา
+  const targetName = mapping[cleanName] || cleanName;
+  
+  // 4. สแกนหา Key ใน ICON_MAP ที่ตรงกับชื่อที่ได้รับมา แบบไม่สนตัวพิมพ์เล็ก-ใหญ่
+  const matchedKey = Object.keys(ICON_MAP).find(
+    (key) => key.toLowerCase() === targetName.toLowerCase()
+  );
+  
+  return matchedKey || "Link";
 };
 
 const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, onLinkClick }) => {
@@ -96,7 +108,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
           )}
 
           {visibleLinks.map((link) => {
-            console.log("ลิงก์นี้ได้รับไอคอนชื่อ:", link?.icon, "และ item มีค่า:", link?.items);
             const subItems = link?.items && link.items.length > 0 ? link.items : [link];
             const titleClass = `${isCompact ? "text-[13px]" : "text-base"} font-bold px-2`;
             const nameClass = `${isCompact ? "text-[11px]" : "text-sm"} font-medium px-2 mt-1`;
@@ -152,7 +163,17 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                       const imageUrl = item?.image || item?.imageUrl; 
                       const WrapperTag = itemUrl ? "a" : "div";
                       return (
-                        <WrapperTag key={item?.id || idx} {...(itemUrl ? { href: formatUrl(itemUrl), target: "_blank", rel: "noopener noreferrer" } : {})} className={`flex flex-col group pointer-events-auto w-full mx-auto ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} style={{ textDecoration: 'none' }}>
+                        <WrapperTag 
+                          key={item?.id || idx} 
+                          {...(itemUrl ? { 
+                            href: formatUrl(itemUrl), 
+                            target: "_blank", 
+                            rel: "noopener noreferrer",
+                            onClick: () => { if (onLinkClick) onLinkClick(item?.id || link?.id); }
+                          } : {})} 
+                          className={`flex flex-col group pointer-events-auto w-full mx-auto ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} 
+                          style={{ textDecoration: 'none' }}
+                        >
                           {imageUrl ? <img src={imageUrl} className="w-full h-auto object-contain rounded-2xl shadow-sm mb-2" /> : <div className="w-full aspect-video bg-slate-200 rounded-2xl mb-2 flex items-center justify-center text-slate-400">ไม่มีรูปภาพ</div>}
                           {(item?.name || item?.title) && <h4 className={`${isCompact ? "text-[13px]" : "text-sm"} font-bold px-1 text-center`} style={{ color: safeDesign.textColor || "#000" }}>{item?.name || item?.title}</h4>}
                         </WrapperTag>
@@ -172,7 +193,15 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                   const ItemIcon = ICON_MAP[itemIconName] || ICON_MAP["Link"];
                   
                   return (
-                    <a key={item?.id || idx} href={formatUrl(itemUrl)} target="_blank" rel="noopener noreferrer" className="w-full flex items-center transition-transform pointer-events-auto hover:scale-[1.02] cursor-pointer" style={{ padding: isCompact ? "8px 12px" : "16px", backgroundColor: safeDesign.btnStyle === "outline" ? "transparent" : (safeDesign.btnBgColor || "#ffffff"), color: safeDesign.btnTextColor || "#000000", borderRadius: btnRadius, border: btnBorder, boxShadow: btnBoxShadow, textDecoration: "none" }}>
+                    <a 
+                      key={item?.id || idx} 
+                      href={formatUrl(itemUrl)} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      onClick={() => { if (onLinkClick) onLinkClick(item?.id || link?.id); }}
+                      className="w-full flex items-center transition-transform pointer-events-auto hover:scale-[1.02] cursor-pointer" 
+                      style={{ padding: isCompact ? "8px 12px" : "16px", backgroundColor: safeDesign.btnStyle === "outline" ? "transparent" : (safeDesign.btnBgColor || "#ffffff"), color: safeDesign.btnTextColor || "#000000", borderRadius: btnRadius, border: btnBorder, boxShadow: btnBoxShadow, textDecoration: "none" }}
+                    >
                       <div className={`${isCompact ? "w-8 h-8" : "w-10 h-10"} rounded-full flex items-center justify-center shrink-0`} style={{ background: "rgba(0,0,0,0.06)", color: safeDesign.btnTextColor }}>
                         {ItemIcon && <ItemIcon size={isCompact ? 16 : 20} />}
                       </div>

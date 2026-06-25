@@ -98,48 +98,49 @@ const PreviewPage = ({ isPublic }) => {
           }
 
           // ============================================================
-          // ⭐️ ตัวดักจับและจัดระเบียบข้อมูลลิงก์
+          // ⭐️ ตัวดักจับและจัดระเบียบข้อมูลลิงก์ (ส่วนที่ได้รับการปรับปรุงแก้ไข)
           // ============================================================
           const rawBlocks = apiData.blocks || [];
           
           const formattedBlocks = rawBlocks.map(block => {
             let typeStr = String(block.type || '').toUpperCase();
-            let correctIcon = block.icon || "Link";
+            // ⭐️ ดักจับทั้ง icon และ icon_id ของตัว Block เองด้วย
+            let defaultIcon = block.icon || block.icon_id || "Link";
 
-            if (typeStr === 'YOUTUBE' || typeStr === 'VIDEO') correctIcon = 'Youtube';
-            else if (typeStr === 'TIKTOK') correctIcon = 'TikTok';
-            else if (typeStr === 'IMAGE') correctIcon = 'Image';
-            else if (typeStr === 'SHOP') correctIcon = 'Shop';
+            // เช็คประเภทเพื่อตั้งค่า Icon เริ่มต้น (กรณีที่ไม่มีการเลือกไว้)
+            if (typeStr === 'YOUTUBE' || typeStr === 'VIDEO') defaultIcon = 'Youtube';
+            else if (typeStr === 'TIKTOK') defaultIcon = 'TikTok';
+            else if (typeStr === 'IMAGE') defaultIcon = 'Image';
+            else if (typeStr === 'SHOP') defaultIcon = 'Shop';
 
-            let correctItems = block.items || (block.content_data && block.content_data.items) || [];
-            if (typeof correctItems === 'string') {
-              try { correctItems = JSON.parse(correctItems); } 
-              catch(e) { correctItems = []; }
+            let rawItems = block.items || (block.content_data && block.content_data.items) || [];
+            if (typeof rawItems === 'string') {
+              try { rawItems = JSON.parse(rawItems); } 
+              catch(e) { rawItems = []; }
             }
 
-            // ⭐️ จัดการ Mapping iconId ของแต่ละ item ให้ติดตัวไปกับ object
-            const itemsWithIcons = correctItems.map(item => ({
-              ...item,
-              iconId: item.iconId || item.icon || correctIcon
-            }));
-
-            if (correctIcon === 'Link' && correctItems.length > 0) {
-              const checkUrl = String(correctItems[0]?.url || correctItems[0]?.link || "").toLowerCase();
+            // ดักจับ Auto-detect จาก URL (ถ้าเป็น Link ปกติ)
+            if (defaultIcon === 'Link' && rawItems.length > 0) {
+              const checkUrl = String(rawItems[0]?.url || rawItems[0]?.link || "").toLowerCase();
               if (checkUrl.includes('youtube.com') || checkUrl.includes('youtu.be')) {
-                correctIcon = 'Youtube'; 
+                defaultIcon = 'Youtube'; 
               } else if (checkUrl.includes('tiktok.com')) {
-                correctIcon = 'TikTok'; 
+                defaultIcon = 'TikTok'; 
               }
             }
+
+            // ⭐️ แก้ไขให้ Logic ดึง iconId แม่นยำที่สุด โดยรองรับ icon_id ที่มาจากหลังบ้าน
+            // ลำดับความสำคัญ: ไอคอนที่เลือกใน Item > ไอคอนที่เลือกใน Block > Auto-Detect > ค่าปริยาย (Link)
+            const formattedItems = rawItems.map(item => ({
+              ...item,
+              iconId: item.iconId || item.icon_id || item.icon || block.icon_id || block.icon || defaultIcon
+            }));
 
             return {
               ...block,                    
               ...block.content_data,
-              items: (correctItems || []).map(item => ({
-                ...item,
-                iconId: item.iconId || item.icon || block.icon // 👈 ดึงค่าที่ถูกต้องส่งไป
-              })),
-              icon: correctIcon,            
+              items: formattedItems,
+              icon: block.icon || block.icon_id || defaultIcon,            
               isVisible: block.is_visible !== undefined ? block.is_visible : true, 
             };
           });

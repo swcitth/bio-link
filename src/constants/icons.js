@@ -1,30 +1,12 @@
 import { 
-  FaYoutube, 
-  FaInstagram, 
-  FaShoppingCart, 
-  FaFileAlt, 
-  FaLink, 
-  FaMusic, 
-  FaTrash, 
-  FaGripVertical,
-  FaTiktok,
-  FaFacebook,
-  // ⭐️ นำเข้าไอคอนใหม่ให้ครบตามหน้าต่างเลือกไอคอน
-  FaGlobe,
-  FaTwitter,
-  FaLine,
-  FaEnvelope,
-  FaPhone,
-  FaGithub,
-  FaLinkedin,
-  FaMapMarkerAlt,
-  FaShoppingBag
+  FaYoutube, FaInstagram, FaShoppingCart, FaFileAlt, FaLink, 
+  FaMusic, FaTiktok, FaFacebook, FaGlobe, FaTwitter, FaLine, 
+  FaEnvelope, FaPhone, FaGithub, FaLinkedin, FaMapMarkerAlt, FaShoppingBag 
 } from "react-icons/fa";
-
-import { FiImage } from "react-icons/fi";  
+import { FiImage } from "react-icons/fi"; 
 
 export const ICON_MAP = {
-  // 🟢 รายการเดิมของคุณ
+  // 🟢 รายการทั่วไป
   Youtube: FaYoutube,
   Instagram: FaInstagram,
   ShoppingCart: FaShoppingCart,
@@ -35,19 +17,16 @@ export const ICON_MAP = {
   TikTok: FaTiktok,  
   Image: FiImage,    
 
-  // ⭐️ รายการที่เพิ่มใหม่ให้ตรงกับหน้าต่างเป๊ะๆ
-  Website: FaGlobe,
-  Twitter: FaTwitter,
-  YouTube: FaYoutube, // ดักจับ YouTube ตัว T ใหญ่
-  "Line/Chat": FaLine, // ถ้าชื่อมีเครื่องหมายทับ (/) ต้องใส่เครื่องหมายคำพูดครอบไว้
-  Chat: FaLine,        // ⭐️ เพิ่มเพื่อให้เลือก Chat แล้วแสดงผลได้ถูกต้อง
-  Email: FaEnvelope,
-  Phone: FaPhone,
-  GitHub: FaGithub,
-  Git: FaGithub,       // ⭐️ เพิ่มเพื่อแก้ปัญหา Git ไม่แสดงผล
-  LinkedIn: FaLinkedin,
-  Location: FaMapMarkerAlt,
-  Shop: FaShoppingBag
+  // ⭐️ รายการที่อัปเดตให้ตรงกับ ID ในหน้า Modal เป๊ะๆ
+  Globe: FaGlobe,          // ใช้ ID: 'Globe'
+  Twitter: FaTwitter,      // ใช้ ID: 'Twitter'
+  Message: FaLine,         // ใช้ ID: 'Message' (ซึ่งคือ Line/Chat)
+  Mail: FaEnvelope,        // ใช้ ID: 'Mail'
+  Phone: FaPhone,          // ใช้ ID: 'Phone'
+  Github: FaGithub,        // ใช้ ID: 'Github'
+  Linkedin: FaLinkedin,    // ใช้ ID: 'Linkedin'
+  Map: FaMapMarkerAlt,     // ใช้ ID: 'Map'
+  Shop: FaShoppingBag      // ใช้ ID: 'Shop'
 };
 
 export const ICON_EMOJI = {
@@ -59,19 +38,15 @@ export const ICON_EMOJI = {
   Music: "🎵",
   TikTok: "📱",      
   Image: "🖼️",
-  // ⭐️ เพิ่มอีโมจิเผื่อไว้ใช้งานด้วย
-  Website: "🌐",
+  Globe: "🌐",
   Facebook: "📘",
   Twitter: "🐦",
-  YouTube: "▶️",
-  "Line/Chat": "💬",
-  Chat: "💬",          // ⭐️ เพิ่มอีโมจิให้ Chat
-  Email: "✉️",
+  Message: "💬",
+  Mail: "✉️",
   Phone: "📞",
-  GitHub: "🐙",
-  Git: "🐙",           // ⭐️ เพิ่มอีโมจิให้ Git
-  LinkedIn: "💼",
-  Location: "📍",
+  Github: "🐙",
+  Linkedin: "💼",
+  Map: "📍",
   Shop: "🛍️"
 };
 

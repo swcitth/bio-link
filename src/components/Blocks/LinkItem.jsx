@@ -4,7 +4,7 @@
 
 import React, { useState } from "react";
 import { FiEdit2, FiEye, FiEyeOff, FiTrash2 } from "react-icons/fi";
-import { FaGripVertical } from "react-icons/fa";
+import { FaGripVertical, FaLink } from "react-icons/fa";
 import { ICON_MAP } from "../../constants/icons";
 
 const LinkItem = ({
@@ -19,7 +19,7 @@ const LinkItem = ({
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
 
-  // ⭐️ 1. เพิ่มระบบแกะกล่องข้อมูล ป้องกันกรณีที่ฐานข้อมูลส่ง items มาเป็น String 
+// 1. ระบบแกะกล่องข้อมูล
   let safeItems = link?.items || [];
   if (typeof safeItems === 'string') {
     try {
@@ -29,12 +29,25 @@ const LinkItem = ({
     }
   }
 
-  // ⭐️ 2. ดึงชื่อไอคอนจากข้อมูลที่แกะกล่องแล้วอย่างปลอดภัย
+  // 2. ดึงชื่อไอคอนอย่างปลอดภัย
   const firstItemIcon = safeItems?.[0]?.iconId || safeItems?.[0]?.icon;
   
-  // ⭐️ 3. แมปเข้ากับ ICON_MAP (ถ้าหาไม่เจอถึงจะใช้ห่วงโซ่ Link)
-  const IconComponent = ICON_MAP[firstItemIcon] || ICON_MAP[link?.icon] || ICON_MAP["Link"];
-
+  // 3. กำหนด IconComponent แยกตามประเภทของบล็อก
+  let IconComponent;
+  
+  // เช็คว่าเป็นบล็อกประเภทรูปภาพหรือไม่
+  if (link.icon === "Image") {
+    IconComponent = ICON_MAP["Image"] || FaLink;
+  } 
+  // เช็คว่าเป็นบล็อกวิดีโอ (YouTube/TikTok) ให้แสดงไอคอนตามที่เลือก
+  else if (link.icon === "Youtube" || link.icon === "TikTok") {
+    IconComponent = ICON_MAP[firstItemIcon] || ICON_MAP[link?.icon] || ICON_MAP["Link"];
+  } 
+  // กรณีอื่นๆ (บล็อก "ปุ่มลิงก์") ให้แสดงห่วงโซ่เสมอ
+  else {
+    IconComponent = FaLink;
+  }
+  
   return (
     <div
       draggable
