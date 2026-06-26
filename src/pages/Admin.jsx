@@ -85,9 +85,17 @@ export default function AdminUserManagement() {
     window.open(`/${targetUsername}?source=admin`, '_blank');
   };
 
+
   const handleLogout = () => {
     if (window.confirm("คุณต้องการออกจากระบบใช่หรือไม่?")) {
-      localStorage.removeItem("user_session"); 
+      // ล้างข้อมูลทุกอย่างเพื่อความชัวร์ไม่ว่าจะติ๊ก Remember Me หรือไม่
+      localStorage.clear();
+      sessionStorage.clear(); 
+
+      if (api.defaults.headers.common['Authorization']) {
+        delete api.defaults.headers.common['Authorization'];
+      }
+
       navigate('/'); 
     }
   };
