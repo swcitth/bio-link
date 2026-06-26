@@ -169,7 +169,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                             href: formatUrl(itemUrl), 
                             target: "_blank", 
                             rel: "noopener noreferrer",
-                            onClick: () => { if (onLinkClick) onLinkClick(item?.id || link?.id); }
+                            onClick: () => { if (onLinkClick && link?.id) onLinkClick(link.id); }
                           } : {})} 
                           className={`flex flex-col group pointer-events-auto w-full mx-auto ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} 
                           style={{ textDecoration: 'none' }}
@@ -198,7 +198,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                       href={formatUrl(itemUrl)} 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      onClick={() => { if (onLinkClick) onLinkClick(item?.id || link?.id); }}
+                      onClick={() => { if (onLinkClick && link?.id) onLinkClick(link.id); }}
                       className="w-full flex items-center transition-transform pointer-events-auto hover:scale-[1.02] cursor-pointer" 
                       style={{ padding: isCompact ? "8px 12px" : "16px", backgroundColor: safeDesign.btnStyle === "outline" ? "transparent" : (safeDesign.btnBgColor || "#ffffff"), color: safeDesign.btnTextColor || "#000000", borderRadius: btnRadius, border: btnBorder, boxShadow: btnBoxShadow, textDecoration: "none" }}
                     >
