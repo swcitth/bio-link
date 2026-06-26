@@ -3,6 +3,7 @@ import axios from 'axios';
 const api = axios.create({
   // baseURL เหมือนที่อยู่ตั้งต้นเมื่อเรานำไปใช้งานเช่น /user = ที่อยู่ตั้งต้น/user
   baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
 });
 
 // 1. Interceptor ขาออก (แนบ Token) จาก front ไป back

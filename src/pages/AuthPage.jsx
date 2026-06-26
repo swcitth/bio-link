@@ -21,17 +21,23 @@ export default function AuthPage({ defaultView = 'login' }) {
 
   // ดักจับว่าถ้า URL เปลี่ยน (defaultView เปลี่ยน) ให้เปลี่ยนหน้าต่างตาม
   useEffect(() => {
-    // ลองหา Token และข้อมูล User จากทั้ง 2 กระเป๋า (Session สำหรับไม่จดจำ, Local สำหรับจดจำ)
+    // 🌟 ดึงข้อมูลแบบแยกตู้ ตามโครงสร้างเดิมของทีม
     const token = sessionStorage.getItem('token') || localStorage.getItem('token');
     const userStr = sessionStorage.getItem('user') || localStorage.getItem('user');
 
-    // ถ้าเจอครบทั้งคู่ แปลว่าเข้าสู่ระบบอยู่แล้ว ให้พาไปหน้าหลังบ้านเลย
     if (token && userStr) {
-      const user = JSON.parse(userStr);
-      if (user.role === "admin") {
-        navigate('/admin');
-      } else {
-        navigate('/dd');
+      try {
+        const user = JSON.parse(userStr);
+        const userRole = user.role ? user.role.toLowerCase() : '';
+
+        // ถ้ามีข้อมูลครบ เช็ค Role แล้วพาไปหน้าให้ถูกต้อง
+        if (userRole === "admin") {
+          navigate('/admin');
+        } else {
+          navigate('/dd');
+        }
+      } catch (error) {
+        console.error("รูปแบบข้อมูล User ไม่ถูกต้อง:", error);
       }
     }
   }, [navigate]);
