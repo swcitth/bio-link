@@ -2,7 +2,6 @@ import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 
 export default function AdminRoute() {
-  // 🌟 ดึงข้อมูลแบบแยกตู้ ตามโครงสร้างคีย์เดิมของทีม
   const userString = localStorage.getItem('user') || sessionStorage.getItem('user');
   const token = localStorage.getItem('token') || sessionStorage.getItem('token');
   
