@@ -10,6 +10,14 @@ import api from "../api/axios";
 // ⭐️ Import ไลบรารี Recharts
 import { AreaChart, Area, XAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
+// ⭐️ Import สำหรับปฏิทิน Date Range (จาก CRM)
+import { X } from "lucide-react";
+import { DateRange } from 'react-date-range';
+import 'react-date-range/dist/styles.css'; 
+import 'react-date-range/dist/theme/default.css'; 
+import { th } from 'date-fns/locale'; 
+import { format } from 'date-fns';
+
 const getSafeNumber = (val) => {
   if (!val) return 0;
   const num = Number(String(val).replace(/,/g, ''));
@@ -86,7 +94,15 @@ const StatsPage = ({ links }) => {
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [calendarView, setCalendarView] = useState(new Date());
+  
+  // ⭐️ State ปฏิทิน DateRange
+  const [dateRangeSelection, setDateRangeSelection] = useState([
+    {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: 'selection'
+    }
+  ]);
 
   const fetchAnalytics = async () => {
     try {
@@ -109,105 +125,6 @@ const StatsPage = ({ links }) => {
     if (dateRange === 'custom') return; 
     fetchAnalytics();
   }, [dateRange]);
-
-  const handleDayClick = (dateStr) => {
-    if (new Date(dateStr) > new Date().setHours(0,0,0,0)) return; 
-    if (!customStart || (customStart && customEnd)) {
-      setCustomStart(dateStr);
-      setCustomEnd('');
-    } else {
-      dateStr < customStart ? setCustomStart(dateStr) : setCustomEnd(dateStr);
-    }
-  };
-
-  const renderCalendarDropdown = () => {
-    const today = new Date();
-    const year = calendarView.getFullYear();
-    const month = calendarView.getMonth();
-    const fullMonthNames = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-    const totalDays = new Date(year, month + 1, 0).getDate();
-    let firstDayIdx = new Date(year, month, 1).getDay();
-    firstDayIdx = firstDayIdx === 0 ? 6 : firstDayIdx - 1; 
-    const prevMonthTotalDays = new Date(year, month, 0).getDate();
-    const cells = [];
-    
-    for (let i = firstDayIdx - 1; i >= 0; i--) {
-      cells.push({ day: prevMonthTotalDays - i, month: month === 0 ? 11 : month - 1, year: month === 0 ? year - 1 : year, isCurrentMonth: false });
-    }
-    for (let d = 1; d <= totalDays; d++) {
-      cells.push({ day: d, month, year, isCurrentMonth: true });
-    }
-    const nextPadding = (7 - (cells.length % 7)) % 7;
-    for (let d = 1; d <= nextPadding; d++) {
-      cells.push({ day: d, month: month === 11 ? 0 : month + 1, year: month === 11 ? year + 1 : year, isCurrentMonth: false });
-    }
-
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth();
-    const yearsRange = Array.from({ length: 6 }, (_, i) => currentYear - 5 + i);
-    const customDaysCount = getDaysCount(customStart, customEnd);
-
-    return (
-      <div className="absolute right-0 mt-2 w-[310px] bg-white p-4 rounded-2xl border border-slate-200 shadow-2xl z-50 text-slate-800">
-        <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
-          <button type="button" onClick={() => setCalendarView(new Date(year, month - 1, 1))} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500">&larr;</button>
-          <div className="flex items-center gap-1.5">
-            <select value={month} onChange={(e) => setCalendarView(new Date(year, parseInt(e.target.value), 1))} className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none">
-              {fullMonthNames.map((name, idx) => (year === currentYear && idx > currentMonth ? null : <option key={idx} value={idx}>{name}</option>))}
-            </select>
-            <select value={year} onChange={(e) => setCalendarView(new Date(parseInt(e.target.value), (parseInt(e.target.value) === currentYear && month > currentMonth) ? currentMonth : month, 1))} className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none">
-              {yearsRange.map((y) => <option key={y} value={y}>พ.ศ. {y + 543}</option>)}
-            </select>
-          </div>
-          <button type="button" onClick={() => setCalendarView(new Date(year, month + 1, 1))} disabled={year >= currentYear && month >= currentMonth} className="p-1.5 disabled:text-slate-200 hover:bg-slate-100 rounded-lg text-slate-500">&rarr;</button>
-        </div>
-        <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 mb-2">
-          {['จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.', 'อา.'].map(d => <div key={d}>{d}</div>)}
-        </div>
-        <div className="grid grid-cols-7 gap-y-1 text-center text-xs">
-          {cells.map((cell, idx) => {
-            const dateStr = `${cell.year}-${String(cell.month + 1).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`;
-            const isFuture = new Date(cell.year, cell.month, cell.day) > today.setHours(0,0,0,0);
-            const isSelectedStart = customStart === dateStr;
-            const isSelectedEnd = customEnd === dateStr;
-            const isInRange = customStart && customEnd && dateStr > customStart && dateStr < customEnd;
-
-            if (!cell.isCurrentMonth) return <div key={idx} className="w-8 h-8 flex items-center justify-center text-slate-200 text-[11px] mx-auto">{cell.day}</div>;
-            if (isFuture) return <div key={idx} className="w-8 h-8 flex items-center justify-center text-slate-300 bg-slate-50/50 rounded-lg line-through cursor-not-allowed mx-auto text-[11px]">{cell.day}</div>;
-
-            let wrapperClass = "w-9 h-9 mx-auto flex items-center justify-center relative ";
-            let btnClass = "w-8 h-8 flex items-center justify-center font-bold text-[11px] rounded-full transition-all z-10 ";
-
-            if (isSelectedStart || isSelectedEnd) {
-              wrapperClass += isSelectedStart && customEnd ? "bg-indigo-50 rounded-l-full" : isSelectedEnd && customStart ? "bg-indigo-50 rounded-r-full" : "";
-              btnClass += "bg-indigo-600 text-white shadow-md";
-            } else if (isInRange) {
-              wrapperClass += "bg-indigo-50 w-full rounded-none";
-              btnClass += "text-indigo-600";
-            } else {
-              btnClass += "text-slate-600 hover:bg-slate-100";
-            }
-
-            return (
-              <div key={idx} className={wrapperClass}>
-                <button type="button" onClick={() => handleDayClick(dateStr)} className={btnClass}>{cell.day}</button>
-              </div>
-            );
-          })}
-        </div>
-        {customStart && (
-          <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-2">
-            <div className="text-[11px] text-center font-bold text-indigo-600 bg-indigo-50/60 py-2 rounded-xl px-1">
-              {customStart && customEnd ? `ช่วงเวลา: ${formatShortThaiDate(customStart)} - ${formatShortThaiDate(customEnd)} (${customDaysCount} วัน)` : `วันเริ่มต้น: ${formatShortThaiDate(customStart)} (เลือกวันสิ้นสุด)`}
-            </div>
-            {customStart && customEnd && (
-              <button type="button" onClick={() => { setIsCalendarOpen(false); fetchAnalytics(); }} className="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl text-xs hover:bg-indigo-700 shadow-md">เสร็จสิ้น</button>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
 
   if (isLoading) return <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-slate-100"><div className="text-indigo-600 font-semibold animate-pulse text-sm">📊 กำลังคำนวณและดึงข้อมูลสถิติจริง...</div></div>;
   if (error) return <div className="text-center py-20 bg-white rounded-2xl border border-red-100 text-red-500 font-medium text-sm">❌ {error}</div>;
@@ -257,11 +174,10 @@ const StatsPage = ({ links }) => {
           </div>
           {dateRange === 'custom' && (
             <div className="relative w-full md:w-auto">
-              <button type="button" onClick={() => setIsCalendarOpen(!isCalendarOpen)} className="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg text-xs sm:text-sm text-slate-700 font-bold hover:bg-slate-100 transition-all shadow-sm w-full md:w-auto">
+              <button type="button" onClick={() => setIsCalendarOpen(true)} className="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg text-xs sm:text-sm text-slate-700 font-bold hover:bg-slate-100 transition-all shadow-sm w-full md:w-auto">
                 <div className="flex items-center gap-2"><FaCalendarAlt className="text-indigo-600" size={13} /><span>{customStart && customEnd ? `${formatShortThaiDate(customStart)} - ${formatShortThaiDate(customEnd)} (${customDaysCount} วัน)` : "เลือกช่วงเวลา..."}</span></div>
                 <span className="text-[10px] text-slate-400">▼</span>
               </button>
-              {isCalendarOpen && renderCalendarDropdown()}
             </div>
           )}
         </div>
@@ -442,6 +358,64 @@ const StatsPage = ({ links }) => {
           <div className="text-center py-6 text-xs text-slate-400 font-medium">ยังไม่มีข้อมูลการคลิกในขณะนี้</div>
         )}
       </div>
+
+      {/* ─── Popup Calendar Modal (จาก CRM) ─── */}
+      {isCalendarOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-[24px] shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-4 px-2">
+              <h3 className="text-lg font-bold text-slate-800">เลือกช่วงวันที่</h3>
+              <button 
+                onClick={() => setIsCalendarOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors"
+              >
+                <X size={18} strokeWidth={2.5} />
+              </button>
+            </div>
+            
+            <div className="border border-slate-100 rounded-xl overflow-hidden">
+              <DateRange
+                editableDateInputs={true}
+                onChange={item => setDateRangeSelection([item.selection])}
+                moveRangeOnFirstSelection={false}
+                ranges={dateRangeSelection}
+                locale={th} 
+                rangeColors={['#4f46e5']} 
+                direction="horizontal"
+                maxDate={new Date()}
+              />
+            </div>
+            
+            <div className="mt-6">
+              <button 
+                onClick={() => {
+                  const start = format(dateRangeSelection[0].startDate, 'yyyy-MM-dd');
+                  const end = format(dateRangeSelection[0].endDate, 'yyyy-MM-dd');
+                  setCustomStart(start);
+                  setCustomEnd(end);
+                  setIsCalendarOpen(false);
+                  
+                  // ดึงข้อมูลใหม่หลังจากกดเสร็จสิ้น
+                  setIsLoading(true);
+                  api.get(`/user/analytics?range=custom&start=${start}&end=${end}`)
+                    .then(response => {
+                      if (response.data.success) setStats(response.data.data);
+                      setIsLoading(false);
+                    })
+                    .catch(err => {
+                      console.error(err);
+                      setError("ไม่สามารถโหลดข้อมูลสถิติได้ในขณะนี้");
+                      setIsLoading(false);
+                    });
+                }}
+                className="w-full py-3 bg-[#F4F5F7] hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition-colors"
+              >
+                เสร็จสิ้น
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div> 
   );
 };

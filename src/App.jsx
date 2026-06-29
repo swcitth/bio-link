@@ -14,7 +14,8 @@ import CookieSettingsPage from './pages/CookieSettingsPage';
 import AdminRoute from './components/AdminRoute';
 import AdminLayout from './components/admin/layout/AdminLayout';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'; 
-import AdminUserManagement from './pages/admin/UserManagementPage'; 
+import AdminUserManagement from './pages/admin/UserManagementPage';
+import CRMDashboardPage from './pages/admin/CRMDashboardPage.jsx';
 
 import { LoadingProvider } from './context/LoadingContext';
 
@@ -52,6 +53,13 @@ function App() {
           <Route path="/admin/users" element={
                                               <AdminLayout>
                                                 <AdminUserManagement />
+                                              </AdminLayout>
+                                            } 
+            />
+          {/* หน้า CRM Dashboard */}
+          <Route path="/admin/crm" element={
+                                              <AdminLayout>
+                                                <CRMDashboardPage />
                                               </AdminLayout>
                                             } 
           />
