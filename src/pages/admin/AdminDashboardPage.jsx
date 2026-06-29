@@ -5,6 +5,7 @@ import TrafficChart from '../../components/admin/dashboard/TrafficChart';
 import TopPages from '../../components/admin/dashboard/TopPages';
 import InactiveUsersTable from '../../components/admin/dashboard/InactiveUsersTable';
 import { chartData, topPages, inactiveUsers } from '../../data/mockData';
+import api from '../../api/axios';
 
 // ⭐️ Import DashboardHeader ที่เราแยก Component ไว้
 import DashboardHeader from '../../components/admin/dashboard/DashboardHeader';
@@ -19,6 +20,10 @@ import { format, differenceInDays } from 'date-fns'; // ฟังก์ชัน
 export default function DashboardPage() {
   const [activeFilter, setActiveFilter] = useState('today');
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
+  const [stats, setStats] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [dateRange, setDateRange] = useState([
     {
       startDate: new Date(),
@@ -49,6 +54,22 @@ export default function DashboardPage() {
     }
   };
 
+  // ฟังก์ชันดึงข้อมูลจาก Backend
+  const fetchStats = async (startDate, endDate) => {
+    setIsLoading(true);
+    try {
+      // ส่ง query params ตามรูปแบบที่กำหนด
+      const response = await api.get(`/admin/dashboard-stats?startDate=${startDate}&endDate=${endDate}`);
+      if (response.data.status === 'success') {
+        setStats(response.data.data); // เอา data ไปเก็บใน state
+      }
+    } catch (error) {
+      console.error("Failed to fetch dashboard stats:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     // ใช้ format จาก date-fns
     const start = format(dateRange[0].startDate, 'yyyy-MM-dd');
@@ -56,11 +77,18 @@ export default function DashboardPage() {
     
     console.log(`[เตรียมยิง API] ช่วงเวลา: เริ่ม ${start} ถึง ${end}`);
     
-    // ตรงนี้คุณสามารถนำ start และ end ไปใส่ใน state หรือเรียก API ได้เลยครับ
+    fetchStats(start, end);
+
   }, [dateRange]);
 
-  // 🌟 ฟังก์ชันสำหรับแปลงรูปแบบวันที่เพื่อแสดงบน Component Header
-  const getSmallDateText = () => {
+  const getButtonClass = (filterType) => {
+    return activeFilter === filterType
+      ? "px-4 py-1 text-xs font-bold bg-[#6B46FF] text-white rounded-full transition-colors"
+      : "px-4 py-1 text-xs font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors";
+  };
+
+  // ฟังก์ชันสำหรับแปลงรูปแบบวันที่เพื่อแสดงบนปุ่ม "กำหนดเอง"
+  const getCustomDateText = () => {
     const { startDate, endDate } = dateRange[0];
     const startStr = format(startDate, 'd MMM yyyy', { locale: th });
     const endStr = format(endDate, 'd MMM yyyy', { locale: th });
@@ -88,10 +116,11 @@ export default function DashboardPage() {
         downloadText="ดาวน์โหลดรายงาน"
       />
 
-      <StatCards />
+      {/* ส่ง Data ลงไปยัง StatCards */}
+      <StatCards stats={stats} isLoading={isLoading} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        <TrafficChart data={chartData} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <TrafficChart data={stats?.chartData || []} isLoading={isLoading} />
         <TopPages pages={topPages} />
       </div>
 
