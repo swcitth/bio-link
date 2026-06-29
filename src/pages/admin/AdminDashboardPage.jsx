@@ -5,6 +5,7 @@ import TrafficChart from '../../components/admin/dashboard/TrafficChart';
 import TopPages from '../../components/admin/dashboard/TopPages';
 import InactiveUsersTable from '../../components/admin/dashboard/InactiveUsersTable';
 import { chartData, topPages, inactiveUsers } from '../../data/mockData';
+import api from '../../api/axios';
 
 // React Date Range & date-fns
 import { DateRange } from 'react-date-range';
@@ -16,6 +17,10 @@ import { format, differenceInDays } from 'date-fns'; // ฟังก์ชัน
 export default function DashboardPage() {
   const [activeFilter, setActiveFilter] = useState('today');
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
+  const [stats, setStats] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [dateRange, setDateRange] = useState([
     {
       startDate: new Date(),
@@ -46,6 +51,22 @@ export default function DashboardPage() {
     }
   };
 
+  // ฟังก์ชันดึงข้อมูลจาก Backend
+  const fetchStats = async (startDate, endDate) => {
+    setIsLoading(true);
+    try {
+      // ส่ง query params ตามรูปแบบที่กำหนด
+      const response = await api.get(`/admin/dashboard-stats?startDate=${startDate}&endDate=${endDate}`);
+      if (response.data.status === 'success') {
+        setStats(response.data.data); // เอา data ไปเก็บใน state
+      }
+    } catch (error) {
+      console.error("Failed to fetch dashboard stats:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     // ใช้ format จาก date-fns
     const start = format(dateRange[0].startDate, 'yyyy-MM-dd');
@@ -53,7 +74,8 @@ export default function DashboardPage() {
     
     console.log(`[เตรียมยิง API] ช่วงเวลา: เริ่ม ${start} ถึง ${end}`);
     
-    // ตรงนี้คุณสามารถนำ start และ end ไปใส่ใน state หรือเรียก API ได้เลยครับ
+    fetchStats(start, end);
+
   }, [dateRange]);
 
   const getButtonClass = (filterType) => {
@@ -62,7 +84,7 @@ export default function DashboardPage() {
       : "px-4 py-1 text-xs font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors";
   };
 
-  // 🌟 ฟังก์ชันสำหรับแปลงรูปแบบวันที่เพื่อแสดงบนปุ่ม "กำหนดเอง"
+  // ฟังก์ชันสำหรับแปลงรูปแบบวันที่เพื่อแสดงบนปุ่ม "กำหนดเอง"
   const getCustomDateText = () => {
     const { startDate, endDate } = dateRange[0];
     
@@ -89,7 +111,7 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold text-slate-800">ภาพรวมระบบ</h1>
           
           <div className="flex items-center mt-3">
-            {/* 🌟 นำทุกอย่างมารวมไว้ใน Container สีขาวกรอบเดียว */}
+            {/* นำทุกอย่างมารวมไว้ใน Container สีขาวกรอบเดียว */}
             <div className="flex items-center bg-white rounded-full p-1 shadow-sm border border-slate-100 transition-all duration-300">
               
               <button className={getButtonClass('today')} onClick={() => handleDateFilter('today')}>วันนี้</button>
@@ -97,7 +119,7 @@ export default function DashboardPage() {
               <button className={getButtonClass('30days')} onClick={() => handleDateFilter('30days')}>30 วัน</button>
               <button className={getButtonClass('custom')} onClick={() => handleDateFilter('custom')}>กำหนดเอง</button>
 
-              {/* 🌟 วันที่ที่เลือก จะโผล่มาต่อท้ายในกล่องเดียวกัน */}
+              {/* วันที่ที่เลือก จะโผล่มาต่อท้ายในกล่องเดียวกัน */}
               {activeFilter === 'custom' && (
                 <div className="flex items-center animate-in fade-in slide-in-from-left-4 duration-300">
                   
@@ -130,10 +152,11 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      <StatCards />
+      {/* ส่ง Data ลงไปยัง StatCards */}
+      <StatCards stats={stats} isLoading={isLoading} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <TrafficChart data={chartData} />
+        <TrafficChart data={stats?.chartData || []} isLoading={isLoading} />
         <TopPages pages={topPages} />
       </div>
 
