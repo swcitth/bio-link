@@ -139,10 +139,26 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                       );
                     } else {
                       let videoId = getYoutubeId(videoUrl); 
+                      
+                      {/* ⭐️ ส่วนที่ปรับปรุง: สร้าง Embed URL และเช็คเงื่อนไข การเล่นอัตโนมัติ ⭐️ */}
+                      let embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}?rel=0` : "";
+                      if (videoId && item?.isAutoplay) {
+                        embedUrl += `&autoplay=1&mute=1`;
+                      }
+
                       return (
                         <div key={item?.id || idx} className="flex flex-col gap-1">
                           <div className="w-full rounded-2xl overflow-hidden shadow-md bg-black aspect-video relative">
-                            {videoId ? <iframe className="absolute inset-0 w-full h-full pointer-events-auto" src={`https://www.youtube.com/embed/${videoId}?rel=0`} frameBorder="0" allowFullScreen /> : <div className="w-full h-full flex items-center justify-center text-white">ยังไม่มีวิดีโอ</div>}
+                            {videoId ? (
+                              <iframe 
+                                className="absolute inset-0 w-full h-full pointer-events-auto" 
+                                src={embedUrl} 
+                                frameBorder="0" 
+                                allowFullScreen 
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-white">ยังไม่มีวิดีโอ</div>
+                            )}
                           </div>
                           {(item?.name || item?.title) && <p className={nameClass} style={{ color: safeDesign.textColor || "#000" }}>{item?.name || item?.title}</p>}
                         </div>

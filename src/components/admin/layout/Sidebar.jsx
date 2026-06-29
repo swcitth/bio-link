@@ -79,10 +79,17 @@ export default function Sidebar({ isOpen, setIsOpen }) {
             User Management
         </RouterLink>
         
-        <a href="#" className="flex items-center gap-3 px-4 py-3 text-indigo-200 hover:text-white hover:bg-white/5 rounded-xl font-semibold transition-colors">
+        <RouterLink 
+          to="/admin/crm" 
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            isActive('/admin/crm') 
+              ? 'bg-indigo-600/40 text-white font-bold border border-indigo-500/30 shadow-sm' 
+              : 'text-indigo-200 hover:text-white hover:bg-white/5 font-semibold border border-transparent'
+          }`}
+        >
           <LayoutTemplate size={20} />
           CRM Dashboard
-        </a>
+        </RouterLink>
       </div>
 
       {/* Sidebar Footer (User Profile & Logout) */}

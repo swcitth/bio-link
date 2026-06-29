@@ -14,6 +14,8 @@ export default function Header({ isSidebarOpen, setIsSidebarOpen }) {
             return 'Dashboard';
         case '/admin/users':
             return 'User Management';
+        case '/admin/crm':
+            return 'CRM Dashboard';
         // ถ้าอนาคตมีหน้าใหม่ ให้มาเพิ่ม case ตรงนี้ได้เลย เช่น
         // case '/admin/settings': return 'ตั้งค่าระบบ (Settings)';
         default:

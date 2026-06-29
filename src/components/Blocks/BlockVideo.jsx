@@ -74,6 +74,24 @@ export default function BlockVideo({ item, index, register, onRemove, onToggleVi
             {...register(`items.${index}.link`)}
           />
         </div>
+
+        {/* ⭐️ ส่วนที่เพิ่มใหม่: ปุ่ม Toggle เล่นอัตโนมัติ (ซ่อนเมื่อเป็น TikTok / แสดงเมื่อเป็น YouTube) ⭐️ */}
+        {!isTikTok && (
+          <div className="flex items-center mt-1">
+            <span className="w-10 md:w-12 text-sm font-medium text-slate-700"></span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              {/* ซ่อน checkbox ไว้แต่ผูกกับ react-hook-form */}
+              <input 
+                type="checkbox" 
+                className="sr-only peer" 
+                {...register(`items.${index}.isAutoplay`)} 
+              />
+              {/* ดีไซน์ปุ่ม Toggle แบบ Tailwind */}
+              <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+              <span className="ml-3 text-[13px] font-medium text-slate-600">เล่นอัตโนมัติ (Auto-play)</span>
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Actions (Edit Label, Visible Toggle & Delete) */}

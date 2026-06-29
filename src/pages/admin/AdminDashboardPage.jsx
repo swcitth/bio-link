@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Menu, X, Calendar as CalendarIcon, ChevronDown } from 'lucide-react'; 
+import { X } from 'lucide-react'; 
 import StatCards from '../../components/admin/dashboard/StatCards';
 import TrafficChart from '../../components/admin/dashboard/TrafficChart';
 import TopPages from '../../components/admin/dashboard/TopPages';
 import InactiveUsersTable from '../../components/admin/dashboard/InactiveUsersTable';
 import { chartData, topPages, inactiveUsers } from '../../data/mockData';
+
+// ⭐️ Import DashboardHeader ที่เราแยก Component ไว้
+import DashboardHeader from '../../components/admin/dashboard/DashboardHeader';
 
 // React Date Range & date-fns
 import { DateRange } from 'react-date-range';
@@ -56,90 +59,47 @@ export default function DashboardPage() {
     // ตรงนี้คุณสามารถนำ start และ end ไปใส่ใน state หรือเรียก API ได้เลยครับ
   }, [dateRange]);
 
-  const getButtonClass = (filterType) => {
-    return activeFilter === filterType
-      ? "px-4 py-1 text-xs font-bold bg-[#6B46FF] text-white rounded-full transition-colors"
-      : "px-4 py-1 text-xs font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors";
+  // 🌟 ฟังก์ชันสำหรับแปลงรูปแบบวันที่เพื่อแสดงบน Component Header
+  const getSmallDateText = () => {
+    const { startDate, endDate } = dateRange[0];
+    const startStr = format(startDate, 'd MMM yyyy', { locale: th });
+    const endStr = format(endDate, 'd MMM yyyy', { locale: th });
+    
+    if (startDate.getTime() === endDate.getTime()) {
+      return `${startStr} (GMT+7)`;
+    }
+    return `${startStr} - ${endStr} (GMT+7)`;
   };
 
-  // 🌟 ฟังก์ชันสำหรับแปลงรูปแบบวันที่เพื่อแสดงบนปุ่ม "กำหนดเอง"
-  const getCustomDateText = () => {
-    const { startDate, endDate } = dateRange[0];
-    
-    // แปลงเป็น ดดด. (เช่น 1 มิ.ย.)
-    const startStr = format(startDate, 'd MMM', { locale: th });
-    const endStr = format(endDate, 'd MMM', { locale: th });
-    
-    // คำนวณจำนวนวัน (+1 เพราะนับรวมวันแรกด้วย เช่น 1 ถึง 25 คือ 25 วัน)
-    const days = differenceInDays(endDate, startDate) + 1;
-
-    // ถ้าเลือกวันเดียวกัน
-    if (startDate.getTime() === endDate.getTime()) {
-      return `${startStr} (1 วัน)`;
-    }
-    
-    // ถ้าเลือกเป็นช่วง
-    return `${startStr} - ${endStr} (${days} วัน)`;
+  const handleDownload = () => {
+    console.log("Downloading Dashboard Report...");
+    // ใส่ Logic ดาวน์โหลดที่นี่
   };
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">ภาพรวมระบบ</h1>
-          
-          <div className="flex items-center mt-3">
-            {/* 🌟 นำทุกอย่างมารวมไว้ใน Container สีขาวกรอบเดียว */}
-            <div className="flex items-center bg-white rounded-full p-1 shadow-sm border border-slate-100 transition-all duration-300">
-              
-              <button className={getButtonClass('today')} onClick={() => handleDateFilter('today')}>วันนี้</button>
-              <button className={getButtonClass('7days')} onClick={() => handleDateFilter('7days')}>7 วัน</button>
-              <button className={getButtonClass('30days')} onClick={() => handleDateFilter('30days')}>30 วัน</button>
-              <button className={getButtonClass('custom')} onClick={() => handleDateFilter('custom')}>กำหนดเอง</button>
-
-              {/* 🌟 วันที่ที่เลือก จะโผล่มาต่อท้ายในกล่องเดียวกัน */}
-              {activeFilter === 'custom' && (
-                <div className="flex items-center animate-in fade-in slide-in-from-left-4 duration-300">
-                  
-                  {/* เส้นคั่นบางๆ */}
-                  <div className="w-px h-5 bg-slate-200 mx-1.5"></div>
-                  
-                  <button 
-                    onClick={() => setIsCalendarOpen(true)}
-                    className="flex items-center gap-2 px-3 py-1 rounded-full hover:bg-slate-50 transition-colors group"
-                  >
-                    <CalendarIcon size={14} className="text-[#6B46FF]" strokeWidth={2.5} />
-                    <span className="text-sm font-bold text-slate-700 whitespace-nowrap">
-                      {getCustomDateText()}
-                    </span>
-                    <ChevronDown size={14} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
-                  </button>
-                  
-                </div>
-              )}
-
-            </div>
-          </div>
-
-          <p className="text-[11px] text-slate-400 mt-2 ml-1">26 มิ.ย. 2026 (GMT+7)</p>
-        </div>
-        
-        <button className="bg-[#6B46FF] hover:bg-indigo-600 text-white px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 transition-colors shadow-sm shadow-indigo-200">
-          <Download size={16} />
-          ดาวน์โหลดรายงาน
-        </button>
-      </div>
+      {/* ─── เรียกใช้งาน DashboardHeader แบบ Component ─── */}
+      <DashboardHeader 
+        title="ภาพรวมระบบ"
+        activeFilter={activeFilter}
+        onFilterChange={handleDateFilter}
+        dateText={getSmallDateText()}
+        onDownload={handleDownload}
+        downloadText="ดาวน์โหลดรายงาน"
+      />
 
       <StatCards />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         <TrafficChart data={chartData} />
         <TopPages pages={topPages} />
       </div>
 
-      <InactiveUsersTable users={inactiveUsers} />
+      <div className="mt-6">
+        <InactiveUsersTable users={inactiveUsers} />
+      </div>
 
-      {/* Popup Calendar Modal */}
+      {/* Popup Calendar Modal (คงเดิม 100%) */}
       {isCalendarOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="bg-white p-6 rounded-[24px] shadow-2xl animate-in fade-in zoom-in-95 duration-200">
