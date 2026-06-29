@@ -111,7 +111,7 @@ export default function DashboardPage() {
         title="ภาพรวมระบบ"
         activeFilter={activeFilter}
         onFilterChange={handleDateFilter}
-        dateText={getSmallDateText()}
+        dateText={getCustomDateText()}
         onDownload={handleDownload}
         downloadText="ดาวน์โหลดรายงาน"
       />
