@@ -1,7 +1,7 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, Bookmark } from 'lucide-react';
 
-export default function TopPages({ pages, day }) {
+export default function TopPages({ pages, days }) {
   // ทำความสะอาดและเตรียมข้อมูลจากสถานะ Props ที่ส่งมาจากหลังบ้าน
   const sortedTopPages = (pages || []).map(page => {
     const views = page?.views || 0;
@@ -37,6 +37,7 @@ export default function TopPages({ pages, day }) {
         <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
             <tr className="text-[11px] font-bold text-slate-400 border-b border-slate-100 uppercase tracking-widest">
+              <th className="pb-4 pl-2 w-16">อันดับ</th>
               <th className="pb-4 pl-2">URL / ผู้ใช้</th>
               <th className="pb-4 px-4 text-right">ยอดผู้เข้าชม</th>
               <th className="pb-4 px-4 text-right">คลิก</th>
@@ -49,28 +50,29 @@ export default function TopPages({ pages, day }) {
           <tbody className="divide-y divide-slate-50">
             {sortedTopPages.length === 0 ? (
               <tr>
-                <td colSpan="7" className="py-12 text-center text-sm text-slate-400">
+                <td colSpan="8" className="py-12 text-center text-sm text-slate-400">
                   ยังไม่มีข้อมูลการเข้าชมในช่วงเวลานี้
                 </td>
               </tr>
             ) : (
               sortedTopPages.map((page, index) => {
                 const isPositive = page.growth > 0;
-                const rankIcon = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🏅';
                 
                 return (
                   <tr key={page.id || index} className="hover:bg-slate-50/50 transition-colors group">
                     
-                    {/* ข้อมูลผู้ใช้และลิงก์โปรไฟล์ */}
+                    {/* 1. คอลัมน์อันดับ (Rank) */}
                     <td className="py-4 pl-2">
-                      <div className="flex items-center gap-4">
-                        <span className="text-2xl w-6 text-center drop-shadow-sm">{rankIcon}</span>
-                        <div className="flex flex-col">
-                          <span className="font-bold text-slate-800 text-[15px]">{page.name || 'Unknown'}</span>
-                          <a href={`https://${page.link || '#'}`} target="_blank" rel="noopener noreferrer" className="text-[13px] text-indigo-600 hover:underline">
-                            https://{page.link || 'unknown'}
-                          </a>
-                        </div>
+                      <span className="font-bold text-slate-800 text-base">{index + 1}</span>
+                    </td>
+                    
+                    {/* 2. ข้อมูลผู้ใช้และลิงก์โปรไฟล์ (เอาไอคอนเหรียญออกแล้ว) */}
+                    <td className="py-4 pl-2">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-slate-800 text-[15px]">{page.name || 'Unknown'}</span>
+                        <a href={`https://${page.link || '#'}`} target="_blank" rel="noopener noreferrer" className="text-[13px] text-indigo-600 hover:underline">
+                          https://{page.link || 'unknown'}
+                        </a>
                       </div>
                     </td>
                     
@@ -84,7 +86,7 @@ export default function TopPages({ pages, day }) {
                       {page.clicks.toLocaleString()}
                     </td>
 
-                    {/*  ยอดกด Save Contact (แสดงผลข้อมูลใหม่) */}
+                    {/* ยอดกด Save Contact */}
                     <td className="py-4 px-4 text-right font-medium text-slate-600 text-sm">
                       <span className="inline-flex items-center gap-1 text-slate-600 font-semibold">
                         {page.saves.toLocaleString()}
@@ -104,21 +106,20 @@ export default function TopPages({ pages, day }) {
                         ) : (
                           <TrendingDown size={16} className="text-slate-400" strokeWidth={2.5} />
                         )}
-                        {/* แก้ไข className ที่เขียนซ้อนกันให้ถูกต้อง */}
                         <span className={`text-sm font-bold ${isPositive ? 'text-emerald-500' : 'text-slate-500'}`}>
                           {isPositive ? '+' : ''}{page.growth}%
                         </span>
                       </div>
                     </td>
 
-                    {/*  กล่องสไตล์ ลิงก์ยอดนิยม (Popular Link UI) */}
+                    {/* ลิงก์ยอดนิยม */}
                     <td className="py-4 px-4 text-left font-medium text-slate-600 text-sm">
                       <div className="flex flex-col">
-                        {/* แสดงชื่อลิงก์เป็นตัวหนา */}
-                        <span className="font-bold text-slate-800 text-[15px]">{page.popularLink.title}</span>
-                        {/* แสดงจำนวนคลิกด้านล่างในบรรทัดใหม่ */}
+                        <span className="font-bold text-slate-800 text-[15px]">
+                          {page.popularLink.title}
+                        </span>
                         <span className="text-[13px] text-slate-500">
-                          {page.popularLink.clicks} คลิก (30 วันล่าสุด)
+                          {page.popularLink.clicks} คลิก {days === 1 ? '(วันนี้)' : `(${days || 30} วันล่าสุด)`}
                         </span>
                       </div>
                     </td>

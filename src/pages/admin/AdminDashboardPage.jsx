@@ -103,6 +103,44 @@ export default function DashboardPage() {
     // ใส่ Logic ดาวน์โหลดที่นี่
   };
 
+  // ฟังก์ชันคำนวณระยะห่างของวัน
+  const calculateDays = (start, end) => {
+    const startMs = start instanceof Date ? start.getTime() : new Date(start).getTime();
+    const endMs = end instanceof Date ? end.getTime() : new Date(end).getTime();
+    
+    const diff = Math.round((endMs - startMs) / (1000 * 60 * 60 * 24));
+    return diff + 1; // +1 เพราะให้นับวันเริ่มต้นด้วย
+  };
+
+  const { startDate, endDate } = dateRange[0];
+  const selectedDaysCount = calculateDays(startDate, endDate);
+
+  // ฟังก์ชันสำหรับสร้างข้อความในปุ่ม (เช่น "1 มิ.ย. - 22 มิ.ย. (22 วัน)")
+  const getButtonDateText = () => {
+    const { startDate, endDate } = dateRange[0];
+    const startStr = format(startDate, 'd MMM', { locale: th });
+    const endStr = format(endDate, 'd MMM', { locale: th });
+    const days = differenceInDays(endDate, startDate) + 1;
+    
+    if (startDate.getTime() === endDate.getTime()) {
+      return `${startStr} (1 วัน)`;
+    }
+    return `${startStr} - ${endStr} (${days} วัน)`;
+  };
+
+  // ฟังก์ชันสำหรับสร้างข้อความด้านล่าง (เช่น "30 มิ.ย. 2026 (GMT+7)")
+  const getSubDateText = () => {
+    const { startDate, endDate } = dateRange[0];
+    const startStr = format(startDate, 'd MMM yyyy', { locale: th });
+    const endStr = format(endDate, 'd MMM yyyy', { locale: th });
+    
+    if (startDate.getTime() === endDate.getTime()) {
+      return `${startStr} (GMT+7)`;
+    }
+    return `${startStr} - ${endStr} (GMT+7)`;
+  };
+
+
   return (
     <>
       {/* ─── เรียกใช้งาน DashboardHeader แบบ Component ─── */}
@@ -110,7 +148,8 @@ export default function DashboardPage() {
         title="ภาพรวมระบบ"
         activeFilter={activeFilter}
         onFilterChange={handleDateFilter}
-        dateText={getCustomDateText()}
+        buttonDateText={getButtonDateText()} // ส่งข้อความปุ่ม
+        subDateText={getSubDateText()}       // ส่งข้อความด้านล่าง
         onDownload={handleDownload}
         downloadText="ดาวน์โหลดรายงาน"
       />
@@ -121,7 +160,7 @@ export default function DashboardPage() {
       <div className="mt-6 flex flex-col gap-6">
         
         <TrafficChart data={stats?.chartData || []} isLoading={isLoading} />
-        <TopPages pages={stats?.topPages || []} />
+        <TopPages pages={stats?.topPages || []}  days={selectedDaysCount} />
         
       </div>
 
