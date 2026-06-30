@@ -7,7 +7,6 @@ import InactiveUsersTable from '../../components/admin/dashboard/InactiveUsersTa
 import { chartData, topPages, inactiveUsers } from '../../data/mockData';
 import api from '../../api/axios';
 
-// ⭐️ Import DashboardHeader ที่เราแยก Component ไว้
 import DashboardHeader from '../../components/admin/dashboard/DashboardHeader';
 
 // React Date Range & date-fns
@@ -111,7 +110,7 @@ export default function DashboardPage() {
         title="ภาพรวมระบบ"
         activeFilter={activeFilter}
         onFilterChange={handleDateFilter}
-        dateText={getSmallDateText()}
+        dateText={getCustomDateText()}
         onDownload={handleDownload}
         downloadText="ดาวน์โหลดรายงาน"
       />
@@ -119,9 +118,11 @@ export default function DashboardPage() {
       {/* ส่ง Data ลงไปยัง StatCards */}
       <StatCards stats={stats} isLoading={isLoading} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="mt-6 flex flex-col gap-6">
+        
         <TrafficChart data={stats?.chartData || []} isLoading={isLoading} />
-        <TopPages pages={topPages} />
+        <TopPages pages={stats?.topPages || []} />
+        
       </div>
 
       <div className="mt-6">
