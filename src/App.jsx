@@ -7,6 +7,7 @@ import PreviewPage from './pages/PreviewPage';
 import EditLink from './pages/EditLink';
 import EditShop from './pages/EditShop';
 import EditVideo from './pages/EditVideo';
+import EditSlider from './pages/EditShopslide';
 import CookiePolicyPage from './pages/CookiePolicyPage';
 import CookieSettingsPage from './pages/CookieSettingsPage';
 
@@ -36,6 +37,7 @@ function App() {
         <Route path="/edit-link" element={<EditLink />} />
         <Route path="/edit-shop" element={<EditShop />} />
         <Route path="/edit-video" element={<EditVideo />} />
+        <Route path="/edit-slider" element={<EditSlider />} />
 
         {/* นโยบายคุกกี้และการตั้งค่าคุกกี้ */}
         <Route path="/cookie-policy" element={<CookiePolicyPage />} />  

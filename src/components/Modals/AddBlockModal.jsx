@@ -37,10 +37,10 @@ const AddBlockModal = ({ isOpen, onClose, onAdd }) => {
           action: () => onAdd("image", "รูปภาพ", "Image") 
         },
         { 
-          icon: <FiCopy size={32} />, // ใช้ FiCopy (รูปซ้อนกัน) แทน Images สไลเดอร์
+          icon: <FiCopy size={32} />, 
           label: "สไลเดอร์", 
-          sub: "เร็วๆนี้", 
-          disabled: true 
+          sub: "รูปภาพสไลด์", 
+          action: () => onAdd("SLIDER", "สไลเดอร์ใหม่", "Slider")
         },
       ],
     },

@@ -89,9 +89,14 @@ const DashboardPage = () => {
     const cleanId = String(link.id).split(':')[0]; 
     
     console.log("ID ที่ส่งไปหน้า Edit คือ:", cleanId);
+    console.log("ไอคอนที่กดคือ:", link.icon);
 
     if (link.icon === "Image") {
       navigate(`/edit-shop?id=${cleanId}`);
+    } 
+    // ⭐️ ตรวจสอบคำที่นี่ให้ตรงกับที่ log ออกมา (ถ้า log ออกมาเป็น SLIDER ก็ต้องเขียนเป็น SLIDER)
+    else if (link.icon === "Slider" || link.icon === "SLIDER") { 
+      navigate(`/edit-slider?id=${cleanId}`);
     } 
     else if (link.icon === "Youtube" || link.icon === "TikTok") {
       navigate(`/edit-video?id=${cleanId}`); 
@@ -199,57 +204,59 @@ const DashboardPage = () => {
   };
 
   const fetchMyBlocks = async () => {
-    try {
-      // 🌟 Refactor: เปลี่ยนมาใช้ api.get แบบเพียวๆ ไม่ต้องพ่วง Token แล้ว
-      const response = await api.get(`/blocks`);
-      
-      if (response.status === 200) {
-        const dbBlocks = response.data.data || [];
-        
-        const formattedBlocks = dbBlocks.map((block) => {
-          let iconName = "Link"; 
-          
-          if (block.type === "IMAGE") {
-            iconName = "Image";
-          } 
-          else if (block.type === "VIDEO") {
-            // ดักจับจากชื่อหัวข้อ (เผื่อไว้)
-            const isTikTokTitle = block.title && block.title.toLowerCase().includes("tiktok");
-            
-            // ⭐️ ดักจับจาก "ลิงก์" ที่แนบมา (เช็คให้ครอบคลุมทั้ง item.link และ item.url) ⭐️
-            const isTikTokLink = Array.isArray(block.content_data) && block.content_data.some(item => {
-              const videoStr = item.link || item.url || "";
-              return videoStr.toLowerCase().includes("tiktok");
-            });
+  try {
+    const response = await api.get(`/blocks`);
+    console.log("ข้อมูลดิบจาก API:", response.data.data);
 
-            // ถ้าชื่อมีคำว่า tiktok หรือ "ลิงก์" มีคำว่า tiktok ให้เปลี่ยนเป็นโลโก้ TikTok ทันที!
-            iconName = (isTikTokTitle || isTikTokLink) ? "TikTok" : "Youtube";
-          } 
-          else if (block.type === "TIKTOK" || block.type === "TikTok") {
-            iconName = "TikTok";
-          }
-          else if (block.type === "YOUTUBE" || block.type === "Youtube") {
-            iconName = "Youtube";
-          }
+    if (response.status === 200) {
+      const dbBlocks = response.data.data || [];
 
-          return {
-            id: block.id,
-            title: block.title || "", 
-            icon: iconName,
-            visible: block.is_visible === 1 || block.is_visible === true, 
-            clicks: 0,
-            items: block.content_data || [] 
-          };
-        });
+      const formattedBlocks = dbBlocks.map((block) => {
+        let iconName = "Link"; // ค่าเริ่มต้น
 
-        setLinks(formattedBlocks); 
-        localStorage.setItem("bio_links", JSON.stringify(formattedBlocks)); 
-      }
-    } catch (error) {
-      console.error("❌ ดึงข้อมูลบล็อกทั้งหมดไม่สำเร็จ:", error);
+        if (block.type === "IMAGE") {
+          iconName = "Image";
+        }
+        else if (block.type === "VIDEO") {
+          const isTikTokTitle = block.title && block.title.toLowerCase().includes("tiktok");
+          const isTikTokLink = Array.isArray(block.content_data) && block.content_data.some(item => {
+            const videoStr = item.link || item.url || "";
+            return videoStr.toLowerCase().includes("tiktok");
+          });
+          iconName = (isTikTokTitle || isTikTokLink) ? "TikTok" : "Youtube";
+        }
+        else if (block.type === "TIKTOK" || block.type === "TikTok") {
+          iconName = "TikTok";
+        }
+        else if (block.type === "YOUTUBE" || block.type === "Youtube") {
+          iconName = "Youtube";
+        }
+        // ⭐️ เพิ่มเงื่อนไข Slider ตรงนี้
+        else if (block.type === "SLIDER" || block.type === "Slider") {
+          iconName = "Slider";
+        }
+        // ⭐️ เพิ่มเงื่อนไข Shop (ถ้ามี)
+        else if (block.type === "SHOP") {
+          iconName = "Shop";
+        }
+
+        return {
+          id: block.id,
+          title: block.title || "",
+          icon: iconName, // ค่านี้จะถูกส่งไปเช็คใน handleEditClick ต่อไป
+          visible: block.is_visible === 1 || block.is_visible === true,
+          clicks: 0,
+          items: block.content_data || []
+        };
+      });
+
+      setLinks(formattedBlocks);
+      localStorage.setItem("bio_links", JSON.stringify(formattedBlocks));
     }
-  };
-
+  } catch (error) {
+    console.error("❌ ดึงข้อมูลบล็อกทั้งหมดไม่สำเร็จ:", error);
+  }
+};
   // ⭐️ 5. ปรับ useEffect ให้รอดาวน์โหลดทั้ง Data และ Image จนครบ ค่อยปิดหน้า Loading ⭐️
   useEffect(() => {
     const initializeData = async () => {
@@ -324,36 +331,62 @@ const DashboardPage = () => {
     }
   };
 
-  const handleAddNewBlock = (type, defaultTitle, defaultIcon) => {
-    const newId = links.length > 0 ? Math.max(...links.map((l) => l.id)) + 1 : 1;
-    const newLink = {
-      id:      newId,
-      title:   defaultTitle,
-      url:     "",
-      icon:    defaultIcon,
-      visible: true,
-      clicks:  0,
-      items:   []
-    };
+  const handleAddNewBlock = async (type, defaultTitle, defaultIcon) => {
+    try {
+      // 1. แปลงค่า type ให้ตรงกับที่ Laravel กำหนดไว้
+      let dbType = 'LINK';
+      if (defaultIcon === "Slider" || type === "SLIDER") dbType = 'SLIDER';
+      else if (defaultIcon === "Image") dbType = 'IMAGE';
+      else if (defaultIcon === "Youtube" || defaultIcon === "TikTok") dbType = 'VIDEO';
 
-    const updatedLinks = [...links, newLink];
-    setLinks(updatedLinks);
+      // 2. ⭐️ ให้หลังบ้าน (Laravel) สร้างบล็อกลง Database ของจริงก่อน
+      const response = await api.post('/blocks', {
+        type: dbType,
+        title: defaultTitle,
+        content_data: []
+      });
 
-    localStorage.setItem("bio_links", JSON.stringify(updatedLinks));
-    localStorage.setItem("bio_profile", JSON.stringify(profile)); 
-    localStorage.setItem("bio_design", JSON.stringify(design));
+      // 3. เอา ID จริงจาก Database (Primary Key) มาใช้งาน
+      const newId = response.data.data.id;
 
-    window.dispatchEvent(new Event("storage"));
-    setIsModalOpen(false);
-    
-    if (defaultIcon === "Image") {
-      navigate(`/edit-shop`); 
-    } 
-    else if (defaultIcon === "Youtube" || defaultIcon === "TikTok") {
-      navigate(`/edit-video?platform=${defaultIcon}`); 
-    } 
-    else {
-      navigate(`/edit-link`); 
+      // 4. อัปเดตข้อมูลลง LocalStorage และ State ตามโค้ดเดิมของคุณ
+      const newLink = {
+        id:      newId, // 👈 ใช้ ID จริงที่ดึงมาจากหลังบ้านแล้ว
+        title:   defaultTitle,
+        url:     "",
+        icon:    defaultIcon,
+        visible: true,
+        clicks:  0,
+        items:   []
+      };
+
+      const updatedLinks = [...links, newLink];
+      setLinks(updatedLinks);
+
+      localStorage.setItem("bio_links", JSON.stringify(updatedLinks));
+      localStorage.setItem("bio_profile", JSON.stringify(profile)); 
+      localStorage.setItem("bio_design", JSON.stringify(design));
+      window.dispatchEvent(new Event("storage"));
+
+      setIsModalOpen(false);
+      
+      // 5. นำทางไปยังหน้าแก้ไข พร้อมแนบ ID ของจริง
+      if (dbType === "SLIDER") {
+        navigate(`/edit-slider?id=${newId}`); 
+      }
+      else if (dbType === "IMAGE") {
+        navigate(`/edit-shop?id=${newId}`); 
+      } 
+      else if (dbType === "VIDEO") {
+        navigate(`/edit-video?platform=${defaultIcon}&id=${newId}`); 
+      } 
+      else {
+        navigate(`/edit-link?id=${newId}`); 
+      }
+
+    } catch (error) {
+      console.error("❌ สร้างบล็อกใหม่ใน Database ไม่สำเร็จ:", error);
+      alert("ไม่สามารถสร้างบล็อกได้ ลองตรวจสอบการเชื่อมต่อหรือข้อมูลโปรไฟล์อีกครั้ง");
     }
   };
   
@@ -500,7 +533,7 @@ const DashboardPage = () => {
 
                     <div className="flex items-center justify-between mb-3">
                       <h2 className="font-bold text-slate-600 text-sm">
-                        🔗 ลิงก์ทั้งหมด ({links.length})
+                        🔗 บล็อกทั้งหมด ({links.length})
                       </h2>
                       <span className="text-xs text-slate-400">ลากเพื่อเรียงลำดับ</span>
                     </div>
