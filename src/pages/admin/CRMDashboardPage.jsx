@@ -4,7 +4,7 @@ import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css'; 
 import 'react-date-range/dist/theme/default.css'; 
 import { th } from 'date-fns/locale'; 
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 
 // ⭐️ Import DashboardHeader ที่เราเพิ่งสร้าง
 import DashboardHeader from '../../components/admin/dashboard/DashboardHeader';
@@ -119,15 +119,41 @@ export default function CRMDashboardPage() {
     // ใส่ Logic การดาวน์โหลดไฟล์ของ CRM ที่นี่
   };
 
+ // ฟังก์ชันสำหรับสร้างข้อความในปุ่ม (เช่น "1 มิ.ย. - 22 มิ.ย. (22 วัน)")
+   const getButtonDateText = () => {
+     const { startDate, endDate } = dateRange[0];
+     const startStr = format(startDate, 'd MMM', { locale: th });
+     const endStr = format(endDate, 'd MMM', { locale: th });
+     const days = differenceInDays(endDate, startDate) + 1;
+     
+     if (startDate.getTime() === endDate.getTime()) {
+       return `${startStr} (1 วัน)`;
+     }
+     return `${startStr} - ${endStr} (${days} วัน)`;
+   };
+ 
+   // ฟังก์ชันสำหรับสร้างข้อความด้านล่าง (เช่น "30 มิ.ย. 2026 (GMT+7)")
+   const getSubDateText = () => {
+     const { startDate, endDate } = dateRange[0];
+     const startStr = format(startDate, 'd MMM yyyy', { locale: th });
+     const endStr = format(endDate, 'd MMM yyyy', { locale: th });
+     
+     if (startDate.getTime() === endDate.getTime()) {
+       return `${startStr} (GMT+7)`;
+     }
+     return `${startStr} - ${endStr} (GMT+7)`;
+   };
+
   return (
     <div className="pb-10 font-sans bg-slate-50/50 min-h-screen">
       
       {/* ─── เรียกใช้งาน DashboardHeader แบบ Component ─── */}
       <DashboardHeader 
-        title="ภาพรวมระบบ (CRM)"
+        title="ภาพรวมระบบ"
         activeFilter={activeFilter}
         onFilterChange={handleDateFilter}
-        dateText={getSmallDateText()}
+        buttonDateText={getButtonDateText()} // ส่งข้อความปุ่ม
+        subDateText={getSubDateText()}       // ส่งข้อความด้านล่าง
         onDownload={handleDownload}
         downloadText="ดาวน์โหลดรายงาน"
       />
