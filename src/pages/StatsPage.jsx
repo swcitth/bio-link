@@ -130,10 +130,52 @@ const StatsPage = ({ links }) => {
   if (error) return <div className="text-center py-20 bg-white rounded-2xl border border-red-100 text-red-500 font-medium text-sm">❌ {error}</div>;
 
   // กรองลิงก์ YouTube/TikTok ออก
-  const displayLinks = stats?.links ? stats.links.filter(link => {
-    const originalLink = links?.find((l) => l.id === link.id);
-    return !(originalLink?.icon === "Youtube" || originalLink?.icon === "TikTok" || originalLink?.type === "VIDEO" || (link.url && (link.url.includes("youtu") || link.url.includes("tiktok.com"))));
-  }) : [];
+  // 🛠️ 1. อิงข้อมูลจาก stats.links เป็นหลัก (ดึงข้อมูลสถิติมาแสดงชัวร์ๆ)
+  const enrichedLinks = stats?.links?.map(statLink => {
+    let parentName = null;
+    let exactTitle = statLink.title;
+    let matchedIcon = statLink.icon; 
+    let matchedType = statLink.type; 
+
+    // ลองค้นหาใน links หลัก
+    let found = links?.find(l => String(l.id) === String(statLink.id));
+    
+    if (found) {
+      exactTitle = found.title;
+      matchedIcon = found.icon;
+      matchedType = found.type;
+    } else {
+      // ถ้าไม่เจอ ลองมุดเข้าไปหาใน subItems (ลิงก์ย่อย)
+      links?.forEach(parent => {
+        if (parent.subItems && Array.isArray(parent.subItems)) {
+          const subFound = parent.subItems.find(sub => String(sub.id) === String(statLink.id) || (sub.url && statLink.url && String(sub.url).trim() === String(statLink.url).trim()));
+          if (subFound) {
+            parentName = parent.title && parent.title !== "ไม่มีชื่อลิงก์" ? parent.title : "กลุ่ม/สไลเดอร์";
+            exactTitle = subFound.name || subFound.title || statLink.title;
+            matchedIcon = subFound.icon || parent.icon;
+            matchedType = subFound.type || "SUB_ITEM";
+          }
+        }
+      });
+    }
+
+    return {
+      ...statLink,
+      title: exactTitle && exactTitle !== "ไม่มีชื่อลิงก์" ? exactTitle : "ลิงก์ของคุณ",
+      parentTitle: parentName,
+      icon: matchedIcon,
+      type: matchedType,
+      clicks: getSafeNumber(statLink.clicks)
+    };
+  }) || [];
+
+  // 🛠️ 2. กรอง YouTube / TikTok ออก
+  const displayLinks = enrichedLinks.filter(link => {
+    return !(link.icon === "Youtube" || link.icon === "TikTok" || link.type === "VIDEO" || (link.url && (link.url.includes("youtu") || link.url.includes("tiktok.com"))));
+  });
+
+  // 🛠️ 3. เรียงลำดับคลิกเยอะสุดขึ้นก่อน
+  displayLinks.sort((a, b) => b.clicks - a.clicks);
   
   const customDaysCount = getDaysCount(customStart, customEnd);
 
@@ -334,15 +376,23 @@ const StatsPage = ({ links }) => {
         <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">📈 ประสิทธิภาพลิงก์ ({rangeText})</h3>
         {displayLinks.length > 0 ? (
           <div className="space-y-3">
-            {displayLinks.map((link) => {
-              const originalLink = links?.find((l) => l.id === link.id);
-              const IconComponent = originalLink?.icon && ICON_MAP[originalLink.icon] ? ICON_MAP[originalLink.icon] : FaLink;
+            {displayLinks.map((link, idx) => {
+              const IconComponent = link.icon && ICON_MAP[link.icon] ? ICON_MAP[link.icon] : FaLink;
               return (
-                <div key={link.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+                <div key={link.id || idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
                   <div className="flex items-center min-w-0 mr-4">
-                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center justify-center shrink-0 mr-3 text-slate-600"><IconComponent size={17} /></div>
+                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center justify-center shrink-0 mr-3 text-slate-600">
+                      <IconComponent size={17} />
+                    </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-700 truncate">{link.title && link.title !== "ไม่มีชื่อลิงก์" ? link.title : "ลิงก์ของคุณ"}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-slate-700 truncate">{link.title}</p>
+                        {link.parentTitle && (
+                          <span className="text-[10px] font-medium text-indigo-500 bg-indigo-50/70 px-1.5 py-0.5 rounded-md shrink-0">
+                            จาก: {link.parentTitle}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] text-slate-400 truncate mt-0.5">{link.url || "ไม่มีลิงก์"}</p>
                     </div>
                   </div>
