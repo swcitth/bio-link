@@ -76,7 +76,7 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
       console.log("Analytics Error:", err);
     }
   };
-
+ 
   const handleSaveContact = async () => {
     trackSaveContact();
 
@@ -84,15 +84,11 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
     if (profile.avatar) {
       try {
         let dataUrlToProcess = profile.avatar;
-
-        // ถ้าเป็น URL ให้ Fetch มาเป็น Base64 ก่อน
         if (profile.avatar.startsWith("http")) {
           const filenameRaw = profile.avatar.split('/').pop();
           const filename = filenameRaw.split('?')[0]; 
-
           const response = await fetch(`${import.meta.env.VITE_API_URL}/get-avatar/${filename}`);
           const blob = await response.blob();
-          
           dataUrlToProcess = await new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result);
@@ -100,8 +96,6 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
             reader.readAsDataURL(blob);
           });
         }
-
-        // ⭐️ โยนเข้าฟังก์ชันแปลง WebP เป็น JPEG ⭐️
         if (dataUrlToProcess) {
           const cleanJpegBase64 = await processImageForVCF(dataUrlToProcess);
           if (cleanJpegBase64) {
@@ -113,28 +107,32 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
       }
     }
 
+    // ⭐️ 1. ดึงข้อมูลแบบเผื่อเรียกชื่อผิด ทั้งสั้นและยาว
+    const phone = profile.phone || profile.contact_phone;
+    const email = profile.email || profile.contact_email;
+    const website = profile.website || profile.contact_website;
+    const company = profile.company || profile.contact_company;
+    const title = profile.title || profile.contact_job_title;
+    const finalName = profile.contactName || profile.contact_name || profile.name || "ไม่มีชื่อ";
+
     let noteData = "";
-    if (profile.company || profile.title) {
-      const companyText = profile.company ? `บริษัท: ${profile.company}` : "";
-      const titleText = profile.title ? `ตำแหน่ง: ${profile.title}` : "";
-      
+    if (company || title) {
+      const companyText = company ? `บริษัท: ${company}` : "";
+      const titleText = title ? `ตำแหน่ง: ${title}` : "";
       const combinedNote = [companyText, titleText].filter(Boolean).join("  ");
-      if (combinedNote) {
-        noteData = `NOTE:${combinedNote}`;
-      }
+      if (combinedNote) noteData = `NOTE:${combinedNote}`;
     }
 
-    const finalName = profile.contactName || profile.name || "ไม่มีชื่อ";
-    const websiteData = profile.website ? `URL:${profile.website}` : "";
+    const websiteData = website ? `URL:${website}` : "";
 
-    // ต่อสตริงด้วย \r\n (CRLF) ซึ่งเป็นข้อบังคับของ iOS 
+    // ⭐️ 2. ใช้ตัวแปรใหม่ที่เราดึงมาด้านบน ใส่ลงใน vcardContent
     const vcardContent = [
       "BEGIN:VCARD",
       "VERSION:3.0",
       `FN:${finalName}`,
       noteData ? noteData.trim() : "",
-      `TEL;TYPE=CELL:${profile.phone || ""}`,
-      `EMAIL:${profile.email || ""}`,
+      `TEL;TYPE=CELL:${phone || ""}`,
+      `EMAIL:${email || ""}`,
       websiteData ? websiteData.trim() : "",
       photoData ? photoData.trim() : "",
       "END:VCARD"
@@ -153,14 +151,18 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
     URL.revokeObjectURL(url);
   };
 
-  if (!profile.phone && !profile.email && !profile.website) return null;
+  // ⭐️ 3. ดักซ่อนปุ่มโดยใช้ตัวแปรแบบเผื่อเรียกชื่อผิด
+  const checkPhone = profile.phone || profile.contact_phone;
+  const checkEmail = profile.email || profile.contact_email;
+  const checkWebsite = profile.website || profile.contact_website;
+
+  if (!checkPhone && !checkEmail && !checkWebsite) return null;
 
   const btnRadius = { square: isCompact ? "6px" : "8px", rounded: "14px", pill: "999px" }[design.btnRounded] || "999px";
   const btnBoxShadow = { none: "none", outline: "none", shadow3d: isCompact ? "3px 3px 0px rgba(0,0,0,0.8)" : "0px 4px 0px rgba(0,0,0,0.2)" }[design.btnStyle] || "none";
 
   const buttonBgColor = design.btnTextColor || "#000000"; 
   const buttonTextColor = getTextColorBasedOnBg(buttonBgColor); 
-  
   const btnBorder = design.btnStyle !== "none" ? `2px solid ${buttonBgColor}` : "none";
 
   return (

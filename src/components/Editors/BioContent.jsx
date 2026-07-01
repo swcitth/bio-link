@@ -80,7 +80,8 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
           className={`${isCompact ? "mt-2 text-sm" : "mt-4 text-2xl"} font-bold text-center leading-tight`}
           style={{ color: safeDesign.textColor || "#333" }}
         >
-          {safeProfile.name || "ชื่อของคุณ"}
+          {/* เรียก display_name ก่อนเพื่อความชัวร์ */}
+          {safeProfile.display_name || safeProfile.name || "ชื่อของคุณ"}
         </h1>
 
         {/* Bio */}
@@ -94,19 +95,21 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
         {/* Links List */}
         <div className={`w-full flex flex-col ${isCompact ? "gap-3 mt-5" : "gap-4 mt-8"}`}>
           
-          {safeProfile.showSaveContact !== false && (
-            <SaveContactButton 
-              profileData={safeProfile} 
-              design={design} 
-              isCompact={isCompact} 
-            />
+          {/* ดักจับตัวแปรเปิดปิดปุ่ม (เขียนให้ Clean และรองรับ Boolean จาก Resource) */}
+          {(safeProfile.showSaveContact === true || safeProfile.show_save_contact === true || 
+            safeProfile.showSaveContact === 1 || safeProfile.show_save_contact === 1) && (
+              <SaveContactButton 
+                profileData={safeProfile} 
+                design={design} 
+                isCompact={isCompact} 
+              />
           )}
           {visibleLinks.length === 0 && (
             <p className={`text-center ${isCompact ? "text-[11px]" : "text-sm"} text-slate-400 mt-3`} style={{ color: safeDesign.textColor }}>
               ยังไม่มีลิงก์แสดงผล
             </p>
           )}
-
+ 
           {visibleLinks.map((link) => {
             const subItems = link?.items && link.items.length > 0 ? link.items : [link];
             const titleClass = `${isCompact ? "text-[13px]" : "text-base"} font-bold px-2`;
