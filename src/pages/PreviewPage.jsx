@@ -105,15 +105,15 @@ const PreviewPage = ({ isPublic }) => {
             username: apiData.username,
             name: apiData.display_name || "",
             bio: apiData.bio || "",
-            avatar: apiData.images?.avatar ? `http://127.0.0.1:8000${apiData.images.avatar}` : "",
-            cover: apiData.images?.cover ? `http://127.0.0.1:8000${apiData.images.cover}` : "",
-            contactName: apiData.contact?.name || "",
-            phone: apiData.contact?.phone || "",
-            email: apiData.contact?.email || "",
-            company: apiData.contact?.company || "",
-            title: apiData.contact?.job_title || "",
-            website: apiData.contact?.website || "",
-            showSaveContact: apiData.contact?.is_enabled === 1 || apiData.contact?.is_enabled === true
+            avatar: apiData.avatar ? `http://127.0.0.1:8000${apiData.avatar}` : "",
+            cover: apiData.cover ? `http://127.0.0.1:8000${apiData.cover}` : "",
+            contactName: apiData.contactName || apiData.contact_name || "",
+            phone: apiData.phone || "",
+            email: apiData.email || "",
+            company: apiData.company || "",
+            title: apiData.title || "",
+            website: apiData.website || "",
+            showSaveContact: [1, "1", true, "true"].includes(apiData.show_save_contact)
           });
 
           // จัดการ ธีม/ดีไซน์
@@ -123,7 +123,7 @@ const PreviewPage = ({ isPublic }) => {
             setDesign({
               theme: "t1", font: "kanit", // ค่าพื้นฐาน
               ...themeCfg,
-              bgImage: apiData.images?.background ? `http://127.0.0.1:8000${apiData.images.background}` : null,
+              bgImage: apiData.background ? `http://127.0.0.1:8000${apiData.background}` : null,
             });
           } else {
              setDesign({ theme: "t1", font: "kanit" });

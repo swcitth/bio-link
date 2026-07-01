@@ -141,9 +141,9 @@ const DashboardPage = () => {
       if (response.status === 200 && dbData) {
         
         // ⭐️ 3. เตรียม URL ของรูปภาพ และส่งให้เบราว์เซอร์โหลดล่วงหน้า (Preload) ⭐️
-        const avatarUrlToLoad = dbData.images?.avatar ? `http://127.0.0.1:8000${dbData.images.avatar}` : null;
-        const coverUrlToLoad = dbData.images?.cover ? `http://127.0.0.1:8000${dbData.images.cover}` : null;
-        const bgImageUrlToLoad = dbData.images?.background ? `http://127.0.0.1:8000${dbData.images.background}` : null;
+        const avatarUrlToLoad = dbData.avatar ? `http://127.0.0.1:8000${dbData.avatar}` : null;
+        const coverUrlToLoad = dbData.cover ? `http://127.0.0.1:8000${dbData.cover}` : null;
+        const bgImageUrlToLoad = dbData.background ? `http://127.0.0.1:8000${dbData.background}` : null;
 
         await Promise.all([
           preloadImage(avatarUrlToLoad),
