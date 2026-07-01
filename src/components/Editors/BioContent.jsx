@@ -209,7 +209,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                           // ⭐️ 1. ปรับการ์ดหลักเป็น relative และล็อคให้เป็นสี่เหลี่ยมจัตุรัส (aspect-square) เสมอ
                           className={`relative snap-center shrink-0 w-[85%] max-w-[280px] aspect-square group rounded-[20px] shadow-sm overflow-hidden ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} 
                           style={{ textDecoration: 'none' }}
-                          onClick={() => { if(itemUrl && onLinkClick) onLinkClick(item?.id || link?.id) }}
+                          onClick={() => { if(itemUrl && onLinkClick) onLinkClick(link?.id, itemUrl) }}
                         >
                           {/* ⭐️ 2. รูปภาพสินค้ากางเต็มพื้นที่การ์ด */}
                           {imageUrl ? (
@@ -269,7 +269,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                           {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})} 
                           className={`flex flex-col group items-start ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"} w-full`} 
                           style={{ textDecoration: 'none' }}
-                          onClick={() => { if(itemUrl && onLinkClick) onLinkClick(item?.id || link?.id) }}
+                          onClick={() => { if(itemUrl && onLinkClick) onLinkClick(link?.id, itemUrl) }}
                         >
                           {imageUrl ? (
                             <img src={imageUrl} alt={item?.name || item?.title} className="w-full h-auto max-h-[500px] object-contain rounded-2xl shadow-sm mb-3 bg-white/50" />
@@ -318,7 +318,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                       key={item?.id || idx} 
                       {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})}
                       className={`block w-full flex items-center transition-transform ${itemUrl ? "hover:scale-[1.02] cursor-pointer" : "cursor-default"}`}
-                      onClick={() => { if(itemUrl && onLinkClick) onLinkClick(item?.id || link?.id) }}
+                      onClick={() => { if(itemUrl && onLinkClick) onLinkClick(link?.id, itemUrl) }}
                       style={{
                         padding: isCompact ? "8px 12px" : "16px",
                         backgroundColor: safeDesign.btnStyle === "outline" ? "transparent" : (safeDesign.btnBgColor || "#ffffff"),
