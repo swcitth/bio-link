@@ -163,13 +163,16 @@ const DashboardPage = () => {
           avatarFile: null,
           coverFile: null,
           
-          contactName: dbData.contact?.name || "",
-          phone: dbData.contact?.phone || "",
-          email: dbData.contact?.email || "",
-          company: dbData.contact?.company || "",
-          title: dbData.contact?.job_title || "",
-          website: dbData.contact?.website || "",
-          showSaveContact: dbData.contact?.is_enabled === 1 || dbData.contact?.is_enabled === true
+          contactName: dbData.contact?.name || dbData.contact_name || dbData.contactName || "",
+          phone: dbData.contact?.phone || dbData.contact_phone || dbData.phone || "",
+          email: dbData.contact?.email || dbData.contact_email || dbData.email || "",
+          company: dbData.contact?.company || dbData.contact_company || dbData.company || "",
+          title: dbData.contact?.job_title || dbData.contact_job_title || dbData.title || "",
+          website: dbData.contact?.website || dbData.contact_website || dbData.website || "",
+          showSaveContact: 
+            [1, "1", true, "true"].includes(dbData.contact?.is_enabled) || 
+            [1, "1", true, "true"].includes(dbData.show_save_contact) || 
+            [1, "1", true, "true"].includes(dbData.showSaveContact)
         }));
 
         if (dbData.theme) {
