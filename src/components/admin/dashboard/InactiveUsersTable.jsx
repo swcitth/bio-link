@@ -1,7 +1,34 @@
 import React from 'react';
 import { AlertCircle, Mail } from 'lucide-react';
 
-export default function InactiveUsersTable({ users }) {
+export default function InactiveUsersTable({ 
+  users = [], // ใส่ Default เป็น array ว่างกันแอปพังกรณีโหลดข้อมูลยังไม่เสร็จ
+  onFilterChange, // ฟังก์ชันเมื่อเปลี่ยน Dropdown วันที่
+  onSendBulkEmail, // ฟังก์ชันเมื่อกด "ส่งอีเมลกระตุ้นทั้งหมด"
+  onSendEmail // ฟังก์ชันเมื่อกดรูปจดหมายรายคน
+}) {
+
+  // ฟังก์ชันช่วยเลือกสไตล์ Badge ตามข้อความสถานะ
+  const getStatusBadgeClass = (status) => {
+    const baseClass = "px-3 py-1 rounded-full text-xs font-medium inline-flex items-center justify-center whitespace-nowrap";
+    
+    if (status?.includes('เสี่ยง')) {
+      // สีแดง/ชมพูอ่อน สำหรับ "เสี่ยงต่อการเลิกใช้งาน" หรือ "เสี่ยงเลิกใช้"
+      return `${baseClass} bg-red-100 text-red-700`; 
+    }
+    if (status?.includes('ยังไม่ตั้งค่า')) {
+      // สีส้ม/เหลืองพาสเทล สำหรับ "สมัครแล้วยังไม่ตั้งค่า" หรือ "ยังไม่ตั้งค่า"
+      return `${baseClass} bg-amber-100 text-amber-700`; 
+    }
+    if (status?.includes('ไม่มีความเคลื่อนไหว')) {
+      // สีแดงเข้มพาสเทล สำหรับ "ไม่มีความเคลื่อนไหว"
+      return `${baseClass} bg-rose-100 text-rose-700`;
+    }
+    
+    // ค่าเริ่มต้นหากไม่ตรงกับเงื่อนไขใดเลย
+    return `${baseClass} bg-slate-100 text-slate-600`;
+  };
+
   return (
     <div className="bg-white rounded-[1.5rem] p-6 shadow-sm border border-slate-50">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
@@ -15,12 +42,20 @@ export default function InactiveUsersTable({ users }) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <select className="bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:border-indigo-300">
-            <option>มากกว่า 30 วัน</option>
-            <option>มากกว่า 60 วัน</option>
-            <option>มากกว่า 90 วัน</option>
+          <select 
+            className="bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:border-indigo-300"
+            onChange={(e) => onFilterChange && onFilterChange(e.target.value)}
+            defaultValue="7" 
+          >
+            <option value="7">มากกว่า 7 วัน (สำหรับเทส)</option>
+            <option value="14">มากกว่า 14 วัน (สำหรับเทส)</option>
+            <option value="30">มากกว่า 30 วัน</option>
           </select>
-          <button className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors whitespace-nowrap">
+          
+          <button 
+            onClick={onSendBulkEmail}
+            className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors whitespace-nowrap"
+          >
             ส่งอีเมลกระตุ้นทั้งหมด
           </button>
         </div>
@@ -29,50 +64,57 @@ export default function InactiveUsersTable({ users }) {
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="text-xs font-bold text-slate-400 border-b border-slate-100">
-              <th className="pb-4 font-bold uppercase tracking-wider">ชื่อบัญชี / USERNAME</th>
-              <th className="pb-4 font-bold uppercase tracking-wider text-center">ลิงก์ใน BIO</th>
-              <th className="pb-4 font-bold uppercase tracking-wider">อัพเดทล่าสุดเมื่อ</th>
-              <th className="pb-4 font-bold uppercase tracking-wider">สถานะ</th>
-              <th className="pb-4 font-bold uppercase tracking-wider text-right">จัดการ</th>
+            <tr className="text-xs font-semibold text-slate-400 border-b border-slate-100">
+              <th className="pb-4 font-semibold uppercase tracking-wider">ชื่อบัญชี / USERNAME</th>
+              <th className="pb-4 font-semibold uppercase tracking-wider text-center">บล็อกใน BIO</th>
+              <th className="pb-4 font-semibold uppercase tracking-wider">อัพเดทล่าสุดเมื่อ</th>
+              <th className="pb-4 font-semibold uppercase tracking-wider">สถานะ</th>
+              <th className="pb-4 font-semibold uppercase tracking-wider text-right">จัดการ</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {users.map((user) => (
-              <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="py-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full ${user.iconColor} text-white flex items-center justify-center font-bold text-sm shrink-0`}>
-                      {user.initial}
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm text-slate-800">{user.name}</p>
-                      <p className="text-xs text-slate-400">{user.handle}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="py-4 text-center">
-                  <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1 rounded-full">
-                    {user.links}
-                  </span>
-                </td>
-                <td className="py-4">
-                  <p className="font-bold text-sm text-slate-800">{user.date}</p>
-                  <p className="text-xs font-bold text-red-500">{user.daysAgo}</p>
-                </td>
-                <td className="py-4">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${user.statusColor}`}></div>
-                    <span className="text-sm text-slate-600 font-medium">{user.status}</span>
-                  </div>
-                </td>
-                <td className="py-4 text-right">
-                  <button className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 flex items-center justify-center ml-auto transition-colors" title="ส่งอีเมลแจ้งเตือน">
-                    <Mail size={16} strokeWidth={2.5} />
-                  </button>
+            {users.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="py-8 text-center text-slate-500">
+                  ไม่มีบัญชีที่เข้าข่ายเงื่อนไขนี้
                 </td>
               </tr>
-            ))}
+            ) : (
+              users.map((user) => (
+                <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="font-medium text-slate-900">{user.name}</div>
+                    <div className="text-slate-500 text-sm">{user.handle}</div>
+                  </td>
+                  <td className="py-4 text-center">
+                    <span className="bg-slate-100 text-slate-600 text-xs font-medium px-3 py-1 rounded-full">
+                      {user.links} บล็อก
+                    </span>
+                  </td>
+                  <td className="py-4">
+                    <p className="font-medium text-sm text-slate-800">{user.date}</p>
+                    <p className="text-xs font-medium text-red-500">{user.daysAgo}</p>
+                  </td>
+                  
+                  {/* ปรับปรุงส่วนแสดงผลสถานะตรงนี้ค่ะ */}
+                  <td className="py-4">
+                    <span className={getStatusBadgeClass(user.status)}>
+                      {user.status}
+                    </span>
+                  </td>
+                  
+                  <td className="py-4 text-right">
+                    <button 
+                      onClick={() => onSendEmail && onSendEmail(user.id)}
+                      className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 flex items-center justify-center ml-auto transition-colors" 
+                      title="ส่งอีเมลแจ้งเตือน"
+                    >
+                      <Mail size={16} strokeWidth={2.5} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
