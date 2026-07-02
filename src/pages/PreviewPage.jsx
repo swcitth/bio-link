@@ -37,43 +37,36 @@ const PreviewPage = ({ isPublic }) => {
   const [error, setError] = useState(null);
 
   // ⭐️ 1. ฟังก์ชันแอบยิง API เก็บสถิติ (ทำงานอยู่เบื้องหลัง) ⭐️
-  const trackAnalytics = (targetUsername, blockId = null) => {
-    // ด่านที่ 1: เช็คว่าเป็นหน้าจอ Preview หรือไม่
-    if (!isPublic || isFromAdmin || !targetUsername) {
-      console.log("🛑 สั่งหยุด: อยู่ในโหมด Preview/Admin");
-      return; 
-    }
+  const trackAnalytics = (targetUsername, blockId = null, clickedUrl = null) => {
+    
+    // 🟡 [ปิดชั่วคราวเพื่อทดสอบ] ด่านที่ 1: เช็คว่าเป็นหน้าจอ Preview หรือไม่
+    // if (!isPublic || isFromAdmin || !targetUsername) {
+    //   console.log("🛑 สั่งหยุด: อยู่ในโหมด Preview/Admin");
+    //   return; 
+    // }
 
-    // ด่านที่ 2: เช็คเจ้าของโปรไฟล์
-    try {
-      const userStr = localStorage.getItem("user");
-      const token = localStorage.getItem("token"); 
+    // 🟡 [ปิดชั่วคราวเพื่อทดสอบ] ด่านที่ 2: เช็คเจ้าของโปรไฟล์
+    // try {
+    //   const userStr = localStorage.getItem("user");
+    //   const token = localStorage.getItem("token"); 
+    //   if (userStr && token) {
+    //     const userObj = JSON.parse(userStr);
+    //     const currentUsername = userObj?.username || userObj?.data?.username || userObj?.user?.username;
+    //     if (currentUsername && String(currentUsername).toLowerCase() === String(targetUsername).toLowerCase()) {
+    //       console.log("🛑 สั่งหยุด: เจ้าของโปรไฟล์กดเอง (ตรวจเจอจาก LocalStorage)");
+    //       return; 
+    //     }
+    //   }
+    //   if (document.referrer && (document.referrer.includes('/dd') || document.referrer.includes('/admin'))) {
+    //     console.log("🛑 สั่งหยุด: ไม่นับยอดเพราะคุณเพิ่งกดเปิดมาจากหน้าแก้ไขเว็บของคุณเอง");
+    //     return;
+    //   }
+    // } catch (err) {
+    //   console.error("Error parsing user data:", err);
+    // }
 
-      // 1. ดักจับจาก LocalStorage ปกติ (ถ้าข้อมูลมา)
-      if (userStr && token) {
-        const userObj = JSON.parse(userStr);
-        const currentUsername = userObj?.username || userObj?.data?.username || userObj?.user?.username;
-        
-        if (currentUsername && String(currentUsername).toLowerCase() === String(targetUsername).toLowerCase()) {
-          console.log("🛑 สั่งหยุด: เจ้าของโปรไฟล์กดเอง (ตรวจเจอจาก LocalStorage)");
-          return; 
-        }
-      }
-
-      // 2. ⭐️ ดักจับเพิ่ม: ป้องกันกรณีเปิดในแท็บเบราว์เซอร์เดียวกันแต่ LocalStorage ดึงไม่มา 
-      // ถ้าเปิดหน้านี้ขึ้นมาแล้วระบบเช็คว่าประวัติก่อนหน้า (Referrer) เพิ่งมาจากหน้าจัดการเว็บ (/dd หรือ /admin) 
-      // ก็มีความเป็นไปได้สูงว่าเป็นตัวคุณเองที่เพิ่งกดเปิดลิงก์ออกมาดู
-      if (document.referrer && (document.referrer.includes('/dd') || document.referrer.includes('/admin'))) {
-        console.log("🛑 สั่งหยุด: ไม่นับยอดเพราะคุณเพิ่งกดเปิดมาจากหน้าแก้ไขเว็บของคุณเอง");
-        return;
-      }
-
-    } catch (err) {
-      console.error("Error parsing user data:", err);
-    }
-
-    // ด่านที่ 3: ยิง API จริง
-    console.log("✅ ผ่านทุกด่าน: ระบบกำลังยิง API นับยอด...");
+    // ✅ ปล่อยให้ผ่านฉลุยเพื่อส่งข้อมูลไปหลังบ้านตอนเราเทส
+    console.log("✅ ผ่านทุกด่าน: ระบบกำลังยิง API นับยอด... ID:", blockId, "URL:", clickedUrl);
     
     let sessionId = sessionStorage.getItem("analytics_session");
     if (!sessionId) {
@@ -84,6 +77,7 @@ const PreviewPage = ({ isPublic }) => {
     api.post(`/analytics/track/${targetUsername}`, {
       session_id: sessionId,
       block_id: blockId, 
+      clicked_url: clickedUrl,
       referrer_url: document.referrer 
     }).catch(err => console.log("Analytics Tracking Error:", err));
   };
@@ -299,10 +293,10 @@ const PreviewPage = ({ isPublic }) => {
         </div>
 
         <BioContent 
-          profile={profile} 
+          profile={profile}
           links={links} 
           design={design} 
-          onLinkClick={(blockId) => trackAnalytics(profile.username, blockId)}
+          onLinkClick={(blockId, url) => trackAnalytics(username || profile.username, blockId, url)}
         />
         
       </div>

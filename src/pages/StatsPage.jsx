@@ -3,7 +3,7 @@
 // ============================================================
 
 import React, { useState, useEffect } from "react";
-import { FaEye, FaMousePointer, FaChartBar, FaStar, FaLink, FaCalendarAlt, FaTrophy } from "react-icons/fa";
+import { FaEye, FaMousePointer, FaChartBar, FaStar, FaLink, FaCalendarAlt, FaTrophy, FaImage } from "react-icons/fa";
 import { ICON_MAP } from "../constants/icons";
 import api from "../api/axios";
 
@@ -129,43 +129,56 @@ const StatsPage = ({ links }) => {
   if (isLoading) return <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-slate-100"><div className="text-indigo-600 font-semibold animate-pulse text-sm">📊 กำลังคำนวณและดึงข้อมูลสถิติจริง...</div></div>;
   if (error) return <div className="text-center py-20 bg-white rounded-2xl border border-red-100 text-red-500 font-medium text-sm">❌ {error}</div>;
 
-  // กรองลิงก์ YouTube/TikTok ออก
-  // 🛠️ 1. อิงข้อมูลจาก stats.links เป็นหลัก (ดึงข้อมูลสถิติมาแสดงชัวร์ๆ)
-  const enrichedLinks = stats?.links?.map(statLink => {
-    let parentName = null;
-    let exactTitle = statLink.title;
-    let matchedIcon = statLink.icon; 
-    let matchedType = statLink.type; 
+  // 🌟 ตัวช่วยทำความสะอาด URL เพื่อให้การค้นหาจับคู่กันได้แม่นยำ 100%
+  const cleanUrl = (u) => {
+    if (!u) return "";
+    return String(u).replace(/^https?:\/\//, '').replace(/^www\./, '').trim().toLowerCase().replace(/\/$/, '');
+  };
 
-    // ลองค้นหาใน links หลัก
-    let found = links?.find(l => String(l.id) === String(statLink.id));
+  // กรองลิงก์ YouTube/TikTok ออก
+  // 🛠️ 1. อิงข้อมูลจาก stats.links เป็นหลัก
+  const enrichedLinks = stats?.links?.map(statLink => {
+    const targetUrl = cleanUrl(statLink.url);
+    let foundIcon = null;
+    let foundImage = null;
+    let isMediaBlock = false; 
     
-    if (found) {
-      exactTitle = found.title;
-      matchedIcon = found.icon;
-      matchedType = found.type;
-    } else {
-      // ถ้าไม่เจอ ลองมุดเข้าไปหาใน subItems (ลิงก์ย่อย)
-      links?.forEach(parent => {
-        if (parent.subItems && Array.isArray(parent.subItems)) {
-          const subFound = parent.subItems.find(sub => String(sub.id) === String(statLink.id) || (sub.url && statLink.url && String(sub.url).trim() === String(statLink.url).trim()));
-          if (subFound) {
-            parentName = parent.title && parent.title !== "ไม่มีชื่อลิงก์" ? parent.title : "กลุ่ม/สไลเดอร์";
-            exactTitle = subFound.name || subFound.title || statLink.title;
-            matchedIcon = subFound.icon || parent.icon;
-            matchedType = subFound.type || "SUB_ITEM";
-          }
+    links?.forEach(block => {
+        const itemsArray = (block.items && Array.isArray(block.items)) ? block.items : [];
+        const allItems = [block, ...itemsArray];
+        
+        const match = allItems.find(item => {
+            const itemUrl = cleanUrl(item.url || item.link);
+            const idMatch = statLink.id && (item.id === statLink.id || block.id === statLink.id);
+            const urlMatch = itemUrl === targetUrl && targetUrl !== "";
+            const titleMatch = statLink.title && (item.title === statLink.title || block.title === statLink.title || item.name === statLink.title);
+            
+            if (idMatch) return true;
+            return urlMatch && (!statLink.title || titleMatch);
+        });
+        
+        if (match) {
+            // 🌟 ดักจับแบบปลอดภัยขั้นสุด ไม่ว่าจะเป็น 'BlockShop', 'blockslider', 'SHOP' โดนหมด
+            const blockType = String(block.type || '').toLowerCase();
+            
+            if (blockType.includes('shop') || blockType.includes('slider')) {
+                isMediaBlock = true;
+            } else {
+                // บล็อกลิงก์ทั่วไป ดึงไอคอนและรูปปกติ
+                foundIcon = match.icon || match.iconId || block.icon || block.iconId;
+                if (match.image || match.imageUrl) {
+                    foundImage = match.image || match.imageUrl;
+                }
+            }
         }
-      });
-    }
+    });
 
     return {
       ...statLink,
-      title: exactTitle && exactTitle !== "ไม่มีชื่อลิงก์" ? exactTitle : "ลิงก์ของคุณ",
-      parentTitle: parentName,
-      icon: matchedIcon,
-      type: matchedType,
-      clicks: getSafeNumber(statLink.clicks)
+      icon: foundIcon || statLink.icon || 'Link', 
+      image: isMediaBlock ? null : (foundImage || statLink.image), // ถ้าเป็นบล็อกมีเดีย บังคับเป็น null เพื่อให้ไปสลับโชว์ไอคอนด้านล่าง
+      isMediaBlock, 
+      clicks: getSafeNumber(statLink.clicks ?? statLink.clicks_count ?? statLink.total_clicks ?? 0)
     };
   }) || [];
 
@@ -377,13 +390,25 @@ const StatsPage = ({ links }) => {
         {displayLinks.length > 0 ? (
           <div className="space-y-3">
             {displayLinks.map((link, idx) => {
-              const IconComponent = link.icon && ICON_MAP[link.icon] ? ICON_MAP[link.icon] : FaLink;
+              
+              // 🌟 ปรับตรงนี้: ถ้าเป็นลบ็อกจาก Shop/Slider ให้ใช้ FaImage ทันที ถ้าไม่ใช่ค่อยไปหาใน ICON_MAP
+              const IconComponent = link.isMediaBlock 
+                ? FaImage 
+                : (link.icon && ICON_MAP[link.icon] ? ICON_MAP[link.icon] : FaLink);
+
               return (
                 <div key={link.id || idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
                   <div className="flex items-center min-w-0 mr-4">
-                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center justify-center shrink-0 mr-3 text-slate-600">
-                      <IconComponent size={17} />
+                    
+                    {/* กล่องไอคอน */}
+                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center justify-center shrink-0 mr-3 text-slate-500 overflow-hidden">
+                      {link.image ? (
+                        <img src={link.image} alt={link.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <IconComponent size={17} className={link.isMediaBlock ? "text-indigo-500" : ""} />
+                      )}
                     </div>
+
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-slate-700 truncate">{link.title}</p>
@@ -397,9 +422,12 @@ const StatsPage = ({ links }) => {
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-extrabold text-indigo-600">{link.clicks || 0}</p>
-                    <p className="text-[10px] text-slate-400 uppercase">คลิก</p>
-                  </div>
+                  {/* ลองดักจับเผื่อกรณีหลังบ้านส่งมาเป็นชื่ออื่นดูครับ */}
+                  <p className="text-sm font-extrabold text-indigo-600">
+                    {getSafeNumber(link.clicks ?? link.clicks_count ?? link.total_clicks ?? 0)}
+                  </p>
+                  <p className="text-[10px] text-slate-400 uppercase">คลิก</p>
+                </div>
                 </div>
               );
             })}
@@ -408,7 +436,6 @@ const StatsPage = ({ links }) => {
           <div className="text-center py-6 text-xs text-slate-400 font-medium">ยังไม่มีข้อมูลการคลิกในขณะนี้</div>
         )}
       </div>
-
       {/* ─── Popup Calendar Modal (จาก CRM) ─── */}
       {isCalendarOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
