@@ -207,59 +207,102 @@ const DashboardPage = () => {
   };
 
   const fetchMyBlocks = async () => {
-  try {
-    const response = await api.get(`/blocks`);
-    console.log("ข้อมูลดิบจาก API:", response.data.data);
+    try {
+      const response = await api.get(`/blocks`);
+      console.log("ข้อมูลดิบจาก API:", response.data.data);
 
-    if (response.status === 200) {
-      const dbBlocks = response.data.data || [];
+      if (response.status === 200) {
+        const dbBlocks = response.data.data || [];
 
-      const formattedBlocks = dbBlocks.map((block) => {
-        let iconName = "Link"; // ค่าเริ่มต้น
+        // ========================================================
+        // 🧹 1. ระบบเทศบาลเก็บขยะ (เช็คจากความว่างเปล่าของ Content เป็นหลัก!)
+        // ========================================================
+        const validBlocks = dbBlocks.filter((block) => {
+          const blockType = String(block.type || '').toUpperCase();
+          
+          // แปลงข้อมูล content_data ให้พร้อมใช้งาน
+          let contentData = block.content_data;
+          if (typeof contentData === 'string') {
+            try { contentData = JSON.parse(contentData); } catch (e) { contentData = []; }
+          }
 
-        if (block.type === "IMAGE") {
-          iconName = "Image";
-        }
-        else if (block.type === "VIDEO") {
-          const isTikTokTitle = block.title && block.title.toLowerCase().includes("tiktok");
-          const isTikTokLink = Array.isArray(block.content_data) && block.content_data.some(item => {
-            const videoStr = item.link || item.url || "";
-            return videoStr.toLowerCase().includes("tiktok");
-          });
-          iconName = (isTikTokTitle || isTikTokLink) ? "TikTok" : "Youtube";
-        }
-        else if (block.type === "TIKTOK" || block.type === "TikTok") {
-          iconName = "TikTok";
-        }
-        else if (block.type === "YOUTUBE" || block.type === "Youtube") {
-          iconName = "Youtube";
-        }
-        // ⭐️ เพิ่มเงื่อนไข Slider ตรงนี้
-        else if (block.type === "SLIDER" || block.type === "Slider") {
-          iconName = "Slider";
-        }
-        // ⭐️ เพิ่มเงื่อนไข Shop (ถ้ามี)
-        else if (block.type === "SHOP") {
-          iconName = "Shop";
-        }
+          let hasValidContent = false;
 
-        return {
-          id: block.id,
-          title: block.title || "",
-          icon: iconName, // ค่านี้จะถูกส่งไปเช็คใน handleEditClick ต่อไป
-          visible: block.is_visible === 1 || block.is_visible === true,
-          clicks: 0,
-          items: block.content_data || []
-        };
-      });
+          // 🌟 เช็คว่าในกล่องนี้ "มีลิงก์ หรือ รูปภาพ" ซ่อนอยู่บ้างไหม?
+          if (Array.isArray(contentData)) {
+            // กรณีเป็น Array (เช่น Slider, Shop, หรือกล่องที่มีหลายไอเทม)
+            hasValidContent = contentData.some(item => 
+              (item.url && String(item.url).trim() !== '') || 
+              (item.link && String(item.link).trim() !== '') || 
+              item.image || 
+              item.imageUrl
+            );
+          } else if (typeof contentData === 'object' && contentData !== null) {
+            // กรณีเป็น Object เดี่ยว
+            hasValidContent = (contentData.url && String(contentData.url).trim() !== '') || 
+                              (contentData.link && String(contentData.link).trim() !== '') || 
+                              contentData.image || 
+                              contentData.imageUrl;
+          }
 
-      setLinks(formattedBlocks);
-      localStorage.setItem("bio_links", JSON.stringify(formattedBlocks));
+          // 🗑️ เงื่อนไขการลบทิ้ง: ถ้าไม่มีเนื้อหาอะไรเลย (ไม่มีรูป ไม่มีลิงก์) -> ลบสถานเดียว!
+          if (!hasValidContent) {
+            console.log(`🧹 ตรวจพบดราฟต์เปล่าไร้เนื้อหา [${blockType}] -> ระบบแอบลบทิ้งให้แล้วครับ`);
+            api.delete(`/blocks/${block.id}`).catch(err => console.log("ลบดราฟต์ขยะไม่สำเร็จ:", err));
+            return false; // เตะทิ้ง ไม่ส่งไปแสดงผลที่หน้าจอ
+          }
+
+          return true; // มีเนื้อหาจริง ให้ผ่านเข้ารอบ
+        });
+
+        // ========================================================
+        // ⭐️ 2. นำบล็อกที่รอดจากการคัดกรอง มาจัดรูปแบบไอคอน
+        // ========================================================
+        const formattedBlocks = validBlocks.map((block) => {
+          let iconName = "Link"; 
+
+          if (block.type === "IMAGE") {
+            iconName = "Image";
+          }
+          else if (block.type === "VIDEO") {
+            const isTikTokTitle = block.title && block.title.toLowerCase().includes("tiktok");
+            const isTikTokLink = Array.isArray(block.content_data) && block.content_data.some(item => {
+              const videoStr = item.link || item.url || "";
+              return videoStr.toLowerCase().includes("tiktok");
+            });
+            iconName = (isTikTokTitle || isTikTokLink) ? "TikTok" : "Youtube";
+          }
+          else if (block.type === "TIKTOK" || block.type === "TikTok") {
+            iconName = "TikTok";
+          }
+          else if (block.type === "YOUTUBE" || block.type === "Youtube") {
+            iconName = "Youtube";
+          }
+          else if (block.type === "SLIDER" || block.type === "Slider") {
+            iconName = "Slider";
+          }
+          else if (block.type === "SHOP") {
+            iconName = "Shop";
+          }
+
+          return {
+            id: block.id,
+            title: block.title || "",
+            icon: iconName,
+            visible: block.is_visible === 1 || block.is_visible === true,
+            clicks: 0,
+            items: block.content_data || []
+          };
+        });
+
+        // 🌟 3. อัปเดตลงหน้าจอ
+        setLinks(formattedBlocks);
+        localStorage.setItem("bio_links", JSON.stringify(formattedBlocks));
+      }
+    } catch (error) {
+      console.error("❌ ดึงข้อมูลบล็อกทั้งหมดไม่สำเร็จ:", error);
     }
-  } catch (error) {
-    console.error("❌ ดึงข้อมูลบล็อกทั้งหมดไม่สำเร็จ:", error);
-  }
-};
+  };
   // ⭐️ 5. ปรับ useEffect ให้รอดาวน์โหลดทั้ง Data และ Image จนครบ ค่อยปิดหน้า Loading ⭐️
   useEffect(() => {
     const initializeData = async () => {
