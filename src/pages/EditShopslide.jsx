@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { Plus } from 'lucide-react';
-// ⭐️ เปลี่ยนมาใช้ตัวเดียวกับ EditShop ชัวร์ 100%
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'; 
 import api from '../api/axios';
-import Navbar from '../components/Layout/NavbarDetail';
+
+// นำเข้า Component โครงสร้างและปุ่มแบบเดียวกับ EditShop
+import Header from "../components/Layout/Header";
 import BlockShop from '../components/Blocks/BlockShop'; 
+import ButtonAdd from "../components/UI/Button/ButtonAdd";
+import ButtonSave from "../components/UI/Button/ButtonSave";
 
 const EditShopslide = () => {
     const [searchParams] = useSearchParams();
@@ -18,7 +20,7 @@ const EditShopslide = () => {
     const { register, control, setValue, handleSubmit, reset, watch } = useForm({
         defaultValues: {
             title: '',
-            type: 'SLIDER', // ⭐️ สำหรับหน้านี้ยังคงล๊อคเป็นประเภท SLIDER เสมอ
+            type: 'SLIDER', // ล๊อคเป็นประเภท SLIDER เสมอ
             items: []
         }
     });
@@ -64,7 +66,7 @@ const EditShopslide = () => {
         setValue(`items.${index}.isVisible`, !currentStatus, { shouldDirty: true });
     };
 
-    // ⭐️ ฟังก์ชันจัดลำดับเมื่อลากเสร็จ (แกะถอดด้ามมาจาก EditShop)
+    // ฟังก์ชันจัดลำดับเมื่อลากเสร็จ
     const handleDragEnd = (result) => {
         if (!result.destination) return;
         move(result.source.index, result.destination.index);
@@ -102,33 +104,44 @@ const EditShopslide = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#f8f9fc] pb-24 font-sans">
-            <Navbar />
+        <form onSubmit={handleSubmit(onSubmit)} className="min-h-screen bg-[#f8f9fa] font-sans pb-20 flex flex-col">
+            
+            <Header
+                onLogoClick={() => navigate("/dd")}
+                showBackButton={true}
+            />
 
-            <form onSubmit={handleSubmit(onSubmit)} className="max-w-4xl mx-auto px-4 mt-10">
+            <main className="flex-1 w-full max-w-3xl mx-auto px-4 pt-28 pb-20">
                 
                 {/* ส่วนที่ 1: ช่องกรอกหัวข้อบล็อก */}
-                <div className="flex bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm mb-8">
-                    <div className="bg-[#f4f5f7] w-48 shrink-0 p-5 border-r border-slate-200 flex flex-col justify-center">
-                        <label className="font-bold text-slate-800 text-[15px] mb-1">หัวข้อบล็อก</label>
-                        <span className="text-[13px] text-slate-400">โปรดระบุได้</span>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex overflow-hidden h-20 mb-8">
+                    <div className="bg-[#f1f5f9] w-48 px-4 flex flex-col justify-center border-r border-slate-200">
+                        <span className="font-bold text-slate-800 text-sm md:text-base">
+                            หัวข้อบล็อก
+                        </span>
+                        <span className="text-xs text-slate-500">
+                            โปรดระบุได้
+                        </span>
                     </div>
-                    <input
-                        type="text"
-                        placeholder="หัวข้อ Slider"
-                        className="flex-1 p-5 focus:outline-none text-slate-700 font-medium placeholder:text-slate-300"
-                        {...register("title")}
-                    />
+
+                    <div className="flex-1 px-4 flex items-center">
+                        <input
+                            type="text"
+                            placeholder="หัวข้อ Slider"
+                            className="w-full text-slate-700 bg-transparent border-none focus:outline-none focus:ring-0 placeholder:text-slate-300 text-lg font-medium"
+                            {...register("title")}
+                        />
+                    </div>
                 </div>
 
-                {/* ⭐️ ส่วนที่ 2: รายการสินค้า ครอบด้วยระบบลากวางตามโมเดล EditShop */}
+                {/* ส่วนที่ 2: รายการสินค้า */}
                 <DragDropContext onDragEnd={handleDragEnd}>
                     <Droppable droppableId="slider-items-list">
                         {(provided) => (
                             <div 
                                 {...provided.droppableProps} 
                                 ref={provided.innerRef} 
-                                className="flex flex-col gap-4 mb-10"
+                                className="flex flex-col gap-4"
                             >
                                 {fields.map((field, index) => {
                                     const currentItem = watchedItems?.[index] || field;
@@ -139,7 +152,6 @@ const EditShopslide = () => {
                                                 <div 
                                                     ref={provided.innerRef} 
                                                     {...provided.draggableProps} 
-                                                    // ⭐️ ตัวนี้ห้ามลืมเด็ดขาด! ช่วยเรื่องอนิเมชั่นตอนลากย้ายตำแหน่ง
                                                     style={{ ...provided.draggableProps.style }}
                                                     className="w-full"
                                                 >
@@ -150,7 +162,6 @@ const EditShopslide = () => {
                                                         setValue={setValue}
                                                         onRemove={() => remove(index)}
                                                         onToggleVisibility={() => handleToggleVisibility(index)}
-                                                        // ⭐️ ส่ง props เข้าไปปลุก 6 จุดเลื่อนสไลด์ใน Component ลูก
                                                         dragHandleProps={provided.dragHandleProps}
                                                     />
                                                 </div>
@@ -164,28 +175,20 @@ const EditShopslide = () => {
                     </Droppable>
                 </DragDropContext>
 
-                {/* ส่วนที่ 3: ปุ่มเพิ่มสินค้า และ ปุ่มบันทึก */}
-                <div className="flex flex-col items-center gap-6">
-                    <button 
-                        type="button"
-                        onClick={() => append({ image: '', name: '', description: '', link: '', price: '', isVisible: true })}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium rounded-full shadow-sm transition-all"
-                    >
-                        <Plus size={18} />
-                        เพิ่มสไลเดอร์
-                    </button>
+                {/* ส่วนที่ 3: ปุ่มดำเนินการ */}
+                <div className="mt-8 flex flex-col items-center gap-6">
+                    <ButtonAdd
+                        onClick={() => append({ id: Date.now(), image: '', name: '', description: '', link: '', price: '', isVisible: true })}
+                        text="เพิ่มสไลเดอร์"
+                    />
 
-                    <button 
-                        type="submit"
-                        disabled={loading}
-                        className="px-10 py-3 bg-[#5a4af4] hover:bg-[#4b3de0] text-white font-bold rounded-xl shadow-md transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {loading ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
-                    </button>
+                    <ButtonSave
+                        onClick={handleSubmit(onSubmit)}
+                    />
                 </div>
 
-            </form>
-        </div>
+            </main>
+        </form>
     );
 };
 
