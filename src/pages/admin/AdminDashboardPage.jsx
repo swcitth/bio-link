@@ -81,29 +81,32 @@ export default function DashboardPage() {
   }, [dateRange, inactiveMinDays]); 
 
 
-  // ✨ ปรับปรุงฟังก์ชันจัดการการส่งอีเมลกลุ่ม (Bulk)
+  // ฟังก์ชันจัดการการส่งอีเมลกลุ่ม (Bulk)
   const handleSendBulkEmail = async () => {
     if (!stats?.inactiveUsers || stats.inactiveUsers.length === 0) {
       alert('ไม่มีบัญชีที่เข้าข่ายให้ส่งอีเมล');
       return;
     }
 
+    // 1. ดึงเฉพาะ ID ของผู้ใช้ในตารางออกมาเป็น Array เช่น [12, 15, 20]
+    const userIds = stats.inactiveUsers.map(user => user.id);
+
     // เพิ่มหน้าต่างยืนยัน ป้องกันการกดผิด
-    if (!window.confirm(`ยืนยันการสั่งคิวส่งอีเมลเตือนผู้ใช้ที่ไม่มีการเคลื่อนไหวเกิน ${inactiveMinDays} วัน ทั้งหมดเลยใช่ไหม?`)) {
+    if (!window.confirm(`ยืนยันการสั่งคิวส่งอีเมลเตือนผู้ใช้ทั้งหมด ${userIds.length} บัญชี ใช่ไหม?`)) {
       return;
     }
     
     try {
-      // ส่งแค่ค่า days ไปให้หลังบ้านจัดการคิวรี่เองเลย เพื่อป้องกัน Data ใหญ่เกินไป (ตามที่เราเขียนใน Controller ไว้)
-      const response = await api.post('/admin/remind-bulk', { days: inactiveMinDays });
-      alert(response.data.message || `เตรียมส่งอีเมลกระตุ้นทั้งหมดเข้าคิวแล้ว!`);
+      // 2. ส่ง user_ids ไปให้หลังบ้าน ตามที่ Backend รอรับอยู่
+      const response = await api.post('/admin/remind-bulk', { user_ids: userIds });
+      
     } catch (error) {
       console.error("Failed to send bulk emails:", error);
       alert('เกิดข้อผิดพลาดในการสั่งรันระบบส่งอีเมลกลุ่ม');
     }
   };
 
-  // ✨ ปรับปรุงฟังก์ชันจัดการการส่งอีเมลรายคน (Single)
+  // ฟังก์ชันจัดการการส่งอีเมลรายคน (Single)
   const handleSendEmail = async (userId) => {
     // เพิ่มหน้าต่างยืนยัน
     if (!window.confirm(`ยืนยันการส่งอีเมลเตือนไปยัง User ID: ${userId} ใช่ไหม?`)) {
@@ -111,9 +114,9 @@ export default function DashboardPage() {
     }
 
     try {
-      // โยน ID ไปต่อท้าย URL เลย (ตามหลักการของ route parameter)
+      // โยน ID ไปต่อท้าย URL เลย (เช็คใน routes/api.php ของ Laravel ด้วยนะว่าใช้ชื่อ route นี้)
       const response = await api.post(`/admin/remind-single/${userId}`);
-      alert(response.data.message || `สั่งส่งอีเมลกระตุ้นไปยัง User ID: ${userId} สำเร็จ!`);
+      
     } catch (error) {
       console.error("Failed to send email:", error);
       alert('เกิดข้อผิดพลาดในการส่งอีเมล');

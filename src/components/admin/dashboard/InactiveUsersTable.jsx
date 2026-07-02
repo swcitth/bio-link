@@ -13,16 +13,20 @@ export default function InactiveUsersTable({
     const baseClass = "px-3 py-1 rounded-full text-xs font-medium inline-flex items-center justify-center whitespace-nowrap";
     
     if (status?.includes('เสี่ยง')) {
-      // สีแดง/ชมพูอ่อน สำหรับ "เสี่ยงต่อการเลิกใช้งาน" หรือ "เสี่ยงเลิกใช้"
-      return `${baseClass} bg-red-100 text-red-700`; 
+      // สีส้ม สำหรับ "เสี่ยงต่อการเลิกใช้งาน"
+      return `${baseClass} bg-orange-100 text-orange-700`; 
     }
     if (status?.includes('ยังไม่ตั้งค่า')) {
-      // สีส้ม/เหลืองพาสเทล สำหรับ "สมัครแล้วยังไม่ตั้งค่า" หรือ "ยังไม่ตั้งค่า"
+      // สีส้ม/เหลืองพาสเทล สำหรับ "สมัครแล้วยังไม่ตั้งค่า"
       return `${baseClass} bg-amber-100 text-amber-700`; 
     }
     if (status?.includes('ไม่มีความเคลื่อนไหว')) {
       // สีแดงเข้มพาสเทล สำหรับ "ไม่มีความเคลื่อนไหว"
       return `${baseClass} bg-rose-100 text-rose-700`;
+    }
+    if (status?.includes('ทำงาน')) {
+      //  สีฟ้า สำหรับ "ลิงก์ยังทำงานอยู่"
+      return `${baseClass} bg-blue-100 text-blue-700`;
     }
     
     // ค่าเริ่มต้นหากไม่ตรงกับเงื่อนไขใดเลย
@@ -67,7 +71,9 @@ export default function InactiveUsersTable({
             <tr className="text-xs font-semibold text-slate-400 border-b border-slate-100">
               <th className="pb-4 font-semibold uppercase tracking-wider">ชื่อบัญชี / USERNAME</th>
               <th className="pb-4 font-semibold uppercase tracking-wider text-center">บล็อกใน BIO</th>
-              <th className="pb-4 font-semibold uppercase tracking-wider">อัพเดทล่าสุดเมื่อ</th>
+              <th className="pb-4 font-semibold uppercase tracking-wider">อัพเดทล่าสุด</th>
+              {/* เพิ่มคอลัมน์ใหม่ */}
+              <th className="pb-4 font-semibold uppercase tracking-wider">การใช้งานลิงค์ล่าสุด</th>
               <th className="pb-4 font-semibold uppercase tracking-wider">สถานะ</th>
               <th className="pb-4 font-semibold uppercase tracking-wider text-right">จัดการ</th>
             </tr>
@@ -75,7 +81,7 @@ export default function InactiveUsersTable({
           <tbody className="divide-y divide-slate-50">
             {users.length === 0 ? (
               <tr>
-                <td colSpan="5" className="py-8 text-center text-slate-500">
+                <td colSpan="6" className="py-8 text-center text-slate-500">
                   ไม่มีบัญชีที่เข้าข่ายเงื่อนไขนี้
                 </td>
               </tr>
@@ -95,8 +101,14 @@ export default function InactiveUsersTable({
                     <p className="font-medium text-sm text-slate-800">{user.date}</p>
                     <p className="text-xs font-medium text-red-500">{user.daysAgo}</p>
                   </td>
+
+                  {/* ดึงข้อมูลการใช้งานลิงก์ล่าสุดมาแสดง */}
+                  <td className="py-4">
+                    <span className={`text-sm ${user.lastLinkActivity === 'ไม่มีข้อมูลการใช้งาน' ? 'text-slate-400' : 'font-medium text-slate-800'}`}>
+                      {user.lastLinkActivity}
+                    </span>
+                  </td>
                   
-                  {/* ปรับปรุงส่วนแสดงผลสถานะตรงนี้ค่ะ */}
                   <td className="py-4">
                     <span className={getStatusBadgeClass(user.status)}>
                       {user.status}
