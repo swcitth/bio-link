@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { Search, ChevronDown, Ban, Trash2, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+// 1. เพิ่ม Download เข้ามาใน import ของ lucide-react
+import { Search, ChevronDown, Ban, Trash2, ChevronLeft, ChevronRight, Eye, Download } from "lucide-react"; 
 import { useNavigate } from 'react-router-dom';
 import api from "../../api/axios"; 
+import DownloadModal from '../../components/admin/dashboard/DownloadModal';
 
 export default function AdminUserManagement() {
   const navigate = useNavigate();
+
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
   const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
 
-  // 1. ดึงข้อมูลจาก API แทน LocalStorage
+  // 1. ดึงข้อมูลจาก API
   const fetchUsers = async () => {
     try {
       const response = await api.get('/admin');
@@ -89,12 +93,21 @@ export default function AdminUserManagement() {
   });
 
   return (
-    // สังเกตว่าเราตัด Layout กรอบนอกออกไปแล้ว เพื่อให้มันสอดเข้าไปใน AdminLayout ได้พอดี
-    <div className="bg-white rounded-[1.5rem] p-6 sm:p-8 shadow-sm border border-slate-50">
-      
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">จัดการผู้ใช้งาน (User Management)</h1>
-        <p className="text-sm text-slate-500 mt-1 font-medium">ดูแลบัญชีผู้ใช้ แบน หรือลบบัญชีที่ทำผิดกฎระบบ</p>
+    <div className="bg-white rounded-[1.5rem] p-6 sm:p-8 shadow-sm border border-slate-50 relative">
+
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">จัดการผู้ใช้งาน (User Management)</h1>
+          <p className="text-sm text-slate-500 mt-1 font-medium">ดูแลบัญชีผู้ใช้ แบน หรือลบบัญชีที่ทำผิดกฎระบบ</p>
+        </div>
+        
+        <button 
+          onClick={() => setIsDownloadModalOpen(true)}
+          className="flex items-center gap-2 bg-[#6B46FF] hover:bg-[#5835E5] text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition-colors"
+        >
+          <Download size={18} />
+          ดาวน์โหลดรายงาน
+        </button>
       </div>
 
       <div className="relative mb-8 max-w-sm">
@@ -246,6 +259,14 @@ export default function AdminUserManagement() {
           </button>
         </div>
       </div>
+
+      {/* 2. เรียกใช้ Modal พร้อมส่ง mode="users" ไว้ด้านล่างสุด */}
+      {isDownloadModalOpen && (
+        <DownloadModal 
+          onClose={() => setIsDownloadModalOpen(false)} 
+          mode="users" 
+        />
+      )}
 
     </div>
   );

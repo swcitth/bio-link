@@ -8,6 +8,7 @@ import { chartData, topPages } from '../../data/mockData';
 import api from '../../api/axios';
 
 import DashboardHeader from '../../components/admin/dashboard/DashboardHeader';
+import DownloadModal from '../../components/admin/dashboard/DownloadModal';
 
 // React Date Range & date-fns
 import { DateRange } from 'react-date-range';
@@ -19,11 +20,13 @@ import { format, differenceInDays } from 'date-fns';
 export default function DashboardPage() {
   const [activeFilter, setActiveFilter] = useState('today');
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  
+
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // เพิ่ม State สำหรับเก็บค่า Dropdown วันที่ไม่มีการเคลื่อนไหว
   const [inactiveMinDays, setInactiveMinDays] = useState(7);
 
   const [dateRange, setDateRange] = useState([
@@ -56,7 +59,6 @@ export default function DashboardPage() {
     }
   };
 
-  // อัพเดทฟังก์ชันให้รับค่า minDays และแนบไปใน URL
   const fetchStats = async (startDate, endDate, minDays) => {
     setIsLoading(true);
     try {
@@ -80,52 +82,38 @@ export default function DashboardPage() {
     fetchStats(start, end, inactiveMinDays);
   }, [dateRange, inactiveMinDays]); 
 
-
-  // ฟังก์ชันจัดการการส่งอีเมลกลุ่ม (Bulk)
   const handleSendBulkEmail = async () => {
     if (!stats?.inactiveUsers || stats.inactiveUsers.length === 0) {
       alert('ไม่มีบัญชีที่เข้าข่ายให้ส่งอีเมล');
       return;
     }
-
-    // 1. ดึงเฉพาะ ID ของผู้ใช้ในตารางออกมาเป็น Array เช่น [12, 15, 20]
     const userIds = stats.inactiveUsers.map(user => user.id);
-
-    // เพิ่มหน้าต่างยืนยัน ป้องกันการกดผิด
     if (!window.confirm(`ยืนยันการสั่งคิวส่งอีเมลเตือนผู้ใช้ทั้งหมด ${userIds.length} บัญชี ใช่ไหม?`)) {
       return;
     }
-    
     try {
-      // 2. ส่ง user_ids ไปให้หลังบ้าน ตามที่ Backend รอรับอยู่
       const response = await api.post('/admin/remind-bulk', { user_ids: userIds });
-      
     } catch (error) {
       console.error("Failed to send bulk emails:", error);
       alert('เกิดข้อผิดพลาดในการสั่งรันระบบส่งอีเมลกลุ่ม');
     }
   };
 
-  // ฟังก์ชันจัดการการส่งอีเมลรายคน (Single)
   const handleSendEmail = async (userId) => {
-    // เพิ่มหน้าต่างยืนยัน
     if (!window.confirm(`ยืนยันการส่งอีเมลเตือนไปยัง User ID: ${userId} ใช่ไหม?`)) {
       return;
     }
-
     try {
-      // โยน ID ไปต่อท้าย URL เลย (เช็คใน routes/api.php ของ Laravel ด้วยนะว่าใช้ชื่อ route นี้)
       const response = await api.post(`/admin/remind-single/${userId}`);
-      
     } catch (error) {
       console.error("Failed to send email:", error);
       alert('เกิดข้อผิดพลาดในการส่งอีเมล');
     }
   };
 
-
+  // 3. แก้ไขฟังก์ชัน handleDownload ให้สั่งเปิด Modal
   const handleDownload = () => {
-    console.log("Downloading Dashboard Report...");
+    setIsDownloadModalOpen(true);
   };
 
   const calculateDays = (start, end) => {
@@ -168,7 +156,7 @@ export default function DashboardPage() {
         onFilterChange={handleDateFilter}
         buttonDateText={getButtonDateText()} 
         subDateText={getSubDateText()}       
-        onDownload={handleDownload}
+        onDownload={handleDownload} 
         downloadText="ดาวน์โหลดรายงาน"
       />
 
@@ -191,6 +179,7 @@ export default function DashboardPage() {
       {/* Popup Calendar Modal */}
       {isCalendarOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          {/* ... (โค้ด Calendar ของคุณเหมือนเดิม) ... */}
           <div className="bg-white p-6 rounded-[24px] shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-4 px-2">
               <h3 className="text-lg font-bold text-slate-800">เลือกช่วงวันที่</h3>
@@ -225,6 +214,14 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 4. Popup Download Modal */}
+      {isDownloadModalOpen && (
+        <DownloadModal 
+          onClose={() => setIsDownloadModalOpen(false)} 
+          initialTimeRange={activeFilter} 
+        />
       )}
     </>
   );
