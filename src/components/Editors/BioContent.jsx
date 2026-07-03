@@ -2,6 +2,8 @@ import React from "react";
 import { ICON_MAP } from "../../constants/icons";
 import { THEME_LIST } from "../../constants/themes";
 import SaveContactButton from "../UI/Button/SaveContactButton"; 
+// ⭐️ อย่าลืม Import BlockSlider ด้วยนะครับ (ปรับ path ให้ตรงกับโปรเจกต์ของคุณ)
+import BlockSlider from "../Blocks/BlockSlider"; 
 
 const FONT_MAP = {
   kanit: "'Kanit', sans-serif",
@@ -10,7 +12,7 @@ const FONT_MAP = {
   prompt: "'Prompt', sans-serif"
 };
 
-// ⭐️ อัปเกรดฟังก์ชันดึง Embed URL ของ YouTube ให้รองรับการเปิด-ปิด Autoplay อัตโนมัติ
+// อัปเกรดฟังก์ชันดึง Embed URL ของ YouTube
 const getYoutubeEmbedUrl = (url, isAutoplay) => {
   if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -19,8 +21,6 @@ const getYoutubeEmbedUrl = (url, isAutoplay) => {
   if (match && match[2].length === 11) {
     const videoId = match[2];
     let embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0`;
-    
-    // หาก item นั้นตั้งค่าให้เปิดเล่นอัตโนมัติ (และบังคับ mute ตามนโยบาย Browser)
     if (isAutoplay) {
       embedUrl += `&autoplay=1&mute=1`;
     }
@@ -29,7 +29,7 @@ const getYoutubeEmbedUrl = (url, isAutoplay) => {
   return null;
 };
 
-// อัปเกรด Regex ให้ดักจับ TikTok ID ได้แม่นยำขึ้น
+// อัปเกรด Regex ให้ดักจับ TikTok ID
 const getTiktokId = (url) => {
   if (!url) return null;
   const match = url.match(/(?:video|v)\/(\d+)/);
@@ -54,7 +54,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
     : (activeTheme?.cfg?.coverBg || activeTheme?.cfg?.bgGradient || "#D8B4FE");
 
   const defaultAvatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
-  console.log("ดึงข้อมูล Links มาได้คือ:", safeLinks);
+
   return (
     <div className={`relative z-10 ${isCompact ? "pb-5" : "pb-20"}`} style={{ fontFamily: selectedFont }}>
       
@@ -80,7 +80,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
           className={`${isCompact ? "mt-2 text-sm" : "mt-4 text-2xl"} font-bold text-center leading-tight`}
           style={{ color: safeDesign.textColor || "#333" }}
         >
-          {/* เรียก display_name ก่อนเพื่อความชัวร์ */}
           {safeProfile.display_name || safeProfile.name || "ชื่อของคุณ"}
         </h1>
 
@@ -95,7 +94,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
         {/* Links List */}
         <div className={`w-full flex flex-col ${isCompact ? "gap-3 mt-5" : "gap-4 mt-8"}`}>
           
-          {/* ดักจับตัวแปรเปิดปิดปุ่ม (เขียนให้ Clean และรองรับ Boolean จาก Resource) */}
+          {/* ปุ่ม Save Contact */}
           {(safeProfile.showSaveContact === true || safeProfile.show_save_contact === true || 
             safeProfile.showSaveContact === 1 || safeProfile.show_save_contact === 1) && (
               <SaveContactButton 
@@ -104,12 +103,13 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                 isCompact={isCompact} 
               />
           )}
+
           {visibleLinks.length === 0 && (
             <p className={`text-center ${isCompact ? "text-[11px]" : "text-sm"} text-slate-400 mt-3`} style={{ color: safeDesign.textColor }}>
               ยังไม่มีลิงก์แสดงผล
             </p>
           )}
- 
+
           {visibleLinks.map((link) => {
             const subItems = link?.items && link.items.length > 0 ? link.items : [link];
             const titleClass = `${isCompact ? "text-[13px]" : "text-base"} font-bold px-2`;
@@ -122,12 +122,9 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                   {link.items && link.title && <h3 className={titleClass} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
                   {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
                     const videoUrl = item?.link || item?.url || "";
-                    
-                    // เช็คว่าลิงก์ใน item นี้เป็น TikTok หรือไม่
                     const isTikTokItem = videoUrl.toLowerCase().includes("tiktok") || (link?.icon === "TikTok" && !videoUrl);
 
                     if (isTikTokItem) {
-                      // --- เรนเดอร์ TikTok ---
                       const tiktokId = getTiktokId(videoUrl);
                       const TiktokIcon = ICON_MAP["TikTok"] || ICON_MAP["Link"];
                       return (
@@ -155,7 +152,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                         </div>
                       );
                     } else {
-                      // --- เรนเดอร์ YouTube ---
                       const youtubeEmbedUrl = getYoutubeEmbedUrl(videoUrl, item?.isAutoplay || link?.isAutoplay); 
                       return (
                         <div key={item?.id || idx} className="flex flex-col gap-1">
@@ -182,20 +178,33 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
               );
             }
 
-            // ⭐️ 3. SLIDER Block (ดักจับทั้งจาก Type และ Icon เพื่อความแม่นยำ)
+            // ⭐️ 3. SLIDER Block
             if (String(link?.type || "").toUpperCase() === "SLIDER" || String(link?.icon || "").toUpperCase() === "SLIDER") {
               return (
-                <div key={link.id || Math.random()} className={`flex flex-col ${isCompact ? "gap-2 mb-2" : "gap-4 mb-4"} w-full overflow-hidden`}>
+                <div key={link.id || Math.random()} className={`flex flex-col ${isCompact ? "gap-2 mb-2" : "gap-4 mb-4"} w-full`}>
+                  {link.title && <h3 className={titleClass} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
+                  <BlockSlider 
+                    block={link} 
+                    items={subItems} 
+                    handleBlockClick={onLinkClick} 
+                  />
+                </div>
+              );
+            }
+
+            // ⭐️ 4. SHOP Block (เพิ่มเงื่อนไข if กลับมาครอบโค้ดที่ลอยอยู่)
+            if (String(link?.type || "").toUpperCase() === "SHOP" || link?.icon === "Shop") {
+              return (
+                <div key={link.id || Math.random()} className={`flex flex-col ${isCompact ? "gap-2 mb-2" : "gap-4 mb-4"} w-full`}>
                   {link.title && <h3 className={titleClass} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
                   
-                  {/* กล่องเลื่อนแนวนอน */}
+                  {/* กล่องเลื่อนแนวนอนของ Shop */}
                   <div className="flex items-start overflow-x-auto gap-4 pb-4 px-1 snap-x snap-mandatory scroll-smooth" style={{ scrollbarWidth: "none" }}>
                     {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
                       const itemUrl = item?.url || item?.link;
                       const imageUrl = item?.image || item?.imageUrl; 
                       const WrapperTag = itemUrl ? "a" : "div";
                       
-                      // เช็คว่าการ์ดใบนี้มีการพิมพ์ข้อความหรือไม่
                       const hasContent = 
                         (item?.name && String(item.name).trim() !== "") ||
                         (item?.title && String(item.title).trim() !== "") ||
@@ -206,12 +215,10 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                         <WrapperTag 
                           key={item?.id || idx} 
                           {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})} 
-                          // ⭐️ 1. ปรับการ์ดหลักเป็น relative และล็อคให้เป็นสี่เหลี่ยมจัตุรัส (aspect-square) เสมอ
                           className={`relative snap-center shrink-0 w-[85%] max-w-[280px] aspect-square group rounded-[20px] shadow-sm overflow-hidden ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} 
                           style={{ textDecoration: 'none' }}
                           onClick={() => { if(itemUrl && onLinkClick) onLinkClick(link?.id, itemUrl) }}
                         >
-                          {/* ⭐️ 2. รูปภาพสินค้ากางเต็มพื้นที่การ์ด */}
                           {imageUrl ? (
                             <img src={imageUrl} alt={item?.name || item?.title} className="w-full h-full object-cover bg-white" />
                           ) : (
@@ -220,10 +227,8 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                             </div>
                           )}
                           
-                          {/* ⭐️ 3. กล่องข้อความซ้อนทับ (ปรับให้แถบเงาเตี้ยลงและพอดีกับข้อความ) */}
                           {hasContent && (
                             <div className="absolute bottom-0 left-0 right-0 flex flex-col justify-end px-3 pb-3 pt-2 bg-gradient-to-t from-black/30 via-black/30 to-transparent ">
-                              
                               {(item?.name || item?.title) && String(item?.name || item?.title).trim() !== "" && (
                                 <h4 className={`${isCompact ? "text-[14px]" : "text-base"} font-bold text-left break-words text-white drop-shadow-md leading-tight mb-1`}>
                                   {item?.name || item?.title}
@@ -241,7 +246,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                                   {item.price} THB
                                 </p>
                               )}
-                              
                             </div>
                           )}
                         </WrapperTag>
@@ -251,7 +255,8 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                 </div>
               );
             }
-            // 4. Image Block
+
+            // ⭐️ 5. Image Block
             if (link?.icon === "Image") {
               return (
                 <div key={link.id || Math.random()} className={`flex flex-col ${isCompact ? "gap-2 mb-2" : "gap-4 mb-4"} w-full`}>
@@ -304,7 +309,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
               );
             }
 
-            // 5. Normal Link
+            // ⭐️ 6. Normal Link
             return (
               <div key={link?.id || Math.random()} className="w-full mb-2 flex flex-col gap-2">
                 {link?.items && link?.title && <h3 className={`${titleClass} mb-1`} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
@@ -343,7 +348,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
           })}
         </div>
         
-        {/* URL footer (เฉพาะจอใหญ่ โชว์ด้านล่างสุด) */}
+        {/* URL footer */}
         {!isCompact && (
           <p className="mt-14 text-sm font-medium opacity-60 text-center" style={{ color: safeDesign.textColor || "#94a3b8" }}>
             mybiolink.com/{safeProfile.username || "username"}

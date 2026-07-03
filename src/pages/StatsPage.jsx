@@ -3,7 +3,7 @@
 // ============================================================
 
 import React, { useState, useEffect } from "react";
-import { FaEye, FaMousePointer, FaChartBar, FaStar, FaLink, FaCalendarAlt, FaTrophy, FaImage } from "react-icons/fa";
+import { FaEye, FaMousePointer, FaChartBar, FaStar, FaLink, FaCalendarAlt, FaTrophy, FaImage, FaDownload } from "react-icons/fa";
 import { ICON_MAP } from "../constants/icons";
 import api from "../api/axios";
 
@@ -94,6 +94,7 @@ const StatsPage = ({ links }) => {
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   // ⭐️ State ปฏิทิน DateRange
   const [dateRangeSelection, setDateRangeSelection] = useState([
@@ -125,7 +126,48 @@ const StatsPage = ({ links }) => {
     if (dateRange === 'custom') return; 
     fetchAnalytics();
   }, [dateRange]);
+// =========================================================
+  // 📥 ฟังก์ชันสำหรับเรียกดาวน์โหลดไฟล์ Excel
+  // =========================================================
+  const handleDownloadReport = async () => {
+    try {
+      setIsDownloading(true); // เปลี่ยนปุ่มเป็นสีเทาพร้อมวงกลมหมุน
+      
+      // ดึงเงื่อนไขวันที่ ที่เราใช้ดูในหน้าเว็บปัจจุบัน
+      let url = `/analytics/export?range=${dateRange}`;
+      if (dateRange === 'custom' && customStart && customEnd) {
+        url += `&start=${customStart}&end=${customEnd}`;
+      }
 
+      // ยิง API ด้วย axios ปกติ (เพื่อส่ง Token)
+      const response = await api.get(url, {
+        responseType: 'blob', // สำคัญมาก! บอกเบราว์เซอร์ว่านี่คือไฟล์ ไม่ใช่ข้อความ
+      });
+
+      // ถ้าโหลดสำเร็จ ให้สร้างลิงก์จำลองและกดเซฟลงเครื่อง
+      const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = urlBlob;
+      
+      // ตั้งชื่อไฟล์
+      const fileName = `Analytics_Report_${dateRange}_${new Date().getTime()}.xlsx`;
+      link.setAttribute('download', fileName);
+      
+      document.body.appendChild(link);
+      link.click(); // สั่งให้เบราว์เซอร์คลิกดาวน์โหลดอัตโนมัติ
+      
+      // ลบตัวแปรทิ้งหลังโหลดเสร็จ
+      link.remove();
+      window.URL.revokeObjectURL(urlBlob);
+      
+    } catch (error) {
+      console.error("ดาวน์โหลดไฟล์ไม่สำเร็จ:", error);
+      alert("❌ เกิดข้อผิดพลาดในการดาวน์โหลดรายงาน กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      // 🌟 สำคัญสุด: ไม่ว่าจะโหลดสำเร็จหรือพัง ต้องคืนค่าปุ่มกลับมาเป็นสีม่วงเสมอ
+      setIsDownloading(false);
+    }
+  };
   if (isLoading) return <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-slate-100"><div className="text-indigo-600 font-semibold animate-pulse text-sm">📊 กำลังคำนวณและดึงข้อมูลสถิติจริง...</div></div>;
   if (error) return <div className="text-center py-20 bg-white rounded-2xl border border-red-100 text-red-500 font-medium text-sm">❌ {error}</div>;
 
@@ -235,6 +277,18 @@ const StatsPage = ({ links }) => {
               </button>
             </div>
           )}
+          {/* 🌟 ปุ่มดาวน์โหลดรายงาน */}
+          <button 
+            onClick={handleDownloadReport}
+            disabled={isDownloading}
+            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-1.5 text-xs sm:text-sm font-bold rounded-lg shadow-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed w-full md:w-auto mt-2 md:mt-0"
+          >
+            {isDownloading ? (
+              <><div className="w-3.5 h-3.5 border-[2.5px] border-white border-t-transparent rounded-full animate-spin"></div> โหลด...</>
+            ) : (
+              <><FaDownload size={13} /> โหลดรายงาน</>
+            )}
+          </button>
         </div>
       </div>
 
@@ -390,17 +444,24 @@ const StatsPage = ({ links }) => {
         {displayLinks.length > 0 ? (
           <div className="space-y-3">
             {displayLinks.map((link, idx) => {
-              
-              // 🌟 ปรับตรงนี้: ถ้าเป็นลบ็อกจาก Shop/Slider ให้ใช้ FaImage ทันที ถ้าไม่ใช่ค่อยไปหาใน ICON_MAP
+              // 🌟 แยกแยะไอคอนตามประเภท (MediaBlock หรือ Link ปกติ)
+              // 1. นำโค้ดนี้ไปวางแทนที่บรรทัดเดิมที่มี const IconComponent = ...
+              const getIconComponent = (iconKey) => {
+                if (!iconKey) return FaLink;
+                // เช็คว่ามีไอคอนนี้ใน ICON_MAP ไหม
+                return ICON_MAP[iconKey] || FaLink;
+              };
+
+              // 2. ในส่วนของ .map((link, idx) => { ... }) ให้แก้การเรียก IconComponent เป็น:
               const IconComponent = link.isMediaBlock 
                 ? FaImage 
-                : (link.icon && ICON_MAP[link.icon] ? ICON_MAP[link.icon] : FaLink);
+                : getIconComponent(link.icon);
 
               return (
                 <div key={link.id || idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
                   <div className="flex items-center min-w-0 mr-4">
                     
-                    {/* กล่องไอคอน */}
+                    {/* กล่องไอคอน/รูปภาพ */}
                     <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center justify-center shrink-0 mr-3 text-slate-500 overflow-hidden">
                       {link.image ? (
                         <img src={link.image} alt={link.title} className="w-full h-full object-cover" />
@@ -411,23 +472,22 @@ const StatsPage = ({ links }) => {
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
+                        {/* 🌟 แสดงชื่อ Item (หรือชื่อบล็อก) */}
                         <p className="text-sm font-semibold text-slate-700 truncate">{link.title}</p>
-                        {link.parentTitle && (
-                          <span className="text-[10px] font-medium text-indigo-500 bg-indigo-50/70 px-1.5 py-0.5 rounded-md shrink-0">
-                            จาก: {link.parentTitle}
-                          </span>
-                        )}
                       </div>
-                      <p className="text-[10px] text-slate-400 truncate mt-0.5">{link.url || "ไม่มีลิงก์"}</p>
+                      {/* 🌟 แสดง URL เพื่อให้แยกแยะรายการที่อยู่ในกรุ๊ปเดียวกันได้ */}
+                      <p className="text-[10px] text-slate-400 truncate mt-0.5" title={link.url}>
+                        {link.url || "ไม่มีลิงก์"}
+                      </p>
                     </div>
                   </div>
+                  
                   <div className="text-right shrink-0">
-                  {/* ลองดักจับเผื่อกรณีหลังบ้านส่งมาเป็นชื่ออื่นดูครับ */}
-                  <p className="text-sm font-extrabold text-indigo-600">
-                    {getSafeNumber(link.clicks ?? link.clicks_count ?? link.total_clicks ?? 0)}
-                  </p>
-                  <p className="text-[10px] text-slate-400 uppercase">คลิก</p>
-                </div>
+                    <p className="text-sm font-extrabold text-indigo-600">
+                      {getSafeNumber(link.clicks)}
+                    </p>
+                    <p className="text-[10px] text-slate-400 uppercase">คลิก</p>
+                  </div>
                 </div>
               );
             })}

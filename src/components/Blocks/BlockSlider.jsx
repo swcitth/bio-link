@@ -1,6 +1,8 @@
 import React from 'react';
 
-const BlockSlider = ({ items = [] }) => {
+// 🌟 แก้ไขจุดที่ 1: เพิ่ม block และ handleBlockClick เข้ามาใน Props
+const BlockSlider = ({ block, items = [], handleBlockClick }) => {
+  
   // ⭐️ 1. ฟังก์ชันเช็ค URL ของรูปภาพ (แก้ปัญหารูปจากหลังบ้านไม่ขึ้น)
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
@@ -25,7 +27,7 @@ const BlockSlider = ({ items = [] }) => {
     <div className="flex overflow-x-auto gap-4 pb-4 snap-x hide-scrollbar">
       {items.map((item, index) => {
         // เช็คว่ามีลิงก์ไหม ถ้าไม่มีให้ใส่ # ไปก่อน
-        const itemLink = item.link || "#";
+        const itemLink = item.link || item.url || "#";
 
         return (
           // ⭐️ 2. เปลี่ยน <div> เป็น <a> เพื่อให้ครอบลิงก์คลิกได้
@@ -33,6 +35,8 @@ const BlockSlider = ({ items = [] }) => {
             key={index} 
             href={itemLink}
             target={itemLink !== "#" ? "_blank" : "_self"} // เปิดแท็บใหม่ถ้ามีลิงก์จริง
+            // 🌟 ตอนนี้ handleBlockClick และ block.id จะใช้งานได้สมบูรณ์แล้ว ไม่แครชแล้วครับ
+            onClick={() => handleBlockClick && handleBlockClick(block.id, itemLink)}
             rel="noopener noreferrer"
             className="w-[70%] shrink-0 snap-center bg-white rounded-xl shadow-sm border border-slate-100 p-3 transition-transform hover:scale-[1.02] block cursor-pointer"
           >
