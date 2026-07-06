@@ -158,7 +158,7 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
 
   if (!checkPhone && !checkEmail && !checkWebsite) return null;
 
-  const btnRadius = { square: isCompact ? "6px" : "8px", rounded: "14px", pill: "999px" }[design.btnRounded] || "999px";
+  const btnRadius = { square: isCompact ? "0px" : "0px", rounded: "14px", pill: "999px" }[design.btnRounded] || "999px";
   const btnBoxShadow = { none: "none", outline: "none", shadow3d: isCompact ? "3px 3px 0px rgba(0,0,0,0.8)" : "0px 4px 0px rgba(0,0,0,0.2)" }[design.btnStyle] || "none";
 
   const buttonBgColor = design.btnTextColor || "#000000"; 

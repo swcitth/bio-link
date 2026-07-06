@@ -200,14 +200,19 @@ const StatsPage = ({ links }) => {
         });
         
         if (match) {
-            // 🌟 ดักจับแบบปลอดภัยขั้นสุด ไม่ว่าจะเป็น 'BlockShop', 'blockslider', 'SHOP' โดนหมด
             const blockType = String(block.type || '').toLowerCase();
             
             if (blockType.includes('shop') || blockType.includes('slider')) {
                 isMediaBlock = true;
             } else {
-                // บล็อกลิงก์ทั่วไป ดึงไอคอนและรูปปกติ
-                foundIcon = match.icon || match.iconId || block.icon || block.iconId;
+                // 🌟 จุดแก้ไข: ดึงไอคอนมาให้ครบ และป้องกันไม่ให้คำว่า 'Link' มาเขียนทับไอคอนจริง
+                const rawIcon = match.iconId || match.icon_id || match.icon || block.iconId || block.icon_id || block.icon;
+                
+                // ถ้าเจอไอคอน และไอคอนนั้นไม่ใช่คำว่า "Link" แบบดั้งเดิม ให้เก็บค่าไว้
+                if (rawIcon && String(rawIcon).toLowerCase() !== 'link') {
+                    foundIcon = rawIcon;
+                }
+
                 if (match.image || match.imageUrl) {
                     foundImage = match.image || match.imageUrl;
                 }
@@ -215,10 +220,13 @@ const StatsPage = ({ links }) => {
         }
     });
 
+    // 🌟 จัดลำดับความสำคัญ: เอาไอคอนที่หาเจอจากหน้าเว็บก่อน -> ถ้าไม่มีค่อยเอาจากหลังบ้าน -> ถ้าไม่มีจริงๆ ค่อยเป็นห่วงโซ่
+    const finalIcon = foundIcon || statLink.icon_id || statLink.icon || 'Link';
+
     return {
       ...statLink,
-      icon: foundIcon || statLink.icon || 'Link', 
-      image: isMediaBlock ? null : (foundImage || statLink.image), // ถ้าเป็นบล็อกมีเดีย บังคับเป็น null เพื่อให้ไปสลับโชว์ไอคอนด้านล่าง
+      icon: finalIcon, 
+      image: isMediaBlock ? null : (foundImage || statLink.image), 
       isMediaBlock, 
       clicks: getSafeNumber(statLink.clicks ?? statLink.clicks_count ?? statLink.total_clicks ?? 0)
     };
@@ -281,8 +289,8 @@ const StatsPage = ({ links }) => {
           <button 
             onClick={handleDownloadReport}
             disabled={isDownloading}
-            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-1.5 text-xs sm:text-sm font-bold rounded-lg shadow-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed w-full md:w-auto mt-2 md:mt-0"
-          >
+            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-[9px] text-xs sm:text-sm font-bold rounded-lg shadow-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed w-full md:w-auto"
+>
             {isDownloading ? (
               <><div className="w-3.5 h-3.5 border-[2.5px] border-white border-t-transparent rounded-full animate-spin"></div> โหลด...</>
             ) : (
@@ -331,17 +339,33 @@ const StatsPage = ({ links }) => {
           </div>
         </div>
 
-        {/* การ์ด 4: ลิงก์ยอดนิยม */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-100 col-span-2 md:col-span-2 lg:col-span-1 flex flex-col justify-between order-5 lg:order-4">
+        {/* การ์ด 4: ลิงก์ยอดนิยม (ปรับให้สมมาตร) */}
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-100 col-span-2 md:col-span-2 lg:col-span-1 flex flex-col gap-2 order-5 lg:order-4">
+          {/* 1. เอา justify-between ออก เปลี่ยนเป็น flex-col gap-2 */}
+          
           <div>
-            <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5"><FaTrophy className="text-amber-500" size={14} /> ลิงก์ยอดนิยม</span>
-            <h2 className="text-sm font-bold text-slate-800 mt-3 truncate" title={topLink ? topLink.title : ""}>
-              {topLink ? (topLink.title !== "ไม่มีชื่อลิงก์" ? topLink.title : "ลิงก์ของคุณ") : "ยังไม่มีข้อมูลคลิก"}
+            <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
+              <FaTrophy className="text-amber-500" size={14} /> ลิงก์ยอดนิยม
+            </span>
+            
+            {/* 2. ลด mt-3 ลงเหลือ mt-1 เพื่อไม่ให้มันหย่อนลงมาต่ำเกินไป */}
+            <h2 className="text-3xl font-extrabold text-slate-800 mt-1 truncate" title={topLink ? topLink.title : ""}>
+              {topLink ? (topLink.title !== "ไม่มีชื่อ" ? topLink.title : "ไม่มีชื่อ") : "ไม่มีข้อมูล"}
             </h2>
+
+            {topLink && (
+              <p className="text-[10px] text-slate-400 truncate" title={topLink.url}>
+                {topLink.url}
+              </p>
+            )}
           </div>
-          <span className="text-[10px] text-amber-600 mt-3 font-semibold bg-amber-50 px-2 py-1 rounded w-fit">
-            {topLink ? `${topLink.clicks} คลิก (${rangeText})` : `ยอด${rangeText}`}
-          </span>
+
+          {/* 3. ส่วนของตัวเลขคลิก จะถูกดันลงมาโดยธรรมชาติด้วย gap-2 ของ div แม่ */}
+          <div className="mt-auto">
+            <span className="text-[10px] text-amber-600 font-semibold bg-amber-50 px-2 py-1 rounded w-fit inline-block">
+              {topLink ? `${topLink.clicks.toLocaleString()} คลิก (${rangeText})` : `ยอด${rangeText}`}
+            </span>
+          </div>
         </div>
 
         {/* การ์ด 5: ยอดกด Save */}
@@ -458,7 +482,7 @@ const StatsPage = ({ links }) => {
                 : getIconComponent(link.icon);
 
               return (
-                <div key={link.id || idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+                <div key={`${link.id || 'link'}-${idx}`} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
                   <div className="flex items-center min-w-0 mr-4">
                     
                     {/* กล่องไอคอน/รูปภาพ */}

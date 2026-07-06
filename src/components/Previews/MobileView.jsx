@@ -55,7 +55,7 @@ const MobileView = ({ profile, links, design, activeTheme }) => {
                 <div key={link.id} style={{ 
                     display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", 
                     backgroundColor: design.btnBgColor, color: design.btnTextColor, 
-                    borderRadius: { square: "6px", rounded: "14px", pill: "999px" }[design.btnRounded] || "999px",
+                    borderRadius: { square: "0px", rounded: "14px", pill: "999px" }[design.btnRounded] || "999px",
                     border: design.btnStyle !== "none" ? `2px solid ${design.btnBorderColor || "transparent"}` : "none",
                     boxShadow: design.btnStyle === "shadow3d" ? "3px 3px 0px rgba(0,0,0,0.8)" : "none"
                 }}>
