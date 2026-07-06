@@ -153,7 +153,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
       }
     },
     onError: (error) => {
-      console.log('Google Popup Error:', error);
+      // console.log('Google Popup Error:', error);
       alert("การเข้าสู่ระบบผ่าน Google ถูกยกเลิก");
     }
   });
@@ -191,7 +191,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
       const response = await api.post(`/login`, payload);
  
       
-      console.log("API Response Data:", response.data);
+      // console.log("API Response Data:", response.data);
 
       const userData = response.data.user;
 

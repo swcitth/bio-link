@@ -128,18 +128,18 @@ const DashboardPage = () => {
 
   // ฟังก์ชัน fetchMyProfile สำหรับดึงข้อมูลจาก Database
   const fetchMyProfile = async () => {
-    console.log("👉 User ที่กำลังใช้งานอยู่คือ:", realUser);
+    // console.log("👉 User ที่กำลังใช้งานอยู่คือ:", realUser);
 
     if (!realUser?.username) {
-        console.log("❌ ไม่พบ username ในระบบ (หา realUser.username ไม่เจอ)");
+        // console.log("❌ ไม่พบ username ในระบบ (หา realUser.username ไม่เจอ)");
         return;
     }
 
     try {
-      console.log(`กำลังดึงข้อมูลจาก: http://127.0.0.1:8000/api/profiles/${realUser.username}`);
+     // console.log(`กำลังดึงข้อมูลจาก: http://127.0.0.1:8000/api/profiles/${realUser.username}`);
       const response = await api.get(`/profiles/${realUser.username}`);
       
-      console.log("✅ ข้อมูลที่ดึงได้จาก DB:", response.data);
+     // console.log("✅ ข้อมูลที่ดึงได้จาก DB:", response.data);
 
       const dbData = response.data.data || response.data; 
 

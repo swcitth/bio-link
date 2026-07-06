@@ -77,7 +77,6 @@ export default function SignupForm({ onSwitchView }) {
       // ตรวจสอบว่าระบบหลังบ้านตอบกลับมาว่า success (ตามที่ตั้งไว้ใน AuthController)
       if (response.data.status === 'success' || response.status === 201) {
         
-        console.log("บันทึกข้อมูลสมัครสมาชิกสำเร็จ!");
 
         // 1. เคลียร์ค่าในฟอร์มให้ว่างเปล่า
         setDisplayName('');

@@ -14,7 +14,7 @@ export default function EditLink() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const linkId = parseInt(searchParams.get("id")); // ดึง ID จาก URL (ถ้ามี)
-  console.log("linkId ที่ได้จาก URL คือ:", searchParams.get("id"));
+ // console.log("linkId ที่ได้จาก URL คือ:", searchParams.get("id"));
 
   // State สำหรับเปิด/ปิดหน้าต่างเลือกไอคอน
   const [isIconPopupOpen, setIsIconPopupOpen] = useState(false);
@@ -45,7 +45,7 @@ export default function EditLink() {
         const response = await api.get(`/blocks/${linkId}`);
       
         const blockData = response.data.data;
-        console.log(blockData);
+       // console.log(blockData);
 
         if (blockData) {
           // เอาข้อมูลที่ได้มา ยัดใส่ฟอร์ม
@@ -55,7 +55,7 @@ export default function EditLink() {
           });
         }
       } catch (error) {
-        console.error("ดึงข้อมูลไม่สำเร็จ:", error);
+       // console.error("ดึงข้อมูลไม่สำเร็จ:", error);
       }
     };
 
