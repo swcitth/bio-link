@@ -17,8 +17,6 @@ export default function AuthPage({ defaultView = 'login' }) {
   const [resetEmail, setResetEmail] = useState(''); // จำอีเมลตอนลืมรหัส
   const [verifiedOtp, setVerifiedOtp] = useState(''); // จำ OTP ที่ยืนยันผ่านแล้ว
 
-  console.log(" ตรวจสอบข้อมูลปัจจุบันในหน้า AuthPage:", { currentView, resetEmail, verifiedOtp });
-
   // ดักจับว่าถ้า URL เปลี่ยน (defaultView เปลี่ยน) ให้เปลี่ยนหน้าต่างตาม
   useEffect(() => {
     // 🌟 ดึงข้อมูลแบบแยกตู้ ตามโครงสร้างเดิมของทีม

@@ -7,20 +7,19 @@ import { th } from 'date-fns/locale';
 import { format } from 'date-fns';
 import api from '../../../api/axios'; // ตรวจสอบ Path ให้ตรงกับโปรเจกต์คุณ
 
-// 1. เพิ่ม prop 'mode' โดยมีค่า default เป็น 'dashboard'
 export default function DownloadModal({ onClose, initialTimeRange = '30days', mode = 'dashboard' }) {
   
   const [timeRange, setTimeRange] = useState(initialTimeRange);
   const [fileFormat, setFileFormat] = useState('excel');
   
-  // 2. ตั้งค่าตัวเลือกตามโหมด
+  // ตั้งค่าตัวเลือกตามโหมด
   const [downloadOptions, setDownloadOptions] = useState({});
 
   useEffect(() => {
     if (mode === 'dashboard') {
       setDownloadOptions({ overview: false, topProfiles: false, inactiveAccounts: false });
     } else if (mode === 'users') {
-      setDownloadOptions({ allUsers: false }); // ตัวเลือกสำหรับหน้า User Management
+      setDownloadOptions({ allUsers: false });
     }
   }, [mode]);
 
@@ -49,10 +48,10 @@ export default function DownloadModal({ onClose, initialTimeRange = '30days', mo
 
   const handleDownload = async () => {
     try {
-      // ถ้าเป็นโหมด users ไม่ต้องส่ง customDate ไป
+      // ✅ อัปเดต Payload ให้ส่งค่า Date ไปด้วยเสมอในทุกโหมด
       const payload = {
-        timeRange: mode === 'users' ? 'all' : timeRange,
-        customDate: (timeRange === 'custom' && mode !== 'users') ? { 
+        timeRange: timeRange,
+        customDate: timeRange === 'custom' ? { 
           start: format(dateRange[0].startDate, 'yyyy-MM-dd'), 
           end: format(dateRange[0].endDate, 'yyyy-MM-dd') 
         } : null,
@@ -96,7 +95,7 @@ export default function DownloadModal({ onClose, initialTimeRange = '30days', mo
     return `${startStr} - ${endStr}`;
   };
 
-  // 3. จัดการข้อมูลรายการที่จะให้เลือกว่าจะใช้ชุดไหน
+  // จัดการข้อมูลรายการที่จะให้เลือกว่าจะใช้ชุดไหน
   const optionsList = mode === 'dashboard' 
     ? {
         overview: { title: 'สถิติภาพรวมระบบ (Overview)', desc: 'ยอดสมัครใหม่, ยอดเข้าชม, ยอดคลิกรวม ฯลฯ' },
@@ -126,53 +125,50 @@ export default function DownloadModal({ onClose, initialTimeRange = '30days', mo
 
           <div className="px-8 pb-8 space-y-8 max-h-[75vh] overflow-y-auto">
             
-            {/* ซ่อน Section 1 (ช่วงเวลา) หากเป็นโหมด users */}
-            {mode === 'dashboard' && (
-              <section className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                <h3 className="text-[15px] font-bold text-slate-800 mb-4">1. เลือกช่วงเวลา</h3>
-                <div className="space-y-4">
-                  {/* ... (โค้ด Radio Buttons เลือกวันที่เหมือนเดิมเป๊ะๆ) ... */}
-                  {['today', '7days', '30days'].map((type) => (
-                    <label key={type} className="flex items-start gap-3 cursor-pointer group">
-                      <div className={`mt-0.5 w-[18px] h-[18px] rounded-full border-[2px] flex items-center justify-center transition-colors ${timeRange === type ? 'border-[#6B46FF]' : 'border-slate-300 group-hover:border-slate-400'}`}>
-                        {timeRange === type && <div className="w-2.5 h-2.5 bg-[#6B46FF] rounded-full" />}
-                      </div>
-                      <div>
-                        <span className={`block text-[15px] font-medium transition-colors ${timeRange === type ? 'text-[#6B46FF] font-bold' : 'text-slate-700'}`}>
-                          {type === 'today' ? 'วันนี้' : type === '7days' ? '7 วัน' : '30 วัน'}
-                        </span>
-                      </div>
-                      <input type="radio" className="hidden" checked={timeRange === type} onChange={() => setTimeRange(type)} />
-                    </label>
-                  ))}
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className={`mt-0.5 w-[18px] h-[18px] rounded-full border-[2px] flex items-center justify-center transition-colors ${timeRange === 'custom' ? 'border-[#6B46FF]' : 'border-slate-300 group-hover:border-slate-400'}`}>
-                      {timeRange === 'custom' && <div className="w-2.5 h-2.5 bg-[#6B46FF] rounded-full" />}
+            {/* ✅ Section 1: แสดงในทุกโหมดแล้ว */}
+            <section className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+              <h3 className="text-[15px] font-bold text-slate-800 mb-4">1. เลือกช่วงเวลา</h3>
+              <div className="space-y-4">
+                {['today', '7days', '30days'].map((type) => (
+                  <label key={type} className="flex items-start gap-3 cursor-pointer group">
+                    <div className={`mt-0.5 w-[18px] h-[18px] rounded-full border-[2px] flex items-center justify-center transition-colors ${timeRange === type ? 'border-[#6B46FF]' : 'border-slate-300 group-hover:border-slate-400'}`}>
+                      {timeRange === type && <div className="w-2.5 h-2.5 bg-[#6B46FF] rounded-full" />}
                     </div>
-                    <div className="w-full">
-                      <span className={`block text-[15px] font-medium transition-colors ${timeRange === 'custom' ? 'text-[#6B46FF] font-bold' : 'text-slate-700'}`}>กำหนดเอง</span>
-                      {timeRange === 'custom' && (
-                        <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                          <button type="button" onClick={() => setIsCalendarOpen(true)} className="w-full flex items-center justify-between bg-white border-2 border-slate-200 hover:border-[#6B46FF]/50 rounded-xl px-4 py-3 transition-colors group">
-                            <div className="flex items-center gap-2 text-slate-700">
-                              <CalendarIcon size={16} className="text-[#6B46FF]" />
-                              <span className="text-sm font-medium">{getButtonDateText()}</span>
-                            </div>
-                            <ChevronDown size={16} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
-                          </button>
-                        </div>
-                      )}
+                    <div>
+                      <span className={`block text-[15px] font-medium transition-colors ${timeRange === type ? 'text-[#6B46FF] font-bold' : 'text-slate-700'}`}>
+                        {type === 'today' ? 'วันนี้' : type === '7days' ? '7 วัน' : '30 วัน'}
+                      </span>
                     </div>
-                    <input type="radio" className="hidden" checked={timeRange === 'custom'} onChange={() => setTimeRange('custom')} />
+                    <input type="radio" className="hidden" checked={timeRange === type} onChange={() => setTimeRange(type)} />
                   </label>
-                </div>
-              </section>
-            )}
+                ))}
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className={`mt-0.5 w-[18px] h-[18px] rounded-full border-[2px] flex items-center justify-center transition-colors ${timeRange === 'custom' ? 'border-[#6B46FF]' : 'border-slate-300 group-hover:border-slate-400'}`}>
+                    {timeRange === 'custom' && <div className="w-2.5 h-2.5 bg-[#6B46FF] rounded-full" />}
+                  </div>
+                  <div className="w-full">
+                    <span className={`block text-[15px] font-medium transition-colors ${timeRange === 'custom' ? 'text-[#6B46FF] font-bold' : 'text-slate-700'}`}>กำหนดเอง</span>
+                    {timeRange === 'custom' && (
+                      <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <button type="button" onClick={() => setIsCalendarOpen(true)} className="w-full flex items-center justify-between bg-white border-2 border-slate-200 hover:border-[#6B46FF]/50 rounded-xl px-4 py-3 transition-colors group">
+                          <div className="flex items-center gap-2 text-slate-700">
+                            <CalendarIcon size={16} className="text-[#6B46FF]" />
+                            <span className="text-sm font-medium">{getButtonDateText()}</span>
+                          </div>
+                          <ChevronDown size={16} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <input type="radio" className="hidden" checked={timeRange === 'custom'} onChange={() => setTimeRange('custom')} />
+                </label>
+              </div>
+            </section>
 
-            {/* Section 2 */}
+            {/* ✅ Section 2: เปลี่ยนหัวข้อให้เป็นเลข 2. เสมอ */}
             <section>
               <h3 className="text-[15px] font-bold text-slate-800 mb-4 px-2">
-                {mode === 'dashboard' ? '2. เลือกข้อมูลที่ต้องการดาวน์โหลด' : '1. เลือกข้อมูลที่ต้องการดาวน์โหลด'}
+                2. เลือกข้อมูลที่ต้องการดาวน์โหลด
               </h3>
               <div className="space-y-3">
                 {Object.entries(optionsList).map(([key, data]) => (
@@ -190,13 +186,12 @@ export default function DownloadModal({ onClose, initialTimeRange = '30days', mo
               </div>
             </section>
 
-            {/* Section 3 */}
+            {/* ✅ Section 3: เปลี่ยนหัวข้อให้เป็นเลข 3. เสมอ */}
             <section className="px-2">
               <h3 className="text-[15px] font-bold text-slate-800 mb-4">
-                {mode === 'dashboard' ? '3. เลือกรูปแบบไฟล์' : '2. เลือกรูปแบบไฟล์'}
+                3. เลือกรูปแบบไฟล์
               </h3>
               <label className="flex items-start gap-3 cursor-pointer group">
-                {/* โค้ดปุ่ม Excel เหมือนเดิม */}
                 <div className={`mt-0.5 w-[18px] h-[18px] rounded-full border-[2px] flex items-center justify-center transition-colors ${fileFormat === 'excel' ? 'border-slate-400' : 'border-slate-300'}`}>
                   {fileFormat === 'excel' && <div className="w-2.5 h-2.5 bg-[#6B46FF] rounded-full" />}
                 </div>
@@ -219,7 +214,7 @@ export default function DownloadModal({ onClose, initialTimeRange = '30days', mo
         </div>
       </div>
 
-      {/* ---------------- Popup Calendar Modal (z-index 110 เพื่อให้ทับ Download Modal) ---------------- */}
+      {/* Popup Calendar Modal */}
       {isCalendarOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="bg-white p-6 rounded-[24px] shadow-2xl animate-in fade-in zoom-in-95 duration-200">

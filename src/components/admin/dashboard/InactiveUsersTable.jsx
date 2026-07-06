@@ -1,5 +1,5 @@
-import React from 'react';
-import { AlertCircle, Mail } from 'lucide-react';
+import React, { useState } from "react";
+import { AlertCircle, Mail, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function InactiveUsersTable({ 
   users = [], // ใส่ Default เป็น array ว่างกันแอปพังกรณีโหลดข้อมูลยังไม่เสร็จ
@@ -8,33 +8,48 @@ export default function InactiveUsersTable({
   onSendEmail // ฟังก์ชันเมื่อกดรูปจดหมายรายคน
 }) {
 
+  // เพิ่ม State สำหรับ Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // คำนวณข้อมูลสำหรับการแบ่งหน้า
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = users.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(users.length / itemsPerPage);
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
   // ฟังก์ชันช่วยเลือกสไตล์ Badge ตามข้อความสถานะ
   const getStatusBadgeClass = (status) => {
     const baseClass = "px-3 py-1 rounded-full text-xs font-medium inline-flex items-center justify-center whitespace-nowrap";
     
     if (status?.includes('เสี่ยง')) {
-      // สีส้ม สำหรับ "เสี่ยงต่อการเลิกใช้งาน"
       return `${baseClass} bg-orange-100 text-orange-700`; 
     }
     if (status?.includes('ยังไม่ตั้งค่า')) {
-      // สีส้ม/เหลืองพาสเทล สำหรับ "สมัครแล้วยังไม่ตั้งค่า"
       return `${baseClass} bg-amber-100 text-amber-700`; 
     }
     if (status?.includes('ไม่มีความเคลื่อนไหว')) {
-      // สีแดงเข้มพาสเทล สำหรับ "ไม่มีความเคลื่อนไหว"
       return `${baseClass} bg-rose-100 text-rose-700`;
     }
     if (status?.includes('ทำงาน')) {
-      //  สีฟ้า สำหรับ "ลิงก์ยังทำงานอยู่"
       return `${baseClass} bg-blue-100 text-blue-700`;
     }
     
-    // ค่าเริ่มต้นหากไม่ตรงกับเงื่อนไขใดเลย
     return `${baseClass} bg-slate-100 text-slate-600`;
   };
 
   return (
-    <div className="bg-white rounded-[1.5rem] p-6 shadow-sm border border-slate-50">
+    <div className="bg-white rounded-[1.5rem] p-6 shadow-sm border border-slate-50 flex flex-col h-full">
+      
+      {/* ส่วนหัวแสดงหัวข้อและปุ่มควบคุม */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div className="flex items-start gap-3">
           <div className="mt-1 text-orange-500 bg-orange-50 p-1.5 rounded-full">
@@ -48,7 +63,10 @@ export default function InactiveUsersTable({
         <div className="flex items-center gap-3">
           <select 
             className="bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:border-indigo-300"
-            onChange={(e) => onFilterChange && onFilterChange(e.target.value)}
+            onChange={(e) => {
+              if (onFilterChange) onFilterChange(e.target.value);
+              setCurrentPage(1); // รีเซ็ตหน้ากลับไปหน้าแรกเมื่อเปลี่ยนฟิลเตอร์
+            }}
             defaultValue="7" 
           >
             <option value="7">มากกว่า 7 วัน (สำหรับเทส)</option>
@@ -65,57 +83,69 @@ export default function InactiveUsersTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+      {/* ปรับปรุงโครงสร้างตาราง HTML แบบเดียวกับ TopPages มี overflow-x-auto และ whitespace-nowrap เพื่อให้สไลด์ดูบนมือถือได้สวยงาม */}
+      <div className="overflow-x-auto flex-1">
+        <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
-            <tr className="text-xs font-semibold text-slate-400 border-b border-slate-100">
-              <th className="pb-4 font-semibold uppercase tracking-wider">ชื่อบัญชี / USERNAME</th>
-              <th className="pb-4 font-semibold uppercase tracking-wider text-center">บล็อกใน BIO</th>
-              <th className="pb-4 font-semibold uppercase tracking-wider">อัพเดทล่าสุด</th>
-              {/* เพิ่มคอลัมน์ใหม่ */}
-              <th className="pb-4 font-semibold uppercase tracking-wider">การใช้งานลิงค์ล่าสุด</th>
-              <th className="pb-4 font-semibold uppercase tracking-wider">สถานะ</th>
-              <th className="pb-4 font-semibold uppercase tracking-wider text-right">จัดการ</th>
+            <tr className="text-[11px] font-bold text-slate-400 border-b border-slate-100 uppercase tracking-widest">
+              <th className="pb-4 pl-2">ชื่อบัญชี / USERNAME</th>
+              <th className="pb-4 text-center">บล็อกใน BIO</th>
+              <th className="pb-4 px-4">อัพเดทล่าสุด</th>
+              <th className="pb-4 px-4">การใช้งานลิงค์ล่าสุด</th>
+              <th className="pb-4 px-4">สถานะ</th>
+              <th className="pb-4 pr-2 text-right">จัดการ</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {users.length === 0 ? (
               <tr>
-                <td colSpan="6" className="py-8 text-center text-slate-500">
+                <td colSpan="6" className="py-12 text-center text-sm text-slate-400">
                   ไม่มีบัญชีที่เข้าข่ายเงื่อนไขนี้
                 </td>
               </tr>
             ) : (
-              users.map((user) => (
-                <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-slate-900">{user.name}</div>
-                    <div className="text-slate-500 text-sm">{user.handle}</div>
+              currentItems.map((user) => (
+                <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
+                  
+                  {/* คอลัมน์ที่ 1: ชื่อบัญชี / USERNAME */}
+                  <td className="py-4 pl-2">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-slate-800 text-[15px]">{user.name}</span>
+                      <span className="text-[13px] text-slate-500">{user.handle}</span>
+                    </div>
                   </td>
+                  
+                  {/* คอลัมน์ที่ 2: บล็อกใน BIO */}
                   <td className="py-4 text-center">
                     <span className="bg-slate-100 text-slate-600 text-xs font-medium px-3 py-1 rounded-full">
                       {user.links} บล็อก
                     </span>
                   </td>
-                  <td className="py-4">
-                    <p className="font-medium text-sm text-slate-800">{user.date}</p>
-                    <p className="text-xs font-medium text-red-500">{user.daysAgo}</p>
+                  
+                  {/* คอลัมน์ที่ 3: อัพเดทล่าสุด */}
+                  <td className="py-4 px-4">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-sm text-slate-800">{user.date}</span>
+                      <span className="text-xs font-medium text-red-500">{user.daysAgo}</span>
+                    </div>
                   </td>
 
-                  {/* ดึงข้อมูลการใช้งานลิงก์ล่าสุดมาแสดง */}
-                  <td className="py-4">
+                  {/* คอลัมน์ที่ 4: การใช้งานลิงค์ล่าสุด */}
+                  <td className="py-4 px-4">
                     <span className={`text-sm ${user.lastLinkActivity === 'ไม่มีข้อมูลการใช้งาน' ? 'text-slate-400' : 'font-medium text-slate-800'}`}>
                       {user.lastLinkActivity}
                     </span>
                   </td>
                   
-                  <td className="py-4">
+                  {/* คอลัมน์ที่ 5: สถานะ */}
+                  <td className="py-4 px-4">
                     <span className={getStatusBadgeClass(user.status)}>
                       {user.status}
                     </span>
                   </td>
                   
-                  <td className="py-4 text-right">
+                  {/* คอลัมน์ที่ 6: ปุ่มจัดการรายคน */}
+                  <td className="py-4 pr-2 text-right">
                     <button 
                       onClick={() => onSendEmail && onSendEmail(user.id)}
                       className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 flex items-center justify-center ml-auto transition-colors" 
@@ -131,11 +161,45 @@ export default function InactiveUsersTable({
         </table>
       </div>
       
-      <div className="mt-4 pt-4 border-t border-slate-100 text-center">
-        <button className="text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors">
-          ดูรายการทั้งหมด
-        </button>
+      {/* ส่วน Footer แสดง Pagination */}
+      <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-6">
+        <span className="text-sm text-slate-500 font-medium">
+          แสดงผล {users.length === 0 ? 0 : indexOfFirstItem + 1} ถึง {Math.min(indexOfLastItem, users.length)} จากทั้งหมด {users.length} รายการ
+        </span>
+        
+        {totalPages > 1 && (
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={goToPrevPage}
+              disabled={currentPage === 1}
+              className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors ${
+                currentPage === 1 
+                  ? 'border-slate-100 text-slate-300 cursor-not-allowed bg-slate-50/50' 
+                  : 'border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-indigo-600 cursor-pointer'
+              }`}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            
+            <span className="text-sm font-medium text-slate-700 bg-slate-50 px-3 py-1 rounded-md border border-slate-100">
+              หน้า {currentPage} / {totalPages}
+            </span>
+
+            <button 
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+              className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors ${
+                currentPage === totalPages 
+                  ? 'border-slate-100 text-slate-300 cursor-not-allowed bg-slate-50/50' 
+                  : 'border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-indigo-600 cursor-pointer'
+              }`}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
       </div>
+
     </div>
   );
 }

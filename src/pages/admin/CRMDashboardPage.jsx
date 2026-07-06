@@ -100,7 +100,6 @@ export default function CRMDashboardPage() {
   useEffect(() => {
     const start = format(dateRange[0].startDate, 'yyyy-MM-dd');
     const end = format(dateRange[0].endDate, 'yyyy-MM-dd');
-    console.log(`[CRM API] ดึงข้อมูลช่วงเวลา: เริ่ม ${start} ถึง ${end}`);
   }, [dateRange]);
 
   const getSmallDateText = () => {
@@ -115,7 +114,6 @@ export default function CRMDashboardPage() {
   };
 
   const handleDownload = () => {
-    console.log("Downloading CRM Report...");
     // ใส่ Logic การดาวน์โหลดไฟล์ของ CRM ที่นี่
   };
 

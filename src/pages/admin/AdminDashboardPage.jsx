@@ -77,7 +77,6 @@ export default function DashboardPage() {
     const start = format(dateRange[0].startDate, 'yyyy-MM-dd');
     const end = format(dateRange[0].endDate, 'yyyy-MM-dd');
     
-    console.log(`[เตรียมยิง API] ช่วงเวลา: เริ่ม ${start} ถึง ${end} | วันที่ไม่มีการเคลื่อนไหว: ${inactiveMinDays} วัน`);
     
     fetchStats(start, end, inactiveMinDays);
   }, [dateRange, inactiveMinDays]); 
