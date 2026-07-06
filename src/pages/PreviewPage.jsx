@@ -38,6 +38,7 @@ const PreviewPage = ({ isPublic }) => {
 
   // ⭐️ 1. ฟังก์ชันแอบยิง API เก็บสถิติ (ทำงานอยู่เบื้องหลัง) ⭐️
   const trackAnalytics = (targetUsername, blockId = null, clickedUrl = null) => {
+    console.log("🎯 เช็คการคลิก! ยิงไปที่:", targetUsername, " | Block ID:", blockId, " | URL:", clickedUrl);
     
     // 🟡 [ปิดชั่วคราวเพื่อทดสอบ] ด่านที่ 1: เช็คว่าเป็นหน้าจอ Preview หรือไม่
     // if (!isPublic || isFromAdmin || !targetUsername) {
@@ -75,11 +76,14 @@ const PreviewPage = ({ isPublic }) => {
     }
 
     api.post(`/analytics/track/${targetUsername}`, {
-      session_id: sessionId,
-      block_id: blockId, 
-      clicked_url: clickedUrl,
-      referrer_url: document.referrer 
-    }).catch(err => console.log("Analytics Tracking Error:", err));
+      block_id: blockId,
+      session_id: sessionId,           // ค่าเดิมของคุณ
+      referrer_url: document.referrer,  // ค่าเดิมของคุณ
+      clicked_url: clickedUrl          // 🌟 เติม/เช็คบรรทัดนี้ เพื่อส่ง URL ไปหลังบ้านด้วย!
+    })
+    .catch((err) => {
+      console.error("Analytics error:", err);
+    });
   };
   
   useEffect(() => {
