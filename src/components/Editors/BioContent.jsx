@@ -2,7 +2,6 @@ import React from "react";
 import { ICON_MAP } from "../../constants/icons";
 import { THEME_LIST } from "../../constants/themes";
 import SaveContactButton from "../UI/Button/SaveContactButton"; 
-// ⭐️ อย่าลืม Import BlockSlider ด้วยนะครับ (ปรับ path ให้ตรงกับโปรเจกต์ของคุณ)
 import BlockSlider from "../Blocks/BlockSlider"; 
 
 const FONT_MAP = {
@@ -12,7 +11,6 @@ const FONT_MAP = {
   prompt: "'Prompt', sans-serif"
 };
 
-// อัปเกรดฟังก์ชันดึง Embed URL ของ YouTube
 const getYoutubeEmbedUrl = (url, isAutoplay) => {
   if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -29,7 +27,6 @@ const getYoutubeEmbedUrl = (url, isAutoplay) => {
   return null;
 };
 
-// อัปเกรด Regex ให้ดักจับ TikTok ID
 const getTiktokId = (url) => {
   if (!url) return null;
   const match = url.match(/(?:video|v)\/(\d+)/);
@@ -45,7 +42,12 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
   const activeTheme = THEME_LIST?.find((t) => t.id === safeDesign.theme) || THEME_LIST?.[0] || {};
   const selectedFont = FONT_MAP[safeDesign.font] || FONT_MAP.kanit;
 
-  const btnRadius = { square: isCompact ? "6px" : "8px", rounded: "14px", pill: "999px" }[safeDesign.btnRounded] || "999px";
+  // 🌟 1. คงค่าปุ่มลิงก์ไว้ให้เป็นแคปซูล (999px)
+  const btnRadius = { square: "0px", rounded: "14px", pill: "999px" }[safeDesign.btnRounded] || "999px";
+  
+  // 🌟 2. เพิ่มตัวแปรใหม่สำหรับกรอบรูป! แคปซูลจะมนแค่ 24px เพื่อไม่ให้รูปกลายเป็นวงกลม
+  const blockRadius = { square: "0px", rounded: "14px", pill: "24px" }[safeDesign.btnRounded] || "24px";
+
   const btnBoxShadow = { none: "none", outline: "none", shadow3d: isCompact ? "3px 3px 0px rgba(0,0,0,0.8)" : "0px 4px 0px rgba(0,0,0,0.2)" }[safeDesign.btnStyle] || "none";
   const btnBorder = safeDesign.btnStyle !== "none" ? `2px solid ${safeDesign.btnBorderColor || "transparent"}` : "none";
 
@@ -58,7 +60,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
   return (
     <div className={`relative z-10 ${isCompact ? "pb-5" : "pb-20"}`} style={{ fontFamily: selectedFont }}>
       
-      {/* Cover Image */}
       <div 
         className={`${isCompact ? "h-[90px]" : "h-48"} shrink-0 overflow-hidden bg-slate-200 relative bg-cover bg-center`}
         style={activeTheme?.cfg?.coverImage ? { backgroundImage: activeTheme.cfg.coverImage } : { background: coverBackground }}
@@ -66,16 +67,13 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
         {safeProfile.cover && <img src={safeProfile.cover} alt="Cover" className="w-full h-full object-cover" />}
       </div>
 
-      {/* Profile Section */}
       <div className={`flex flex-col items-center px-4 ${isCompact ? "-mt-7" : "-mt-12"} relative z-10`}>
-        {/* Avatar */}
         <img
           src={safeProfile.avatar || defaultAvatar}
           alt="avatar"
           className={`${isCompact ? "w-14 h-14 border-[3px]" : "w-24 h-24 border-4"} rounded-full border-white shadow-xl object-cover shrink-0 bg-white`}
         />
 
-        {/* Name */}
         <h1
           className={`${isCompact ? "mt-2 text-sm" : "mt-4 text-2xl"} font-bold text-center leading-tight`}
           style={{ color: safeDesign.textColor || "#333" }}
@@ -83,7 +81,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
           {safeProfile.display_name || safeProfile.name || "ชื่อของคุณ"}
         </h1>
 
-        {/* Bio */}
         <p
           className={`${isCompact ? "text-[11px] mt-1" : "mt-2 text-sm max-w-sm"} text-center opacity-80 leading-relaxed`}
           style={{ color: safeDesign.textColor || "#666" }}
@@ -91,10 +88,8 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
           {safeProfile.bio || "Bio ของคุณ"}
         </p>
 
-        {/* Links List */}
         <div className={`w-full flex flex-col ${isCompact ? "gap-3 mt-5" : "gap-4 mt-8"}`}>
           
-          {/* ปุ่ม Save Contact */}
           {(safeProfile.showSaveContact === true || safeProfile.show_save_contact === true || 
             safeProfile.showSaveContact === 1 || safeProfile.show_save_contact === 1) && (
               <SaveContactButton 
@@ -115,7 +110,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
             const titleClass = `${isCompact ? "text-[13px]" : "text-base"} font-bold px-2`;
             const nameClass = `${isCompact ? "text-[11px]" : "text-sm"} font-medium px-2 mt-1`;
 
-            // ⭐️ 1 & 2. Video Block (รวมศูนย์ YouTube และ TikTok)
             if (link?.icon === "Youtube" || link?.icon === "TikTok" || link?.type === "VIDEO") {
               return (
                 <div key={link.id || Math.random()} className={`flex flex-col ${isCompact ? "gap-2 mb-2" : "gap-3 mb-4"} w-full`}>
@@ -129,7 +123,8 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                       const TiktokIcon = ICON_MAP["TikTok"] || ICON_MAP["Link"];
                       return (
                         <div key={item?.id || idx} className="flex flex-col gap-1">
-                          <div className="w-full rounded-2xl overflow-hidden shadow-md bg-black relative" style={{ aspectRatio: '9/16', maxHeight: isCompact ? '480px' : '600px' }}>
+                          {/* 🌟 เปลี่ยนเป็น blockRadius */}
+                          <div className="w-full overflow-hidden shadow-md bg-black relative" style={{ aspectRatio: '9/16', maxHeight: isCompact ? '480px' : '600px', borderRadius: blockRadius }}>
                             {tiktokId ? (
                               <iframe 
                                 className="w-full h-full" 
@@ -155,7 +150,8 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                       const youtubeEmbedUrl = getYoutubeEmbedUrl(videoUrl, item?.isAutoplay || link?.isAutoplay); 
                       return (
                         <div key={item?.id || idx} className="flex flex-col gap-1">
-                          <div className="w-full rounded-2xl overflow-hidden shadow-md bg-black aspect-video relative">
+                          {/* 🌟 เปลี่ยนเป็น blockRadius */}
+                          <div className="w-full overflow-hidden shadow-md bg-black aspect-video relative" style={{ borderRadius: blockRadius }}>
                             {youtubeEmbedUrl ? (
                               <iframe 
                                 className="w-full h-full" 
@@ -178,7 +174,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
               );
             }
 
-            // ⭐️ 3. SLIDER Block
             if (String(link?.type || "").toUpperCase() === "SLIDER" || String(link?.icon || "").toUpperCase() === "SLIDER") {
               return (
                 <div key={link.id || Math.random()} className={`flex flex-col ${isCompact ? "gap-2 mb-2" : "gap-4 mb-4"} w-full`}>
@@ -187,18 +182,17 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                     block={link} 
                     items={subItems} 
                     handleBlockClick={onLinkClick} 
+                    design={safeDesign} 
                   />
                 </div>
               );
             }
 
-            // ⭐️ 4. SHOP Block (เพิ่มเงื่อนไข if กลับมาครอบโค้ดที่ลอยอยู่)
             if (String(link?.type || "").toUpperCase() === "SHOP" || link?.icon === "Shop") {
               return (
                 <div key={link.id || Math.random()} className={`flex flex-col ${isCompact ? "gap-2 mb-2" : "gap-4 mb-4"} w-full`}>
                   {link.title && <h3 className={titleClass} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
                   
-                  {/* กล่องเลื่อนแนวนอนของ Shop */}
                   <div className="flex items-start overflow-x-auto gap-4 pb-4 px-1 snap-x snap-mandatory scroll-smooth" style={{ scrollbarWidth: "none" }}>
                     {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
                       const itemUrl = item?.url || item?.link;
@@ -215,8 +209,8 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                         <WrapperTag 
                           key={item?.id || idx} 
                           {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})} 
-                          className={`relative snap-center shrink-0 w-[85%] max-w-[280px] aspect-square group rounded-[20px] shadow-sm overflow-hidden ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} 
-                          style={{ textDecoration: 'none' }}
+                          className={`relative snap-center shrink-0 w-[85%] max-w-[280px] aspect-square group shadow-sm overflow-hidden ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} 
+                          style={{ textDecoration: 'none', borderRadius: blockRadius }} // 🌟 เปลี่ยนเป็น blockRadius
                           onClick={() => { if(itemUrl && onLinkClick) onLinkClick(link?.id, itemUrl) }}
                         >
                           {imageUrl ? (
@@ -256,7 +250,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
               );
             }
 
-            // ⭐️ 5. Image Block
             if (link?.icon === "Image") {
               return (
                 <div key={link.id || Math.random()} className={`flex flex-col ${isCompact ? "gap-2 mb-2" : "gap-4 mb-4"} w-full`}>
@@ -277,9 +270,9 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                           onClick={() => { if(itemUrl && onLinkClick) onLinkClick(link?.id, itemUrl) }}
                         >
                           {imageUrl ? (
-                            <img src={imageUrl} alt={item?.name || item?.title} className="w-full h-auto max-h-[500px] object-contain rounded-2xl shadow-sm mb-3 bg-white/50" />
+                            <img src={imageUrl} alt={item?.name || item?.title} className="w-full h-auto max-h-[500px] object-contain shadow-sm mb-3 bg-white/50" style={{ borderRadius: blockRadius }} /> // 🌟 เปลี่ยนเป็น blockRadius
                           ) : (
-                            <div className="w-full aspect-square bg-slate-200 rounded-2xl shadow-sm mb-3 flex items-center justify-center">
+                            <div className="w-full aspect-square bg-slate-200 shadow-sm mb-3 flex items-center justify-center" style={{ borderRadius: blockRadius }}> // 🌟 เปลี่ยนเป็น blockRadius
                               <span className="text-slate-400 text-xs font-bold">ยังไม่มีรูปภาพ</span>
                             </div>
                           )}
@@ -309,7 +302,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
               );
             }
 
-            // ⭐️ 6. Normal Link
             return (
               <div key={link?.id || Math.random()} className="w-full mb-2 flex flex-col gap-2">
                 {link?.items && link?.title && <h3 className={`${titleClass} mb-1`} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
@@ -328,7 +320,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                         padding: isCompact ? "8px 12px" : "16px",
                         backgroundColor: safeDesign.btnStyle === "outline" ? "transparent" : (safeDesign.btnBgColor || "#ffffff"),
                         color: safeDesign.btnTextColor || "#000000",
-                        borderRadius: btnRadius,
+                        borderRadius: btnRadius, // 🌟 ลิงก์ปุ่มปกติ ยังคงใช้ความโค้งมนแบบแคปซูล (btnRadius) เหมือนเดิม!
                         border: btnBorder,
                         boxShadow: btnBoxShadow,
                         textDecoration: "none"
@@ -348,7 +340,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
           })}
         </div>
         
-        {/* URL footer */}
         {!isCompact && (
           <p className="mt-14 text-sm font-medium opacity-60 text-center" style={{ color: safeDesign.textColor || "#94a3b8" }}>
             mybiolink.com/{safeProfile.username || "username"}
