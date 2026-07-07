@@ -42,7 +42,15 @@ const DesignEditor = ({ design, setDesign, profile }) => {
   const update = (field, value) => {
     setDesign((prev) => {
       const newState = { ...prev, [field]: value };
-      if (field === "bgColor") {
+      // 🌟 เพิ่มเงื่อนไข: ถ้าเปลี่ยนสีต่างๆ ในหมวด Custom ให้สลับเป็นธีม custom ทันที
+      if (
+        field === "bgColor" || 
+        field === "coverColor" || 
+        field === "textColor" ||
+        field === "btnBgColor" ||
+        field === "btnTextColor" ||
+        field === "btnBorderColor"
+      ) {
         newState.theme = "custom";
       }
       return newState;

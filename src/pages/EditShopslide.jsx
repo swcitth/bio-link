@@ -163,6 +163,7 @@ const EditShopslide = () => {
                                                         onRemove={() => remove(index)}
                                                         onToggleVisibility={() => handleToggleVisibility(index)}
                                                         dragHandleProps={provided.dragHandleProps}
+                                                        showDescription={false}
                                                     />
                                                 </div>
                                             )}

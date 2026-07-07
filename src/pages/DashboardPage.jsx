@@ -145,10 +145,17 @@ const DashboardPage = () => {
 
       if (response.status === 200 && dbData) {
         
-        // ⭐️ 3. เตรียม URL ของรูปภาพ และส่งให้เบราว์เซอร์โหลดล่วงหน้า (Preload) ⭐️
-        const avatarUrlToLoad = dbData.avatar ? `http://127.0.0.1:8000${dbData.avatar}` : null;
-        const coverUrlToLoad = dbData.cover ? `http://127.0.0.1:8000${dbData.cover}` : null;
-        const bgImageUrlToLoad = dbData.background ? `http://127.0.0.1:8000${dbData.background}` : null;
+        // 🌟 ฟังก์ชันตัวช่วย: ถ้ามี http อยู่แล้วให้ใช้เลย ถ้าไม่มีให้เติมโดเมนหลังบ้านเข้าไป
+        const getValidImageUrl = (path) => {
+          if (!path) return null;
+          return path.startsWith('http') ? path : `http://127.0.0.1:8000${path}`;
+        };
+
+        // 🌟 3. เตรียม URL ของรูปภาพ 
+        // ถ้า dbData ไม่มีรูป (เป็น null/undefined) ให้ลองดึงจาก realUser (ข้อมูลจาก Google ตอน Login)
+        const avatarUrlToLoad = getValidImageUrl(dbData.avatar || realUser?.avatar);
+        const coverUrlToLoad = getValidImageUrl(dbData.cover);
+        const bgImageUrlToLoad = getValidImageUrl(dbData.background);
 
         await Promise.all([
           preloadImage(avatarUrlToLoad),
@@ -462,6 +469,9 @@ const DashboardPage = () => {
     formData.append("contact_job_title", profile.title || "");
     formData.append("contact_website", profile.website || "");
     formData.append("show_save_contact", profile.showSaveContact !== false ? 1 : 0);
+    formData.append("avatar_url", profile.avatar || "");
+    formData.append("cover_url", profile.cover || "");
+    formData.append("bg_image_url", design.bgImage || "");
 
     const themeConfigData = {
       theme: design.theme || "custom",
