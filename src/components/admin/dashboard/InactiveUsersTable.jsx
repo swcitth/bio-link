@@ -27,22 +27,28 @@ export default function InactiveUsersTable({
   };
 
   // ฟังก์ชันช่วยเลือกสไตล์ Badge ตามข้อความสถานะ
+  // ฟังก์ชันช่วยเลือกสไตล์ Badge ตามข้อความสถานะ
   const getStatusBadgeClass = (status) => {
     const baseClass = "px-3 py-1 rounded-full text-xs font-medium inline-flex items-center justify-center whitespace-nowrap";
     
-    if (status?.includes('เสี่ยง')) {
-      return `${baseClass} bg-orange-100 text-orange-700`; 
-    }
-    if (status?.includes('ยังไม่ตั้งค่า')) {
+    if (!status) return `${baseClass} bg-slate-100 text-slate-600`;
+    
+    // ดักจับสถานะ "สมัครแล้วยังไม่ตั้งค่า" -> สีเหลือง/ส้ม
+    if (status.includes('ยังไม่ตั้งค่า')) {
       return `${baseClass} bg-amber-100 text-amber-700`; 
     }
-    if (status?.includes('ไม่มีความเคลื่อนไหว')) {
+    
+    // ดักจับสถานะ "ไม่มีผู้เข้าชม และ ไม่มีการอัพเดทบัญชี" -> สีแดง (เพิ่มคำใหม่เข้าไป)
+    if (status.includes('ไม่มีผู้เข้าชม') || status.includes('ไม่มีความเคลื่อนไหว')) {
       return `${baseClass} bg-rose-100 text-rose-700`;
     }
-    if (status?.includes('ทำงาน')) {
+    
+    // ดักจับสถานะ "มีผู้เข้าชม (ไม่มีการอัพเดทบล็อก)" -> สีฟ้า (เพิ่มคำใหม่เข้าไป)
+    if (status.includes('มีผู้เข้าชม') || status.includes('ทำงาน')) {
       return `${baseClass} bg-blue-100 text-blue-700`;
     }
     
+    // ค่าเริ่มต้น สีเทา
     return `${baseClass} bg-slate-100 text-slate-600`;
   };
 
@@ -52,20 +58,23 @@ export default function InactiveUsersTable({
       {/* ส่วนหัวแสดงหัวข้อและปุ่มควบคุม */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div className="flex items-start gap-3">
-          <div className="mt-1 text-orange-500 bg-orange-50 p-1.5 rounded-full">
+          <div className="mt-1 text-orange-500 bg-orange-50 p-1.5 rounded-full shrink-0">
             <AlertCircle size={20} />
           </div>
           <div>
             <h2 className="text-lg font-bold text-slate-800">บัญชีที่ไม่มีการอัพเดท</h2>
-            <p className="text-sm text-slate-500">บัญชีที่ไม่มีการล็อกอินหรือแก้ไขลิงก์เกิน 30 วัน</p>
+            {/* 💡 แนะนำเพิ่มเติม: ถ้าอยากให้เลข 30 วัน เปลี่ยนตาม Dropdown ต้องใช้ตัวแปร State มาแสดงตรงนี้นะครับ */}
+            <p className="text-sm text-slate-500">บัญชีที่ไม่มีการล็อกอินหรือแก้ไขลิงก์เกินระยะเวลาที่กำหนด</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        
+        {/* 🛠️ แก้ไขส่วนนี้: เปลี่ยน flex เป็น flex-wrap หรือเรียงแนวตั้งบนมือถือ (w-full sm:w-auto) */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto mt-4 sm:mt-0">
           <select 
-            className="bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:border-indigo-300"
+            className="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:border-indigo-300"
             onChange={(e) => {
               if (onFilterChange) onFilterChange(e.target.value);
-              setCurrentPage(1); // รีเซ็ตหน้ากลับไปหน้าแรกเมื่อเปลี่ยนฟิลเตอร์
+              setCurrentPage(1);
             }}
             defaultValue="7" 
           >
@@ -76,7 +85,7 @@ export default function InactiveUsersTable({
           
           <button 
             onClick={onSendBulkEmail}
-            className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors whitespace-nowrap"
+            className="w-full sm:w-auto bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors whitespace-nowrap text-center"
           >
             ส่งอีเมลกระตุ้นทั้งหมด
           </button>
@@ -88,10 +97,10 @@ export default function InactiveUsersTable({
         <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
             <tr className="text-[11px] font-bold text-slate-400 border-b border-slate-100 uppercase tracking-widest">
-              <th className="pb-4 pl-2">ชื่อบัญชี / USERNAME</th>
-              <th className="pb-4 text-center">บล็อกใน BIO</th>
-              <th className="pb-4 px-4">อัพเดทล่าสุด</th>
-              <th className="pb-4 px-4">การใช้งานลิงค์ล่าสุด</th>
+              <th className="pb-4 pl-2">ชื่อบัญชี</th>
+              <th className="pb-4 text-center">จำนวนบล็อก</th>
+              <th className="pb-4 px-4">แก้ไขบล็อกล่าสุด</th>
+              <th className="pb-4 px-4">ผู้เข้าชมล่าสุด</th>
               <th className="pb-4 px-4">สถานะ</th>
               <th className="pb-4 pr-2 text-right">จัดการ</th>
             </tr>

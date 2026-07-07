@@ -79,8 +79,8 @@ export default function Sidebar({ isOpen, setIsOpen }) {
           <div className="bg-[#5a4bfc] p-2 rounded-[14px] flex items-center justify-center">
             <Link2 className="w-6 h-6 text-white" strokeWidth={2.5} />
           </div>
-          <span className="text-[22px] font-extrabold text-white tracking-tight flex items-center gap-1.5">
-            MyBioLink
+          <span className="text-[30px] font-extrabold text-white tracking-tight flex items-center gap-1.5">
+            MiLink
           </span>
         </div>
         <button 
