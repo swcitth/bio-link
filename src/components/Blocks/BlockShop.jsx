@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { GripVertical, Eye, EyeOff, Trash2, Plus } from 'lucide-react';
 
-export default function BlockShop({ item, index, register, setValue, onRemove, onToggleVisibility, dragHandleProps }) {
+export default function BlockShop({ item, index, register, setValue, onRemove, onToggleVisibility, dragHandleProps, showDescription = true }) {
   const fileInputRef = useRef(null);
 
   const handleImageClick = () => {
@@ -81,15 +81,20 @@ export default function BlockShop({ item, index, register, setValue, onRemove, o
             {...register(`items.${index}.name`)}
           />
         </div>
-        <div className="flex items-center">
-          <span className="w-14 text-sm font-medium text-slate-700">อธิบาย</span>
-          <input
-            type="text"
-            placeholder="คำอธิบายเพิ่มเติม..."
-            className="flex-1 border border-slate-200 rounded-md px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 placeholder:text-slate-300 bg-slate-50/50 transition-all"
-            {...register(`items.${index}.description`)}
-          />
-        </div>
+
+        {/* 🌟 เพิ่มเงื่อนไขครอบช่องอธิบายตรงนี้ครับ 🌟 */}
+        {showDescription && (
+          <div className="flex items-center">
+            <span className="w-14 text-sm font-medium text-slate-700">อธิบาย</span>
+            <input
+              type="text"
+              placeholder="คำอธิบายเพิ่มเติม..."
+              className="flex-1 border border-slate-200 rounded-md px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 placeholder:text-slate-300 bg-slate-50/50 transition-all"
+              {...register(`items.${index}.description`)}
+            />
+          </div>
+        )}
+
         <div className="flex items-center">
           <span className="w-14 text-sm font-medium text-slate-700">ลิงก์</span>
           <input

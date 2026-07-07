@@ -82,7 +82,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
         </h1>
 
         <p
-          className={`${isCompact ? "text-[11px] mt-1" : "mt-2 text-sm max-w-sm"} text-center opacity-80 leading-relaxed`}
+          className={`${isCompact ? "text-[11px] mt-1" : "mt-2 text-sm max-w-sm"} w-full px-2 text-center opacity-80 leading-relaxed break-words whitespace-pre-wrap`}
           style={{ color: safeDesign.textColor || "#666" }}
         >
           {safeProfile.bio || "Bio ของคุณ"}
@@ -123,7 +123,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                       const TiktokIcon = ICON_MAP["TikTok"] || ICON_MAP["Link"];
                       return (
                         <div key={item?.id || idx} className="flex flex-col gap-1">
-                          {/* 🌟 เปลี่ยนเป็น blockRadius */}
+                          {/* 🌟 โครงสร้างกรอบเดิมของคุณคงเดิมทั้งหมด */}
                           <div className="w-full overflow-hidden shadow-md bg-black relative" style={{ aspectRatio: '9/16', maxHeight: isCompact ? '480px' : '600px', borderRadius: blockRadius }}>
                             {tiktokId ? (
                               <iframe 
@@ -150,7 +150,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                       const youtubeEmbedUrl = getYoutubeEmbedUrl(videoUrl, item?.isAutoplay || link?.isAutoplay); 
                       return (
                         <div key={item?.id || idx} className="flex flex-col gap-1">
-                          {/* 🌟 เปลี่ยนเป็น blockRadius */}
                           <div className="w-full overflow-hidden shadow-md bg-black aspect-video relative" style={{ borderRadius: blockRadius }}>
                             {youtubeEmbedUrl ? (
                               <iframe 
@@ -210,7 +209,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                           key={item?.id || idx} 
                           {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})} 
                           className={`relative snap-center shrink-0 w-[85%] max-w-[280px] aspect-square group shadow-sm overflow-hidden ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} 
-                          style={{ textDecoration: 'none', borderRadius: blockRadius }} // 🌟 เปลี่ยนเป็น blockRadius
+                          style={{ textDecoration: 'none', borderRadius: blockRadius }}
                           onClick={() => { if(itemUrl && onLinkClick) onLinkClick(link?.id, itemUrl) }}
                         >
                           {imageUrl ? (
@@ -270,9 +269,9 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                           onClick={() => { if(itemUrl && onLinkClick) onLinkClick(link?.id, itemUrl) }}
                         >
                           {imageUrl ? (
-                            <img src={imageUrl} alt={item?.name || item?.title} className="w-full h-auto max-h-[500px] object-contain shadow-sm mb-3 bg-white/50" style={{ borderRadius: blockRadius }} /> // 🌟 เปลี่ยนเป็น blockRadius
+                            <img src={imageUrl} alt={item?.name || item?.title} className="w-full h-auto max-h-[500px] object-contain shadow-sm mb-3 bg-white/50" style={{ borderRadius: blockRadius }} />
                           ) : (
-                            <div className="w-full aspect-square bg-slate-200 shadow-sm mb-3 flex items-center justify-center" style={{ borderRadius: blockRadius }}> // 🌟 เปลี่ยนเป็น blockRadius
+                            <div className="w-full aspect-square bg-slate-200 shadow-sm mb-3 flex items-center justify-center" style={{ borderRadius: blockRadius }}>
                               <span className="text-slate-400 text-xs font-bold">ยังไม่มีรูปภาพ</span>
                             </div>
                           )}
@@ -320,7 +319,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                         padding: isCompact ? "8px 12px" : "16px",
                         backgroundColor: safeDesign.btnStyle === "outline" ? "transparent" : (safeDesign.btnBgColor || "#ffffff"),
                         color: safeDesign.btnTextColor || "#000000",
-                        borderRadius: btnRadius, // 🌟 ลิงก์ปุ่มปกติ ยังคงใช้ความโค้งมนแบบแคปซูล (btnRadius) เหมือนเดิม!
+                        borderRadius: btnRadius,
                         border: btnBorder,
                         boxShadow: btnBoxShadow,
                         textDecoration: "none"

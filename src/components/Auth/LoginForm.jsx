@@ -133,7 +133,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           
           window.dispatchEvent(new Event("storage")); // แจ้งเตือนระบบว่าล็อกอินแล้ว
 
-          alert(`เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับคุณ ${userData.name}`);
+          alert(`เข้าสู่ระบบสำเร็จ!`);
 
           // ตรวจสอบ role
           if (userData.role === "admin") {

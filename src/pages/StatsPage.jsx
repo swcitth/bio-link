@@ -90,6 +90,15 @@ const StatsPage = ({ links }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const calculatedCtr = React.useMemo(() => {
+    if (!stats) return 0;
+    const views = getSafeNumber(stats.total_views);
+    const clicks = getSafeNumber(stats.total_clicks);
+    const saves = getSafeNumber(stats.total_saves);
+    if (views === 0) return 0;
+    return (((clicks + saves) / views) * 100).toFixed(2);
+  }, [stats]);
+
   const [dateRange, setDateRange] = useState('7days'); 
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
@@ -331,7 +340,8 @@ const StatsPage = ({ links }) => {
         <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col justify-between order-3">
           <div>
             <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5"><FaChartBar className="text-emerald-500" size={14} /> CTR</span>
-            <h2 className="text-3xl font-extrabold text-slate-800 mt-2">{stats?.ctr || 0}%</h2>
+            {/* 🌟 ใช้ calculatedCtr ที่คำนวณใหม่เสมอ */}
+            <h2 className="text-3xl font-extrabold text-slate-800 mt-2">{calculatedCtr}%</h2>
           </div>
           <div className="flex items-center justify-between gap-2 mt-3">
             <span className="text-[10px] text-slate-400 font-medium bg-slate-50 px-2 py-1 rounded w-fit">อัตราคลิก{rangeText}</span>

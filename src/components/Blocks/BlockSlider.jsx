@@ -113,10 +113,6 @@ const BlockSlider = ({ block, items = [], handleBlockClick, design }) => {
               {item.name || "ไม่มีชื่อสินค้า"}
             </h4>
             
-            <p className="text-xs text-slate-500 mt-1 truncate pointer-events-none">
-              {item.description || "ไม่มีรายละเอียด"}
-            </p>
-            
             <div className="text-sm font-bold text-indigo-600 mt-2 pointer-events-none">
               {item.price ? `฿${item.price}` : "฿0"}
             </div>
