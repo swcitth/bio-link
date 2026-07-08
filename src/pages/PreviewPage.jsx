@@ -20,6 +20,16 @@ const FONT_MAP = {
   prompt: "'Prompt', sans-serif"
 };
 
+// 🌟 1. นำฟังก์ชันนี้มาวางต่อท้าย FONT_MAP ตรงนี้เลยครับ 🌟
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return "";
+  if (imagePath.startsWith('http') || imagePath.startsWith('data:')) {
+    return imagePath;
+  }
+  const prefix = imagePath.startsWith('/') ? '' : '/';
+  return `http://127.0.0.1:8000${prefix}${imagePath}`;
+};
+
 // ⭐️ รับค่า isPublic มาจาก Route ใน App.jsx
 const PreviewPage = ({ isPublic }) => {
   const navigate = useNavigate();
@@ -103,8 +113,8 @@ const PreviewPage = ({ isPublic }) => {
             username: apiData.username,
             name: apiData.display_name || "",
             bio: apiData.bio || "",
-            avatar: apiData.avatar ? `http://127.0.0.1:8000${apiData.avatar}` : "",
-            cover: apiData.cover ? `http://127.0.0.1:8000${apiData.cover}` : "",
+            avatar: getImageUrl(apiData.avatar),
+            cover: getImageUrl(apiData.cover),
             contactName: apiData.contactName || apiData.contact_name || "",
             phone: apiData.phone || "",
             email: apiData.email || "",
