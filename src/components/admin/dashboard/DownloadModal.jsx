@@ -59,8 +59,6 @@ export default function DownloadModal({ onClose, initialTimeRange = '30days', mo
         fileFormat
       };
       
-      alert("กำลังดาวน์โหลด กรุณารอสักครู่...");
-      
       const response = await api.post('/admin/export-report', payload, {
         responseType: 'blob' 
       });
