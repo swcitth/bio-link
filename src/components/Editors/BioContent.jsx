@@ -99,12 +99,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
               />
           )}
 
-          {visibleLinks.length === 0 && (
-            <p className={`text-center ${isCompact ? "text-[11px]" : "text-sm"} text-slate-400 mt-3`} style={{ color: safeDesign.textColor }}>
-              ยังไม่มีลิงก์แสดงผล
-            </p>
-          )}
-
           {visibleLinks.map((link) => {
             const subItems = link?.items && link.items.length > 0 ? link.items : [link];
             const titleClass = `${isCompact ? "text-[13px]" : "text-base"} font-bold px-2`;
