@@ -58,3 +58,22 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+export const getImageUrl = (imagePath) => {
+  if (!imagePath) return "";
+  if (imagePath.startsWith('http') || imagePath.startsWith('data:')) return imagePath;
+
+  let baseUrl = import.meta.env.VITE_API_URL || 'apimilink.swceservice.com/api';
+  
+  // 1. ตัด /api ทิ้งก่อน
+  baseUrl = baseUrl.replace(/\/api\/?$/, ''); 
+
+  // 2. 🌟 เช็คว่ามี http หรือ https นำหน้าหรือยัง? 
+  // ถ้าไม่มี ให้เติม https:// เข้าไปให้เองอัตโนมัติครับ
+  if (!baseUrl.startsWith('http')) {
+    baseUrl = 'https://' + baseUrl;
+  }
+  
+  const prefix = imagePath.startsWith('/') ? '' : '/';
+  return `${baseUrl}${prefix}${imagePath}`;
+};

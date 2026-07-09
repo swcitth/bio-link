@@ -1,13 +1,7 @@
 import React, { useRef, useState } from "react";
 // นำเข้าไอคอน User เพิ่มเติมสำหรับช่องกรอกชื่อ
 import { Pencil, Camera, UploadCloud, Trash2, Phone, Mail, Building, Briefcase, User, Globe } from "lucide-react";
-
-// ⭐️ เพิ่มฟังก์ชันผู้ช่วยแปลง URL เพื่อให้ดึงรูปจาก Laravel ได้ถูกต้อง
-const getImageUrl = (path) => {
-  if (!path) return null;
-  if (path.startsWith("http") || path.startsWith("blob:") || path.startsWith("data:")) return path;
-  return `http://127.0.0.1:8000${path}`;
-};
+import api, { getImageUrl } from '../api/axios';
 
 const ProfileEditor = ({ profile, setProfile }) => {
   const avatarRef = useRef(null);

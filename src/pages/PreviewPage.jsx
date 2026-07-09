@@ -11,23 +11,13 @@ import Header from "../components/Layout/Header";
 import { THEME_LIST } from "../constants/themes";
 import BioContent from "../components/Editors/BioContent"; 
 import Navbar from "../components/Layout/NavbarDetail";
-import api from '../api/axios';
+import api, { getImageUrl } from '../api/axios';
 
 const FONT_MAP = {
   kanit: "'Kanit', sans-serif",
   sarabun: "'Sarabun', sans-serif",
   mali: "'Mali', cursive",
   prompt: "'Prompt', sans-serif"
-};
-
-// 🌟 1. นำฟังก์ชันนี้มาวางต่อท้าย FONT_MAP ตรงนี้เลยครับ 🌟
-const getImageUrl = (imagePath) => {
-  if (!imagePath) return "";
-  if (imagePath.startsWith('http') || imagePath.startsWith('data:')) {
-    return imagePath;
-  }
-  const prefix = imagePath.startsWith('/') ? '' : '/';
-  return `http://127.0.0.1:8000${prefix}${imagePath}`;
 };
 
 // ⭐️ รับค่า isPublic มาจาก Route ใน App.jsx
