@@ -1,5 +1,6 @@
 import React from "react";
 import { ICON_MAP } from "../../constants/icons";
+import { getImageUrl } from "../../api/axios";
 
 const MobileView = ({ profile, links, design, activeTheme }) => {
   // Logic: ตรวจสอบว่าโหมด Custom หรือไม่

@@ -5,6 +5,7 @@
 import React, { useRef } from "react";
 import { Sparkles, Type, UploadCloud, Trash2 } from "lucide-react";
 import { THEME_LIST } from "../../constants/themes";
+import { getImageUrl } from "../../api/axios";
 
 const parseColorToHex = (color) => {
   if (!color) return "#ffffff";
