@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { GripVertical, Eye, EyeOff, Trash2, Plus } from 'lucide-react';
-import api, { getImageUrl } from '../api/axios';
+import api, { getImageUrl } from "../../api/axios";
 
 export default function BlockShop({ item, index, register, setValue, onRemove, onToggleVisibility, dragHandleProps, showDescription = true }) {
   const fileInputRef = useRef(null);

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import api, { getImageUrl } from '../api/axios';
+import api, { getImageUrl } from "../../api/axios";
 
 const BlockSlider = ({ block, items = [], handleBlockClick, design }) => {
   // 🌟 เพิ่ม Hooks สำหรับจัดการการลากเมาส์เลื่อน (Mouse Dragging)

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 // นำเข้าไอคอน User เพิ่มเติมสำหรับช่องกรอกชื่อ
 import { Pencil, Camera, UploadCloud, Trash2, Phone, Mail, Building, Briefcase, User, Globe } from "lucide-react";
-import api, { getImageUrl } from '../api/axios';
+import api, { getImageUrl } from "../../api/axios";
 
 const ProfileEditor = ({ profile, setProfile }) => {
   const avatarRef = useRef(null);

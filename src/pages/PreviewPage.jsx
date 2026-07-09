@@ -11,7 +11,7 @@ import Header from "../components/Layout/Header";
 import { THEME_LIST } from "../constants/themes";
 import BioContent from "../components/Editors/BioContent"; 
 import Navbar from "../components/Layout/NavbarDetail";
-import api, { getImageUrl } from '../api/axios';
+import api, { getImageUrl } from "../../api/axios";
 
 const FONT_MAP = {
   kanit: "'Kanit', sans-serif",
