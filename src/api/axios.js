@@ -61,19 +61,27 @@ export default api;
 
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return "";
-  if (imagePath.startsWith('http') || imagePath.startsWith('data:')) return imagePath;
 
-  let baseUrl = import.meta.env.VITE_API_URL || 'apimilink.swceservice.com/api';
+  // 1. 🌟 เพิ่มบรรทัดนี้: ถ้าเป็นรูป Preview (blob:) ให้รีเทิร์นกลับไปทันที
+  if (imagePath.startsWith('blob:')) return imagePath;
+
+  // 2. ล้าง 127.0.0.1 หรือ localhost ออกจาก Database (เผื่อติดมาจากข้อมูลเก่า)
+  let cleanPath = imagePath.replace(/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?/, '');
+
+  // 3. ถ้าเป็นลิงก์จริง (http, https) หรือรูป base64 (data:) ให้ส่งกลับไปเลย
+  if (cleanPath.startsWith('http') || cleanPath.startsWith('data:')) return cleanPath;
+
+  // 4. ประกอบร่างกับ Base URL จริงของ Production
+  let baseUrl = import.meta.env.VITE_API_URL || 'https://apimilink.swceservice.com/api';
   
-  // 1. ตัด /api ทิ้งก่อน
+  // ตัด /api ทิ้ง
   baseUrl = baseUrl.replace(/\/api\/?$/, ''); 
 
-  // 2. 🌟 เช็คว่ามี http หรือ https นำหน้าหรือยัง? 
-  // ถ้าไม่มี ให้เติม https:// เข้าไปให้เองอัตโนมัติครับ
+  // เติม https:// ถ้ายังไม่มี
   if (!baseUrl.startsWith('http')) {
     baseUrl = 'https://' + baseUrl;
   }
   
-  const prefix = imagePath.startsWith('/') ? '' : '/';
-  return `${baseUrl}${prefix}${imagePath}`;
+  const prefix = cleanPath.startsWith('/') ? '' : '/';
+  return `${baseUrl}${prefix}${cleanPath}`;
 };
