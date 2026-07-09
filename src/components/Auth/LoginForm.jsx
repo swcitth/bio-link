@@ -223,11 +223,16 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
       
       if (error.response) {
         
-        // ดักจับ Error 403: บัญชียังไม่ยืนยันอีเมล
-        if (error.response.status === 403 && error.response.data.is_verified === false) {
-          alert(error.response.data.message);
-          // เก็บอีเมลที่กรอกไว้ใน State เพื่อให้ปุ่มส่งอีเมลอีกครั้งโผล่ขึ้นมา
-          setUnverifiedEmail(identifier);
+        // ดักจับ Error 403 (แยกเป็นกรณียืนยันอีเมล กับ กรณีโดนแบน)
+        if (error.response.status === 403) {
+          if (error.response.data.is_verified === false) {
+            // กรณีที่ 1: บัญชียังไม่ยืนยันอีเมล
+            alert(error.response.data.message);
+            setUnverifiedEmail(identifier);
+          } else {
+            // กรณีที่ 2: ถูกแบน (ดึงข้อความ 'บัญชีของคุณถูกระงับ...' จากหลังบ้านมาโชว์เลย)
+            alert(error.response.data.message);
+          }
         } 
         else if (error.response.status === 429) {
           alert(error.response.data.message); 
