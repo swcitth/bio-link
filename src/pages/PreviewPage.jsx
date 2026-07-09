@@ -121,7 +121,7 @@ const PreviewPage = ({ isPublic }) => {
             setDesign({
               theme: "t1", font: "kanit", // ค่าพื้นฐาน
               ...themeCfg,
-              bgImage: apiData.background ? `http://127.0.0.1:8000${apiData.background}` : null,
+              bgImage: apiData.background ? getImageUrl(apiData.background) : null,
             });
           } else {
              setDesign({ theme: "t1", font: "kanit" });
@@ -292,7 +292,7 @@ const PreviewPage = ({ isPublic }) => {
       >
         <div className="fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-0 overflow-hidden" style={{ background: screenBackground }}>
           {design.bgImage && (
-            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${design.bgImage})`, opacity: 0.6 }} />
+            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url('${getImageUrl(design.bgImage)}')`, opacity: 0.6 }} />
           )}
         </div>
 
