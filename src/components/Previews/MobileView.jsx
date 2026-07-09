@@ -1,5 +1,6 @@
 import React from "react";
 import { ICON_MAP } from "../../constants/icons";
+import { getImageUrl } from "../../api/axios";
 
 const MobileView = ({ profile, links, design, activeTheme }) => {
   // Logic: ตรวจสอบว่าโหมด Custom หรือไม่
@@ -29,7 +30,7 @@ const MobileView = ({ profile, links, design, activeTheme }) => {
       {design.bgImage && (
         <div 
           className="absolute inset-0 z-0 bg-cover bg-center" 
-          style={{ backgroundImage: `url(${design.bgImage})`, opacity: 0.6 }} 
+          style={{ backgroundImage: `url('${getImageUrl(design.bgImage)}')`, opacity: 0.6 }} 
         />
       )}
 

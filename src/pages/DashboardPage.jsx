@@ -456,22 +456,44 @@ const DashboardPage = () => {
     localStorage.setItem("bio_links", JSON.stringify(links));
     localStorage.setItem("bio_design", JSON.stringify(design));
 
-    const formData = new FormData();
-    formData.append("_method", "PUT"); 
+const formData = new FormData();
+formData.append("_method", "PUT"); 
 
-    formData.append("username", cleanProfileUsername); 
-    formData.append("display_name", profile.name || "");
-    formData.append("bio", profile.bio || "");
-    formData.append("contact_name", profile.contactName || "");
-    formData.append("contact_phone", profile.phone || "");
-    formData.append("contact_email", profile.email || "");
-    formData.append("contact_company", profile.company || "");
-    formData.append("contact_job_title", profile.title || "");
-    formData.append("contact_website", profile.website || "");
-    formData.append("show_save_contact", profile.showSaveContact !== false ? 1 : 0);
-    formData.append("avatar_url", profile.avatar || "");
-    formData.append("cover_url", profile.cover || "");
-    formData.append("bg_image_url", design.bgImage || "");
+// ... ข้อมูล Text อื่นๆ ส่งเหมือนเดิม ...
+formData.append("username", cleanProfileUsername); 
+formData.append("display_name", profile.name || "");
+formData.append("bio", profile.bio || "");
+formData.append("contact_name", profile.contactName || "");
+formData.append("contact_phone", profile.phone || "");
+formData.append("contact_email", profile.email || "");
+formData.append("contact_company", profile.company || "");
+formData.append("contact_job_title", profile.title || "");
+formData.append("contact_website", profile.website || "");
+formData.append("show_save_contact", profile.showSaveContact !== false ? 1 : 0);
+
+// 🌟🌟🌟 ส่วนที่ต้องแก้: การส่งข้อมูลรูปภาพ 🌟🌟🌟
+
+// 1. จัดการรูป Avatar
+if (profile.avatarFile) {
+    // ถ้ามีการเลือกไฟล์ใหม่ ให้ส่ง 'ตัวไฟล์' ไปที่ Key 'avatar'
+    formData.append("avatar", profile.avatarFile);
+}
+// ส่ง URL ควบคู่ไปด้วย เพื่อให้ Backend รู้ว่าไม่ได้สั่งลบ (ถ้ากดลบจะเป็นค่าว่าง Backend จะได้ลบให้)
+formData.append("avatar_url", profile.avatar || ""); 
+
+
+// 2. จัดการรูป Cover
+if (profile.coverFile) {
+    formData.append("cover", profile.coverFile);
+}
+formData.append("cover_url", profile.cover || "");
+
+
+// 3. จัดการรูป Background (ถ้ามี)
+if (design.bgImageFile) { // สมมติว่าใน design state มีเก็บไฟล์ไว้
+    formData.append("bg_image", design.bgImageFile);
+}
+formData.append("bg_image_url", design.bgImage || "");
 
     const themeConfigData = {
       theme: design.theme || "custom",

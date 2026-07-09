@@ -129,7 +129,14 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
     const vcardContent = [
       "BEGIN:VCARD",
       "VERSION:3.0",
+      // 1. บังคับให้มือถืออ่านข้อความทั้งหมดเป็น "ชื่อ" (ไม่ให้แอบตัดวงเล็บทิ้ง)
+      `N:;${finalName};;;`,
       `FN:${finalName}`,
+     
+      // 2. ดึงข้อมูลบริษัทและตำแหน่งมาใส่ (ถ้ามี) มือถือจะจัด Layout ให้สวยงามอัตโนมัติ
+      profile?.company ? `ORG:${profile.company}` : "",
+      profile?.title ? `TITLE:${profile.title}` : "",
+     
       noteData ? noteData.trim() : "",
       `TEL;TYPE=CELL:${phone || ""}`,
       `EMAIL:${email || ""}`,
