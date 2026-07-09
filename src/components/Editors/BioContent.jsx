@@ -70,7 +70,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
 
       <div className={`flex flex-col items-center px-4 ${isCompact ? "-mt-7" : "-mt-12"} relative z-10`}>
         <img
-          src={safeProfile.avatar || defaultAvatar}
+          src={getImageUrl(safeProfile.avatar) || defaultAvatar}
           alt="avatar"
           className={`${isCompact ? "w-14 h-14 border-[3px]" : "w-24 h-24 border-4"} rounded-full border-white shadow-xl object-cover shrink-0 bg-white`}
         />

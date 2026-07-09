@@ -121,7 +121,7 @@ const PreviewPage = ({ isPublic }) => {
             setDesign({
               theme: "t1", font: "kanit", // ค่าพื้นฐาน
               ...themeCfg,
-              bgImage: apiData.background ? `http://127.0.0.1:8000${apiData.background}` : null,
+              bgImage: apiData.background ? getImageUrl(apiData.background) : null,
             });
           } else {
              setDesign({ theme: "t1", font: "kanit" });
