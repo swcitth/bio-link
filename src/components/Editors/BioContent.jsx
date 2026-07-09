@@ -3,6 +3,7 @@ import { ICON_MAP } from "../../constants/icons";
 import { THEME_LIST } from "../../constants/themes";
 import SaveContactButton from "../UI/Button/SaveContactButton"; 
 import BlockSlider from "../Blocks/BlockSlider"; 
+import api, { getImageUrl } from "../../api/axios";
 
 const FONT_MAP = {
   kanit: "'Kanit', sans-serif",
@@ -64,7 +65,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
         className={`${isCompact ? "h-[90px]" : "h-48"} shrink-0 overflow-hidden bg-slate-200 relative bg-cover bg-center`}
         style={activeTheme?.cfg?.coverImage ? { backgroundImage: activeTheme.cfg.coverImage } : { background: coverBackground }}
       >
-        {safeProfile.cover && <img src={safeProfile.cover} alt="Cover" className="w-full h-full object-cover" />}
+        {safeProfile.cover && <img src={getImageUrl(safeProfile.cover)} alt="Cover" className="w-full h-full object-cover" />}
       </div>
 
       <div className={`flex flex-col items-center px-4 ${isCompact ? "-mt-7" : "-mt-12"} relative z-10`}>
@@ -207,7 +208,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                           onClick={() => { if(itemUrl && onLinkClick) onLinkClick(link?.id, itemUrl) }}
                         >
                           {imageUrl ? (
-                            <img src={imageUrl} alt={item?.name || item?.title} className="w-full h-full object-cover bg-white" />
+                            <img src={getImageUrl(imageUrl)} alt={item?.name || item?.title} className="w-full h-full object-cover bg-white" />
                           ) : (
                             <div className="w-full h-full bg-slate-200 flex items-center justify-center">
                               <span className="text-slate-400 text-xs font-bold">ไม่มีรูปภาพ</span>
@@ -263,7 +264,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                           onClick={() => { if(itemUrl && onLinkClick) onLinkClick(link?.id, itemUrl) }}
                         >
                           {imageUrl ? (
-                            <img src={imageUrl} alt={item?.name || item?.title} className="w-full h-auto max-h-[500px] object-contain shadow-sm mb-3 bg-white/50" style={{ borderRadius: blockRadius }} />
+                            <img src={getImageUrl(imageUrl)} alt={item?.name || item?.title} className="w-full h-auto max-h-[500px] object-contain shadow-sm mb-3 bg-white/50" style={{ borderRadius: blockRadius }} />
                           ) : (
                             <div className="w-full aspect-square bg-slate-200 shadow-sm mb-3 flex items-center justify-center" style={{ borderRadius: blockRadius }}>
                               <span className="text-slate-400 text-xs font-bold">ยังไม่มีรูปภาพ</span>
