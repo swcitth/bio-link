@@ -29,7 +29,7 @@ const MobileView = ({ profile, links, design, activeTheme }) => {
       {design.bgImage && (
         <div 
           className="absolute inset-0 z-0 bg-cover bg-center" 
-          style={{ backgroundImage: `url(${design.bgImage})`, opacity: 0.6 }} 
+          style={{ backgroundImage: `url('${getImageUrl(design.bgImage)}')`, opacity: 0.6 }} 
         />
       )}
 
