@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Layout, Smartphone, Share2, Video, Camera, ShoppingBag, CheckCircle2, Link2 } from 'lucide-react';
+// 🌟 เพิ่ม PlayCircle เข้ามาใน import
+import { ArrowRight, Layout, Smartphone, Share2, Video, Camera, ShoppingBag, CheckCircle2, Link2, PlayCircle } from 'lucide-react';
 import Navbar from '../components/Layout/NavbarLanding';
 import Footer from '../components/Layout/Footer';
 import CookieBanner from '../components/UI/CookieBanner';
@@ -29,7 +30,7 @@ export default function LandingPage() {
     >
       <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap');
-       
+        
         .animate-blob { animation: blob 7s infinite; }
         .animation-delay-2000 { animation-delay: 2s; }
         @keyframes blob {
@@ -75,10 +76,10 @@ export default function LandingPage() {
 
         <div className="flex-1 relative w-full flex justify-center lg:justify-end">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-400 rounded-full mix-blend-multiply filter blur-[80px] opacity-60"></div>
-         
+          
           <div className={`relative transition-all duration-1000 transform ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}`}>
             <div className="relative w-[300px] h-[600px] bg-white rounded-[3rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] border-[8px] border-slate-900 overflow-hidden ring-4 ring-slate-100">
-             
+              
               <div className="absolute top-0 inset-x-0 h-7 bg-slate-900 rounded-b-3xl w-40 mx-auto z-20 flex items-center justify-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-slate-700"></div>
                 <div className="w-12 h-1.5 rounded-full bg-slate-800"></div>
@@ -101,7 +102,6 @@ export default function LandingPage() {
                 <p className="text-sm text-slate-500 mb-8 text-center font-medium">ติดตามผลงานของฉันได้ที่นี่ 👇</p>
 
                 <div className="w-full space-y-4">
-                  {/* 👈 แก้ไข: ใช้ไอคอน Video แทน Youtube */}
                   <a href="#" className="flex items-center gap-3 bg-white hover:bg-slate-50/80 text-slate-800 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 border border-slate-100/50 backdrop-blur-sm group">
                     <div className="bg-red-100 text-red-600 p-2 rounded-xl group-hover:scale-110 transition-transform">
                       <Video className="w-5 h-5" />
@@ -109,7 +109,6 @@ export default function LandingPage() {
                     <span className="font-semibold text-sm">YouTube Channel</span>
                   </a>
 
-                  {/* 👈 แก้ไข: ใช้ไอคอน Camera แทน Instagram */}
                   <a href="#" className="flex items-center gap-3 bg-white hover:bg-slate-50/80 text-slate-800 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 border border-slate-100/50 backdrop-blur-sm group">
                     <div className="bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 text-white p-2 rounded-xl group-hover:scale-110 transition-transform">
                       <Camera className="w-5 h-5" />
@@ -130,7 +129,7 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-           
+            
             <div className="absolute -right-6 top-20 bg-white p-3 rounded-2xl shadow-lg border border-slate-100 animate-bounce" style={{animationDuration: '3s'}}>
                <span className="text-2xl">🔥</span>
             </div>
@@ -148,13 +147,14 @@ export default function LandingPage() {
             <p className="text-slate-500">ฟีเจอร์ครบครัน ใช้งานง่าย ตอบโจทย์ทุกความต้องการของคุณ</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* 🌟 ปรับ grid เป็น 4 คอลัมน์บนจอใหญ่ เพื่อให้กล่องที่ 4 วางเรียงกันได้พอดี */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             <div className="bg-slate-50/50 hover:bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group">
               <div className="w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform">
                 <Layout className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">ปรับแต่งง่าย</h3>
-              <p className="text-slate-600 leading-relaxed">
+              <p className="text-slate-600 leading-relaxed text-sm">
                 มีหลายธีมให้เลือกใช้ เปลี่ยนสี อัปโหลดพื้นหลัง หรือจัดเรียงปุ่มได้ตามสไตล์ของคุณเองอย่างอิสระ
               </p>
             </div>
@@ -164,7 +164,7 @@ export default function LandingPage() {
                 <Smartphone className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">รองรับมือถือ</h3>
-              <p className="text-slate-600 leading-relaxed">
+              <p className="text-slate-600 leading-relaxed text-sm">
                 แสดงผลสวยทุกหน้าจอ ไม่ว่าผู้เยี่ยมชมจะเปิดจากสมาร์ทโฟน แท็บเล็ต หรือคอมพิวเตอร์
               </p>
             </div>
@@ -174,10 +174,27 @@ export default function LandingPage() {
                 <Share2 className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">แชร์ได้ทันที</h3>
-              <p className="text-slate-600 leading-relaxed">
+              <p className="text-slate-600 leading-relaxed text-sm">
                 นำลิงก์ไปแปะได้ทุกโซเชียล พร้อม QR Code ในตัวให้คุณดาวน์โหลดไปพิมพ์ หรือแชร์ต่อได้ง่ายดาย
               </p>
             </div>
+
+            {/* 🌟 บล็อกที่ 4: วิธีการใช้งาน (ลิงก์ไป YouTube) */}
+            <a 
+              href="https://www.youtube.com/playlist?list=YOUR_PLAYLIST_ID_HERE" //  แก้ไขลิงก์ YouTube 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="block bg-slate-50/50 hover:bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-red-500/5 transition-all duration-300 group cursor-pointer"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform">
+                <PlayCircle className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">วิธีการใช้งาน</h3>
+              <p className="text-slate-600 leading-relaxed text-sm">
+                เรียนรู้วิธีการสร้างและปรับแต่งโปรไฟล์ของคุณทีละขั้นตอนผ่านวิดีโอสอนการใช้งานบน YouTube
+              </p>
+            </a>
+
           </div>
         </div>
       </section>

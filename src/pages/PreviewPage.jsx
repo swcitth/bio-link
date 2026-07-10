@@ -75,14 +75,21 @@ const PreviewPage = ({ isPublic }) => {
       sessionStorage.setItem("analytics_session", sessionId);
     }
 
+    // นุชเข้ามาแก้ในส่วนนี้ 
+    // 1. ดึงค่า source มารอไว้ก่อน
+    const urlParams = new URLSearchParams(window.location.search);
+    const source = urlParams.get('source');
+
+    // 2. ส่งค่าไปพร้อมกับ api.post ตัวเดิมของคุณ
     api.post(`/analytics/track/${targetUsername}`, {
-      block_id: blockId,
-      session_id: sessionId,           // ค่าเดิมของคุณ
-      referrer_url: document.referrer,  // ค่าเดิมของคุณ
-      clicked_url: clickedUrl          // 🌟 เติม/เช็คบรรทัดนี้ เพื่อส่ง URL ไปหลังบ้านด้วย!
+        block_id: blockId,
+        session_id: sessionId,           // ค่าเดิมของคุณ
+        referrer_url: document.referrer,  // ค่าเดิมของคุณ
+        clicked_url: clickedUrl,          // ค่าเดิมของคุณ
+        source: source                    // 👈 เพิ่มบรรทัดนี้เข้าไปเลยครับ!
     })
     .catch((err) => {
-      console.error("Analytics error:", err);
+        console.error("Analytics error:", err);
     });
   };
   
@@ -179,9 +186,19 @@ const PreviewPage = ({ isPublic }) => {
           setIsLoading(false);
           trackAnalytics(apiData.username, null);
         })
+
+        // นุชเพิ่มตรงนี้ด้วยน้าในส่วนของ การแสดงผลถ้า กดดูโปรไฟล์ที่แชร์ไว้แล้วโปรไฟล์โดนแบนอยู่
         .catch((err) => {
           console.error("Error fetching profile:", err);
-          setError("ไม่พบข้อมูลโปรไฟล์ของผู้ใช้นี้ในระบบ");
+          
+          if (err.response && err.response.status === 403) {
+            // ถ้าโดนแบน (403) หน้าตาจะเหมือนเดิม แต่คำตรงกลางจะเปลี่ยนเป็นคำนี้
+            setError("เกิดปัญหาไม่สามารถแสดงหน้าแชร์ได้ในขณะนี้");
+          } else {
+            // ถ้าโดนลบ (404) จะขึ้นคำนี้
+            setError("ไม่พบข้อมูลโปรไฟล์ของผู้ใช้นี้ในระบบ");
+          }
+          
           setIsLoading(false);
         });
     } else {
@@ -232,7 +249,7 @@ const PreviewPage = ({ isPublic }) => {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-100 p-6 text-center font-sans">
-        <div className="text-2xl font-bold text-red-500 mb-2">ขออภัยด้วยครับ</div>
+        <div className="text-2xl font-bold text-red-500 mb-2">ขออภัย</div>
         <div className="text-slate-600 mb-6">{error}</div>
         <button 
           onClick={() => navigate('/')} 
@@ -302,6 +319,22 @@ const PreviewPage = ({ isPublic }) => {
           design={design} 
           onLinkClick={(blockId, url) => trackAnalytics(username || profile.username, blockId, url)}
         />
+
+        <div className="pb-12 -mt-18 text-center relative z-20">
+          <a
+            href="/" // 👈 ลิงก์กลับไปหน้า Landing Page (เครื่องหมาย / คือหน้าแรก)
+            target="_blank" // เปิดแท็บใหม่ ผู้ใช้จะได้ไม่หลุดจากหน้าโปรไฟล์นี้
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/40 backdrop-blur-md shadow-[0_2px_10px_rgba(0,0,0,0.05)] border border-white/40 text-xs font-bold text-slate-700 hover:bg-white hover:text-[#6B46FF] transition-all hover:scale-105 hover:shadow-md cursor-pointer"
+          >
+            {/* ไอคอนลิงก์ (สามารถเปลี่ยนเป็นโลโก้ของเว็บคุณ <img> แทนได้) */}
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            Made with MyBioLink
+          </a>
+        </div>
         
       </div>
     </div>

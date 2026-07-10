@@ -1,5 +1,5 @@
 import React from "react";
-import axios from "axios";
+import api from "../../../api/axios";
 
 const getTextColorBasedOnBg = (bgColor) => {
   if (!bgColor) return "#000000"; 
@@ -67,16 +67,24 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
         sessionStorage.setItem("analytics_session", sessionId);
       }
 
-      await axios.post(`${import.meta.env.VITE_API_URL}/analytics/track/${profile.username}`, {
+      // นุชเพิ่มส่วนนี้น้าเผื่อปอมาดูแล้วมันerror มาทุบนุชได้เลยย
+      //ดึงค่า source จาก URL มารอไว้เพื่อเช็คว่าเป็น Admin กดหรือไม่
+      const urlParams = new URLSearchParams(window.location.search);
+      const source = urlParams.get('source');
+
+      // นุชปรับพาร์ทไปใช้ file api/axios naa
+      await api.post(`/analytics/track/${profile.username}`, {
         session_id: sessionId, 
         block_id: 999999,
-        referrer_url: document.referrer || "direct" 
+        referrer_url: document.referrer || "direct",
+        source: source // ส่งตัวแปร source แนบไปให้หลังบ้านจัดการ
       });
     } catch (err) {
       console.log("Analytics Error:", err);
     }
   };
  
+  // นุชจะแก้ส่วนนี้
   const handleSaveContact = async () => {
     trackSaveContact();
 
@@ -87,8 +95,10 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
         if (profile.avatar.startsWith("http")) {
           const filenameRaw = profile.avatar.split('/').pop();
           const filename = filenameRaw.split('?')[0]; 
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/get-avatar/${filename}`);
-          const blob = await response.blob();
+          const response = await api.get(`/get-avatar/${filename}`, {
+            responseType: 'blob' 
+          });
+          const blob = response.data; // ดึง blob ออกมาจาก response.data ของ axios
           dataUrlToProcess = await new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result);
