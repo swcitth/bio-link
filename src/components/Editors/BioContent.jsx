@@ -333,12 +333,6 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
             );
           })}
         </div>
-        
-        {!isCompact && (
-          <p className="mt-14 text-sm font-medium opacity-60 text-center" style={{ color: safeDesign.textColor || "#94a3b8" }}>
-            mybiolink.com/{safeProfile.username || "username"}
-          </p>
-        )}
       </div>
     </div>
   );

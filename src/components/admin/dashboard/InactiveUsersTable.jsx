@@ -67,8 +67,8 @@ export default function InactiveUsersTable({
             }}
             defaultValue="7" 
           >
-            <option value="7">มากกว่า 7 วัน (สำหรับเทส)</option>
-            <option value="14">มากกว่า 14 วัน (สำหรับเทส)</option>
+            <option value="7">มากกว่า 7 วัน</option>
+            <option value="14">มากกว่า 14 วัน</option>
             <option value="30">มากกว่า 30 วัน</option>
           </select>
           
