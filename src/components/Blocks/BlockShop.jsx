@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { GripVertical, Eye, EyeOff, Trash2, Plus } from 'lucide-react';
+import api, { getImageUrl } from "../../api/axios";
 
 export default function BlockShop({ item, index, register, setValue, onRemove, onToggleVisibility, dragHandleProps, showDescription = true }) {
   const fileInputRef = useRef(null);
@@ -20,16 +21,6 @@ export default function BlockShop({ item, index, register, setValue, onRemove, o
     }
   };
 
-  // ฟังก์ชันเช็ค URL ของรูปภาพ
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    // ถ้าเพิ่งอัปโหลดใหม่ (เป็น Base64) หรือเป็นลิงก์เว็บอื่น ให้โชว์ได้เลย
-    if (imagePath.startsWith('data:') || imagePath.startsWith('http')) {
-      return imagePath;
-    }
-    // ถ้าดึงมาจาก Database (เป็น /storage/...) ให้เติม URL หลังบ้านเข้าไป
-    return `http://127.0.0.1:8000${imagePath}`;
-  };
 
   return (
     <div className={`bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-start md:items-center gap-3 md:gap-6 transition-opacity ${item.isVisible ? 'opacity-100' : 'opacity-50'}`}>

@@ -11,23 +11,13 @@ import Header from "../components/Layout/Header";
 import { THEME_LIST } from "../constants/themes";
 import BioContent from "../components/Editors/BioContent"; 
 import Navbar from "../components/Layout/NavbarDetail";
-import api from '../api/axios';
+import api, { getImageUrl } from "../api/axios";
 
 const FONT_MAP = {
   kanit: "'Kanit', sans-serif",
   sarabun: "'Sarabun', sans-serif",
   mali: "'Mali', cursive",
   prompt: "'Prompt', sans-serif"
-};
-
-// 🌟 1. นำฟังก์ชันนี้มาวางต่อท้าย FONT_MAP ตรงนี้เลยครับ 🌟
-const getImageUrl = (imagePath) => {
-  if (!imagePath) return "";
-  if (imagePath.startsWith('http') || imagePath.startsWith('data:')) {
-    return imagePath;
-  }
-  const prefix = imagePath.startsWith('/') ? '' : '/';
-  return `http://127.0.0.1:8000${prefix}${imagePath}`;
 };
 
 // ⭐️ รับค่า isPublic มาจาก Route ใน App.jsx
@@ -113,8 +103,8 @@ const PreviewPage = ({ isPublic }) => {
             username: apiData.username,
             name: apiData.display_name || "",
             bio: apiData.bio || "",
-            avatar: getImageUrl(apiData.avatar),
-            cover: getImageUrl(apiData.cover),
+            avatar: apiData.avatar, 
+            cover: apiData.cover,
             contactName: apiData.contactName || apiData.contact_name || "",
             phone: apiData.phone || "",
             email: apiData.email || "",
@@ -131,7 +121,7 @@ const PreviewPage = ({ isPublic }) => {
             setDesign({
               theme: "t1", font: "kanit", // ค่าพื้นฐาน
               ...themeCfg,
-              bgImage: apiData.background ? `http://127.0.0.1:8000${apiData.background}` : null,
+              bgImage: apiData.background ? getImageUrl(String(apiData.background)) : null,
             });
           } else {
              setDesign({ theme: "t1", font: "kanit" });
@@ -302,7 +292,7 @@ const PreviewPage = ({ isPublic }) => {
       >
         <div className="fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-0 overflow-hidden" style={{ background: screenBackground }}>
           {design.bgImage && (
-            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${design.bgImage})`, opacity: 0.6 }} />
+            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url('${getImageUrl(design.bgImage)}')`, opacity: 0.6 }} />
           )}
         </div>
 

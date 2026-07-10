@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { THEME_LIST } from "../../constants/themes";
 import BioContent from "../Editors/BioContent";
 import axios from 'axios';
+import { getImageUrl } from "../../api/axios";
 
 const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
   const activeTheme = THEME_LIST.find((t) => t.id === design.theme) || THEME_LIST[0];
@@ -54,7 +55,7 @@ const PhonePreview = ({ profile = {}, links = [], design = {} }) => {
           {design.bgImage && (
             <div 
               className="absolute inset-0 z-0 bg-cover bg-center" 
-              style={{ backgroundImage: `url(${design.bgImage})`, opacity: 0.6 }} 
+              style={{ backgroundImage: `url('${getImageUrl(design.bgImage)}')`, opacity: 0.6 }} 
             />
           )}
 

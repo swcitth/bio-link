@@ -58,3 +58,30 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+export const getImageUrl = (imagePath) => {
+  if (!imagePath) return "";
+
+  // 1. 🌟 เพิ่มบรรทัดนี้: ถ้าเป็นรูป Preview (blob:) ให้รีเทิร์นกลับไปทันที
+  if (imagePath.startsWith('blob:')) return imagePath;
+
+  // 2. ล้าง 127.0.0.1 หรือ localhost ออกจาก Database (เผื่อติดมาจากข้อมูลเก่า)
+  let cleanPath = imagePath.replace(/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?/, '');
+
+  // 3. ถ้าเป็นลิงก์จริง (http, https) หรือรูป base64 (data:) ให้ส่งกลับไปเลย
+  if (cleanPath.startsWith('http') || cleanPath.startsWith('data:')) return cleanPath;
+
+  // 4. ประกอบร่างกับ Base URL จริงของ Production
+  let baseUrl = import.meta.env.VITE_API_URL || 'https://apimilink.swceservice.com/api';
+  
+  // ตัด /api ทิ้ง
+  baseUrl = baseUrl.replace(/\/api\/?$/, ''); 
+
+  // เติม https:// ถ้ายังไม่มี
+  if (!baseUrl.startsWith('http')) {
+    baseUrl = 'https://' + baseUrl;
+  }
+  
+  const prefix = cleanPath.startsWith('/') ? '' : '/';
+  return `${baseUrl}${prefix}${cleanPath}`;
+};

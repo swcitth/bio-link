@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import api, { getImageUrl } from "../../api/axios";
 
 const BlockSlider = ({ block, items = [], handleBlockClick, design }) => {
   // 🌟 เพิ่ม Hooks สำหรับจัดการการลากเมาส์เลื่อน (Mouse Dragging)
@@ -15,14 +16,6 @@ const BlockSlider = ({ block, items = [], handleBlockClick, design }) => {
       case 'pill': return 'rounded-[24px]'; 
       default: return 'rounded-lg';
     }
-  };
-
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    if (imagePath.startsWith('data:') || imagePath.startsWith('http')) {
-      return imagePath;
-    }
-    return `http://127.0.0.1:8000${imagePath}`; 
   };
 
   // ==========================================
