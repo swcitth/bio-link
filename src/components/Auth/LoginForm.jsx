@@ -142,10 +142,23 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
             navigate('/dd'); 
           }
         }
-      } 
-      catch (error){
+      } catch (error) {
         console.error("Google Login Backend Error:", error);
-        alert("เข้าสู่ระบบด้วย Google ไม่สำเร็จกรุณาลองใหม่อีกครั้งค่ะ");
+        
+        // ตรวจสอบว่ามีข้อมูล Error ตอบกลับมาจาก Backend (Laravel) หรือไม่
+        if (error.response) {
+          // ถ้าเป็น 403 (โดนแบน) ให้ดึงข้อความจากหลังบ้านมาแสดงเลย
+          if (error.response.status === 403) {
+            alert(error.response.data.message);
+          } else {
+            // กรณีพังด้วย Status อื่นๆ
+            alert("เซิร์ฟเวอร์เกิดข้อผิดพลาด (Status: " + error.response.status + ")");
+          }
+        } else {
+          // กรณีไม่มี Response กลับมาเลย (เช่น เน็ตหลุด หรือ API ล่ม)
+          alert("เข้าสู่ระบบด้วย Google ไม่สำเร็จกรุณาลองใหม่อีกครั้งค่ะ");
+        }
+        
       } 
       // ไม่ว่าจะทำงานสำเร็จหรือไม่การใช้ finally เป็นการบอกว่าใต้สิ่งนี้จะต้องทำงานเสมอ
       finally {

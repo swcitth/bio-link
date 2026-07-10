@@ -75,14 +75,21 @@ const PreviewPage = ({ isPublic }) => {
       sessionStorage.setItem("analytics_session", sessionId);
     }
 
+    // นุชเข้ามาแก้ในส่วนนี้ 
+    // 1. ดึงค่า source มารอไว้ก่อน
+    const urlParams = new URLSearchParams(window.location.search);
+    const source = urlParams.get('source');
+
+    // 2. ส่งค่าไปพร้อมกับ api.post ตัวเดิมของคุณ
     api.post(`/analytics/track/${targetUsername}`, {
-      block_id: blockId,
-      session_id: sessionId,           // ค่าเดิมของคุณ
-      referrer_url: document.referrer,  // ค่าเดิมของคุณ
-      clicked_url: clickedUrl          // 🌟 เติม/เช็คบรรทัดนี้ เพื่อส่ง URL ไปหลังบ้านด้วย!
+        block_id: blockId,
+        session_id: sessionId,           // ค่าเดิมของคุณ
+        referrer_url: document.referrer,  // ค่าเดิมของคุณ
+        clicked_url: clickedUrl,          // ค่าเดิมของคุณ
+        source: source                    // 👈 เพิ่มบรรทัดนี้เข้าไปเลยครับ!
     })
     .catch((err) => {
-      console.error("Analytics error:", err);
+        console.error("Analytics error:", err);
     });
   };
   
