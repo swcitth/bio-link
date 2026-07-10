@@ -39,10 +39,8 @@ export default function TopPages({ pages, days }) {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
-
   // ดึง Domain ปัจจุบันอัตโนมัติ (เช่น http://localhost:5173 หรือ https://milink.swceservice.com)
   const baseUrl = window.location.origin;
-
 
   return (
     <div className="bg-white rounded-[1.5rem] p-6 shadow-sm border border-slate-50 flex flex-col h-full">
@@ -81,14 +79,14 @@ export default function TopPages({ pages, days }) {
                
                 // คำนวณอันดับ (Rank) ที่ถูกต้อง แม้จะอยู่หน้า 2, 3...
                 const rankIndex = indexOfFirstItem + index + 1;
-               
+                
                 // เตรียมข้อมูล URL ปลายทาง
                 const userPath = page.username || (page.name ? page.name.replace('@', '') : 'unknown');
                 const fullLink = `${baseUrl}/${userPath}`;
-               
+                
                 // ตัด http:// หรือ https:// ออกเวลาแสดงผลให้ดูมินิมอล
                 const displayLink = fullLink.replace(/^https?:\/\//, '');
-               
+                
                 return (
                   <tr key={page.id || index} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="py-4 pl-2">
@@ -98,10 +96,10 @@ export default function TopPages({ pages, days }) {
                     <td className="py-4 pl-2">
                       <div className="flex flex-col">
                         <span className="font-bold text-slate-800 text-[15px]">{page.name || 'Unknown'}</span>
-                        <a
-                          href={fullLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <a 
+                          href={fullLink} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
                           className="text-[13px] text-indigo-600 hover:underline"
                         >
                           {displayLink}
