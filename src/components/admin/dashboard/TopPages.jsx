@@ -82,10 +82,12 @@ export default function TopPages({ pages, days }) {
                 
                 // เตรียมข้อมูล URL ปลายทาง
                 const userPath = page.username || (page.name ? page.name.replace('@', '') : 'unknown');
-                const fullLink = `${baseUrl}/${userPath}`;
-                
-                // ตัด http:// หรือ https:// ออกเวลาแสดงผลให้ดูมินิมอล
-                const displayLink = fullLink.replace(/^https?:\/\//, '');
+
+                // 🌟 1. ลิงก์สำหรับเวลา "กดคลิก" (เติม ?source=admin เข้าไป)
+                const fullLink = `${baseUrl}/${userPath}?source=admin`;
+
+                // 🌟 2. ลิงก์สำหรับ "แสดงผลหน้าจอ" (ตัดส่วนที่เป็น ?source=admin และ https:// ออกเพื่อให้ดูสะอาดตา)
+                const displayLink = `${baseUrl}/${userPath}`.replace(/^https?:\/\//, '');
                 
                 return (
                   <tr key={page.id || index} className="hover:bg-slate-50/50 transition-colors group">
