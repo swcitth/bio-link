@@ -281,18 +281,14 @@ const PreviewPage = ({ isPublic }) => {
     <div className="min-h-screen relative bg-slate-100 font-sans">
       
       {!isPublic && (
-        <div className="relative z-30">
+        // 🌟 1. เติม hidden md:block ตรงนี้เพื่อซ่อนแถบนี้ในมือถือทั้งหมด
+        <div className="relative z-30 hidden md:block">
           <Header onLogoClick={handleLogoClick}>
             <div className="flex items-center gap-2">
               <button onClick={handleBackClick} className="hidden md:flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors underline underline-offset-2">
                 <FaArrowLeft size={14} /> ย้อนกลับ
               </button>
-              <button onClick={handleShare} className="flex md:hidden items-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
-                <Share2 size={15} /> แชร์
-              </button>
-              <button onClick={handleLogout} className="flex md:hidden items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors shadow-md shadow-red-200">
-                <FaSignOutAlt size={15} /> ออกจากระบบ
-              </button>
+              {/* 🌟 2. ลบปุ่ม 'แชร์' และ 'ออกจากระบบ' ของเดิมทิ้งไปได้เลยครับ */}
             </div>
           </Header>
         </div>
@@ -320,7 +316,7 @@ const PreviewPage = ({ isPublic }) => {
       )}
 
       <div 
-        className={`max-w-xl mx-auto min-h-screen relative z-10 shadow-2xl ${!isPublic ? 'pt-[72px] pb-[72px] md:pb-0' : 'pt-0'}`}
+        className={`max-w-xl mx-auto min-h-screen relative z-10 shadow-2xl ${!isPublic ? 'md:pt-[72px] pt-0 pb-[72px] md:pb-0' : 'pt-0'}`}
         style={{ fontFamily: selectedFont }}
       >
         <div className="fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-xl z-0 overflow-hidden" style={{ background: screenBackground }}>
