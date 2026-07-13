@@ -296,6 +296,78 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
               );
             }
 
+            if (String(link?.type || "").toUpperCase() === "GRID2" || String(link?.type || "").toUpperCase() === "GRID3" || link?.icon === "Grid2" || link?.icon === "Grid3") {
+              
+              // เช็คว่าเป็น 3 คอลัมน์หรือไม่ เพื่อปรับคลาสของ Grid
+              const isGrid3 = String(link?.type || "").toUpperCase() === "GRID3" || link?.icon === "Grid3";
+              const gridColsClass = isGrid3 ? "grid-cols-3 gap-2" : "grid-cols-2 gap-3 md:gap-4";
+
+              return (
+                <div key={link.id || Math.random()} className={`flex flex-col ${isCompact ? "gap-2 mb-2" : "gap-4 mb-4"} w-full`}>
+                  {/* หัวข้อบล็อก */}
+                  {link.title && <h3 className={titleClass} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
+                  
+                  {/* กล่อง Grid */}
+                  <div className={`grid ${gridColsClass} w-full px-1`}>
+                    {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
+                      const itemUrl = item?.url || item?.link;
+                      const imageUrl = item?.image || item?.imageUrl; 
+                      const WrapperTag = itemUrl ? "a" : "div";
+                      
+                      return (
+                        <WrapperTag 
+                          key={item?.id || idx} 
+                          {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})} 
+                          className={`flex flex-col bg-white overflow-hidden group ${itemUrl ? "hover:shadow-md cursor-pointer transition-shadow" : "cursor-default"}`} 
+                          style={{ 
+                            textDecoration: 'none', 
+                            borderRadius: blockRadius,
+                            boxShadow: safeDesign.btnStyle === "shadow3d" ? "2px 2px 0px rgba(0,0,0,0.8)" : "0px 2px 4px rgba(0,0,0,0.05)",
+                            border: btnBorder !== "none" ? btnBorder : "1px solid rgba(0,0,0,0.05)"
+                          }}
+                          onClick={() => { if(itemUrl && onLinkClick) onLinkClick(link?.id, itemUrl) }}
+                        >
+                          {/* ส่วนรูปภาพ (สัดส่วน 1:1 จัตุรัส) */}
+                          <div className="w-full aspect-square bg-slate-100 relative overflow-hidden flex items-center justify-center">
+                            {imageUrl ? (
+                              <img 
+                                src={getImageUrl(imageUrl)} 
+                                alt={item?.name || item?.title} 
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                              />
+                            ) : (
+                              <span className="text-slate-400 text-[10px] sm:text-xs font-bold">ไม่มีรูป</span>
+                            )}
+                          </div>
+                          
+                          {/* ส่วนรายละเอียด (ชื่อ, ราคา) */}
+                          {(item?.name || item?.title || item?.price) && (
+                            <div className={`flex flex-col ${isCompact ? "p-1.5" : "p-2.5"} w-full bg-white/80 backdrop-blur-sm`}>
+                              {(item?.name || item?.title) && (
+                                <h4 className={`${isCompact ? "text-[11px]" : "text-xs sm:text-sm"} font-bold text-slate-800 truncate`}>
+                                  {item?.name || item?.title}
+                                </h4>
+                              )}
+                              {(item?.description) && (
+                                <p className={`${isCompact ? "text-[9px]" : "text-[10px] sm:text-xs"} text-slate-500 truncate mt-0.5`}>
+                                  {item.description}
+                                </p>
+                              )}
+                              {(item?.price) && (
+                                <p className={`${isCompact ? "text-[11px]" : "text-xs sm:text-sm"} font-bold text-indigo-600 mt-1`}>
+                                  {item.price} ฿
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </WrapperTag>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <div key={link?.id || Math.random()} className="w-full mb-2 flex flex-col gap-2">
                 {link?.items && link?.title && <h3 className={`${titleClass} mb-1`} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}

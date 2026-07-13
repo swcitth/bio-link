@@ -3,6 +3,23 @@ import { FiX, FiList, FiGrid, FiImage, FiCopy } from "react-icons/fi";
 import { FaYoutube, FaTiktok } from "react-icons/fa";
 
 // ============================================================
+// Custom Icon สำหรับตาราง 3 คอลัมน์ (เนื่องจาก react-icons/fi ไม่มี 3x3)
+// ============================================================
+const Grid3x3Icon = ({ size = 32 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="4" height="4" rx="0.5" />
+    <rect x="10" y="3" width="4" height="4" rx="0.5" />
+    <rect x="17" y="3" width="4" height="4" rx="0.5" />
+    <rect x="3" y="10" width="4" height="4" rx="0.5" />
+    <rect x="10" y="10" width="4" height="4" rx="0.5" />
+    <rect x="17" y="10" width="4" height="4" rx="0.5" />
+    <rect x="3" y="17" width="4" height="4" rx="0.5" />
+    <rect x="10" y="17" width="4" height="4" rx="0.5" />
+    <rect x="17" y="17" width="4" height="4" rx="0.5" />
+  </svg>
+);
+
+// ============================================================
 // AddBlockModal Component
 // ============================================================
 const AddBlockModal = ({ isOpen, onClose, onAdd }) => {
@@ -42,6 +59,20 @@ const AddBlockModal = ({ isOpen, onClose, onAdd }) => {
           sub: "รูปภาพสไลด์", 
           action: () => onAdd("SLIDER", "สไลเดอร์ใหม่", "Slider")
         },
+        // --- เพิ่มตาราง 2 คอลัมน์ ---
+        {
+          icon: <FiGrid size={32} />,
+          label: "ตาราง",
+          sub: "2 คอลัมน์",
+          action: () => onAdd("grid2", "ตาราง 2 คอลัมน์", "Grid2")
+        },
+        // --- เพิ่มตาราง 3 คอลัมน์ ---
+        {
+          icon: <Grid3x3Icon size={32} />,
+          label: "ตาราง",
+          sub: "3 คอลัมน์",
+          action: () => onAdd("grid3", "ตาราง 3 คอลัมน์", "Grid3")
+        }
       ],
     },
     {

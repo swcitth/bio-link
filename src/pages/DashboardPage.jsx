@@ -85,22 +85,26 @@ const DashboardPage = () => {
   };
 
   const handleEditClick = (link) => {
-    // แยกเอาเฉพาะเลขตัวหน้า
     const cleanId = String(link.id).split(':')[0]; 
     
-    console.log("ID ที่ส่งไปหน้า Edit คือ:", cleanId);
-    console.log("ไอคอนที่กดคือ:", link.icon);
+    console.log("DEBUG: ID =", cleanId, "| Icon =", link.icon, "| Type =", link.type);
+
+    // 1. เช็คจากทั้ง icon และ type เพื่อให้ครอบคลุม
+    const isGrid = link.icon === "Grid2" || link.icon === "Grid3" || 
+                   link.type === "GRID2" || link.type === "GRID3";
 
     if (link.icon === "Image") {
       navigate(`/edit-shop?id=${cleanId}`);
     } 
-    // ⭐️ ตรวจสอบคำที่นี่ให้ตรงกับที่ log ออกมา (ถ้า log ออกมาเป็น SLIDER ก็ต้องเขียนเป็น SLIDER)
     else if (link.icon === "Slider" || link.icon === "SLIDER") { 
       navigate(`/edit-slider?id=${cleanId}`);
     } 
     else if (link.icon === "Youtube" || link.icon === "TikTok") {
       navigate(`/edit-video?id=${cleanId}`); 
     } 
+    else if (isGrid) {
+      navigate(`/edit-grid?id=${cleanId}`);  
+    }
     else {
       navigate(`/edit-link?id=${cleanId}`);
     }
@@ -291,11 +295,18 @@ const DashboardPage = () => {
           else if (block.type === "SHOP") {
             iconName = "Shop";
           }
+          else if (block.type === "GRID2" || block.type === "Grid2") {
+            iconName = "Grid2";
+          }
+          else if (block.type === "GRID3" || block.type === "Grid3") {
+            iconName = "Grid3";
+          }
 
           return {
             id: block.id,
             title: block.title || "",
             icon: iconName,
+            type: block.type, 
             visible: block.is_visible === 1 || block.is_visible === true,
             clicks: 0,
             items: block.content_data || []
@@ -391,6 +402,8 @@ const DashboardPage = () => {
       if (defaultIcon === "Slider" || type === "SLIDER") dbType = 'SLIDER';
       else if (defaultIcon === "Image") dbType = 'IMAGE';
       else if (defaultIcon === "Youtube" || defaultIcon === "TikTok") dbType = 'VIDEO';
+      else if (type === "grid2") dbType = 'GRID2';
+      else if (type === "grid3") dbType = 'GRID3';
 
       // 2. ⭐️ ให้หลังบ้าน (Laravel) สร้างบล็อกลง Database ของจริงก่อน
       const response = await api.post('/blocks', {
@@ -404,10 +417,11 @@ const DashboardPage = () => {
 
       // 4. อัปเดตข้อมูลลง LocalStorage และ State ตามโค้ดเดิมของคุณ
       const newLink = {
-        id:      newId, // 👈 ใช้ ID จริงที่ดึงมาจากหลังบ้านแล้ว
+        id:      newId,
         title:   defaultTitle,
         url:     "",
-        icon:    defaultIcon,
+        icon:    (dbType === "GRID2") ? "Grid2" : (dbType === "GRID3") ? "Grid3" : defaultIcon,
+        type:    dbType, 
         visible: true,
         clicks:  0,
         items:   []
@@ -433,6 +447,10 @@ const DashboardPage = () => {
       else if (dbType === "VIDEO") {
         navigate(`/edit-video?platform=${defaultIcon}&id=${newId}`); 
       } 
+      // 🌟 เพิ่มหน้านี้
+      else if (dbType === "GRID2" || dbType === "GRID3") {
+        navigate(`/edit-grid?id=${newId}`); 
+      }
       else {
         navigate(`/edit-link?id=${newId}`); 
       }
