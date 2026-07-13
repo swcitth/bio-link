@@ -170,8 +170,8 @@ const DashboardPage = () => {
           name: dbData.display_name || prev.name,
           bio: dbData.bio || prev.bio,
           
-          avatar: avatarUrlToLoad || prev.avatar,
-          cover: coverUrlToLoad || prev.cover,
+          avatar: (dbData.avatar === null || dbData.avatar_url === null) ? "" : (avatarUrlToLoad || prev.avatar),
+          cover: (dbData.cover === null || dbData.cover_url === null) ? "" : (coverUrlToLoad || prev.cover),
           avatarFile: null,
           coverFile: null,
           
@@ -203,7 +203,7 @@ const DashboardPage = () => {
             btnRounded: themeCfg.btnRounded || prev.btnRounded,
             btnStyle: themeCfg.btnStyle || prev.btnStyle,
             
-            bgImage: bgImageUrlToLoad || prev.bgImage,
+            bgImage: (dbData.background === null || dbData.bg_image_url === null) ? "" : (bgImageUrlToLoad || prev.bgImage),
             bgImageFile: null
           }));
         }

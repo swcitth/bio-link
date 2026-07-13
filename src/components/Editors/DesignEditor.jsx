@@ -112,7 +112,7 @@ const DesignEditor = ({ design, setDesign, profile }) => {
               ? "border-transparent shadow-sm" 
               : "border-dashed border-slate-300 bg-slate-50/50 hover:border-indigo-400 hover:bg-indigo-50/50"
           }`}
-          style={design.bgImage ? { backgroundImage: `url(${design.bgImage})`, backgroundSize: "cover", backgroundPosition: "center" } : {}}
+          style={design.bgImage ? { backgroundImage: `url('${getImageUrl(design.bgImage)}')`, backgroundSize: "cover", backgroundPosition: "center" } : {}}
         >
           {design.bgImage && <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all" />}
 
