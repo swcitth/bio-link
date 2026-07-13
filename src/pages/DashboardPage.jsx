@@ -16,8 +16,7 @@ import StatsPage     from "../pages/StatsPage";
 import { useNavigate, useLocation } from "react-router-dom";
 import ShareModal    from "../components/Modals/ShareModal";
 
-// 🌟 นำเข้าแค่ api กลางตัวเดียวพอ (ลบ import axios ธรรมดาทิ้งแล้ว)
-import api           from "../api/axios"; 
+import api, { getImageUrl } from "../api/axios"; 
 
 // Hooks
 import { useDragSort } from "../hooks/useDragSort";
@@ -148,7 +147,7 @@ const DashboardPage = () => {
         // 🌟 ฟังก์ชันตัวช่วย: ถ้ามี http อยู่แล้วให้ใช้เลย ถ้าไม่มีให้เติมโดเมนหลังบ้านเข้าไป
         const getValidImageUrl = (path) => {
           if (!path) return null;
-          return path.startsWith('http') ? path : `http://127.0.0.1:8000${path}`;
+          return getImageUrl(path);
         };
 
         // 🌟 3. เตรียม URL ของรูปภาพ 
@@ -221,8 +220,11 @@ const DashboardPage = () => {
       if (response.status === 200) {
         const dbBlocks = response.data.data || [];
 
+        // 🌟 1. สร้างตัวแปรมานับว่ามีบล็อกกี่อันที่โดนแอบลบทิ้ง
+        let deletedCount = 0; 
+
         // ========================================================
-        // 🧹 1. ระบบเทศบาลเก็บขยะ (เช็คจากความว่างเปล่าของ Content เป็นหลัก!)
+        // 🧹 2. ระบบเทศบาลเก็บขยะ (คัดกรองบล็อกที่ไม่สมบูรณ์)
         // ========================================================
         const validBlocks = dbBlocks.filter((block) => {
           const blockType = String(block.type || '').toUpperCase();
@@ -234,33 +236,64 @@ const DashboardPage = () => {
           }
 
           let hasValidContent = false;
+          const hasBlockTitle = block.title && String(block.title).trim() !== '';
 
-          // 🌟 เช็คว่าในกล่องนี้ "มีลิงก์ หรือ รูปภาพ" ซ่อนอยู่บ้างไหม?
-          if (Array.isArray(contentData)) {
-            // กรณีเป็น Array (เช่น Slider, Shop, หรือกล่องที่มีหลายไอเทม)
-            hasValidContent = contentData.some(item => 
-              (item.url && String(item.url).trim() !== '') || 
-              (item.link && String(item.link).trim() !== '') || 
-              item.image || 
-              item.imageUrl
-            );
-          } else if (typeof contentData === 'object' && contentData !== null) {
-            // กรณีเป็น Object เดี่ยว
-            hasValidContent = (contentData.url && String(contentData.url).trim() !== '') || 
-                              (contentData.link && String(contentData.link).trim() !== '') || 
-                              contentData.image || 
-                              contentData.imageUrl;
+          // 🛑 กฎข้อที่ 1: ถ้าเป็นบล็อกลิงก์ (LINK) "บังคับว่าต้องมี URL เท่านั้น"
+          if (blockType === 'LINK') {
+            if (Array.isArray(contentData) && contentData.length > 0) {
+              hasValidContent = contentData.some(item => 
+                (item.url && String(item.url).trim() !== '') || 
+                (item.link && String(item.link).trim() !== '')
+              );
+            } else if (typeof contentData === 'object' && contentData !== null && !Array.isArray(contentData)) {
+              hasValidContent = (contentData.url && String(contentData.url).trim() !== '') || 
+                                (contentData.link && String(contentData.link).trim() !== '');
+            }
+          } 
+          // 🟢 กฎข้อที่ 2: สำหรับบล็อกประเภทอื่นๆ (Shop, Slider, Image, Video) อนุโลมให้มีแค่ชื่อหรือรูปก็ได้
+          else {
+            if (Array.isArray(contentData) && contentData.length > 0) {
+              hasValidContent = contentData.some(item => 
+                (item.url && String(item.url).trim() !== '') || 
+                (item.link && String(item.link).trim() !== '') || 
+                (item.title && String(item.title).trim() !== '') || 
+                (item.name && String(item.name).trim() !== '') ||   
+                item.image || 
+                item.imageUrl
+              );
+            } else if (typeof contentData === 'object' && contentData !== null && !Array.isArray(contentData)) {
+              hasValidContent = (contentData.url && String(contentData.url).trim() !== '') || 
+                                (contentData.link && String(contentData.link).trim() !== '') || 
+                                (contentData.title && String(contentData.title).trim() !== '') || 
+                                (contentData.name && String(contentData.name).trim() !== '') ||   
+                                contentData.image || 
+                                contentData.imageUrl;
+            }
+
+            // ถ้าไม่มีอะไรเลย แต่ตัวกล่องแม่มีการตั้งชื่อไว้ ก็ถือว่ารอด
+            if (!hasValidContent && hasBlockTitle) {
+              hasValidContent = true;
+            }
           }
 
-          // 🗑️ เงื่อนไขการลบทิ้ง: ถ้าไม่มีเนื้อหาอะไรเลย (ไม่มีรูป ไม่มีลิงก์) -> ลบสถานเดียว!
+          // 🗑️ ถ้าไม่ผ่านกฎ (ไม่มีข้อมูลสำคัญ) ให้ลบทิ้งและนับยอดสะสมไว้
           if (!hasValidContent) {
-            console.log(`🧹 ตรวจพบดราฟต์เปล่าไร้เนื้อหา [${blockType}] -> ระบบแอบลบทิ้งให้แล้วครับ`);
+            console.log(`🧹 ตรวจพบดราฟต์ที่ไม่สมบูรณ์ [${blockType}] -> ระบบกำลังลบทิ้ง`);
             api.delete(`/blocks/${block.id}`).catch(err => console.log("ลบดราฟต์ขยะไม่สำเร็จ:", err));
-            return false; // เตะทิ้ง ไม่ส่งไปแสดงผลที่หน้าจอ
+            
+            deletedCount++; // 🌟 นับเพิ่มไป 1
+            return false; // เตะทิ้ง ไม่ให้เข้ารอบไปแสดงผล
           }
 
-          return true; // มีเนื้อหาจริง ให้ผ่านเข้ารอบ
+          return true; // ข้อมูลครบถ้วน ให้ผ่านเข้ารอบได้
         });
+
+        // 🌟 3. แจ้งเตือนผู้ใช้ถ้ามีการลบขยะเกิดขึ้น
+        if (deletedCount > 0) {
+          setTimeout(() => {
+            alert(`⚠️ มีบล็อกจำนวน ${deletedCount} รายการ ถูกลบออกอัตโนมัติเนื่องจากคุณไม่ได้กรอกข้อมูลลิงก์ (URL) ครับ`);
+          }, 500); // ดีเลย์นิดนึงให้หน้าเว็บโหลดเสร็จก่อนค่อยเด้งเตือน
+        }
 
         // ========================================================
         // ⭐️ 2. นำบล็อกที่รอดจากการคัดกรอง มาจัดรูปแบบไอคอน
@@ -531,7 +564,7 @@ formData.append("bg_image_url", design.bgImage || "");
     );
 
     if (response.status === 200) {
-      alert("💾 บันทึกข้อมูลและรูปภาพลงฐานข้อมูล MySQL จริงสำเร็จเรียบร้อยแล้วครับ!");
+      alert("💾 บันทึกข้อมูลและรูปภาพลงฐานข้อมูล MySQL จริงสำเร็จเรียบร้อยแล้ว");
       
       setProfile(prev => ({ ...prev, username: cleanProfileUsername }));
 

@@ -47,7 +47,7 @@ const ProfileEditor = ({ profile, setProfile }) => {
             (profile.cover || profile.cover_url) ? "border-transparent shadow-sm" : "border-dashed border-slate-300 bg-slate-50/50 hover:border-indigo-400 hover:bg-indigo-50/50"
           }`}
           // ⭐️ ครอบด้วย getImageUrl() และเช็คตัวแปร cover_url
-          style={(profile.cover || profile.cover_url) ? { backgroundImage: `url(${getImageUrl(profile.cover || profile.cover_url)})`, backgroundSize: "cover", backgroundPosition: "center" } : {}}
+          style={(profile.cover || profile.cover_url) ? { backgroundImage: `url('${getImageUrl(profile.cover || profile.cover_url)}')`, backgroundSize: "cover", backgroundPosition: "center" } : {}}
         >
           {(profile.cover || profile.cover_url) && <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all" />}
           <div className="relative z-10 flex flex-col items-center">
