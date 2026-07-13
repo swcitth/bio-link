@@ -225,13 +225,29 @@ const PreviewPage = ({ isPublic }) => {
   };
 
   const handleLogout = async () => {
-    try { await api.post('/logout'); } catch (error) { console.error(error); }
-    finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      navigate("/");
-    }
-  };
+  try { 
+    // แจ้งหลังบ้านให้ทำลาย Token ทิ้งเพื่อความปลอดภัย
+    await api.post('/logout'); 
+  } catch (error) { 
+    console.error("Logout API Error:", error); 
+  } finally {
+    // เคลียร์ข้อมูลทั้งใน localStorage และ sessionStorage ให้เกลี้ยง
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    
+    // หรือถ้าในเว็บไม่ได้เก็บค่าสำคัญอื่นๆ ไว้ จะใช้คำสั่งเหมาเข่งแบบนี้ก็ได้ครับ
+    // localStorage.clear();
+    // sessionStorage.clear();
+
+    // แจ้งเตือน Tab อื่นๆ ว่าเราทำการ Logout แล้ว (อิงจากที่คุณเขียนในหน้า Login)
+    window.dispatchEvent(new Event("storage"));
+
+    // เด้งกลับไปหน้าแรก
+    navigate("/");
+  }
+};
 
   const selectedFont = FONT_MAP[design.font] || FONT_MAP.kanit;
   const screenBackground = design.theme === "custom" 
