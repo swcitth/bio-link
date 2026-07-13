@@ -110,6 +110,23 @@ export default function EditLink() {
 
   // ฟังก์ชันหลักเมื่อกดปุ่ม "บันทึกการเปลี่ยนแปลง" 
   const onSubmit = async (data) => {
+    
+    // ==========================================
+    // 🌟 ด่านที่ 2: ตรวจสอบข้อมูลก่อนส่งไปหลังบ้าน
+    // ==========================================
+    
+    // 1. เช็คว่าไม่มีลิงก์เลยสักอัน (เช่น กดลบทิ้งหมดแล้วกดเซฟ)
+    if (!data.items || data.items.length === 0) {
+      alert("❌ กรุณาเพิ่มลิงก์อย่างน้อย 1 รายการก่อนกดบันทึก");
+      return; // 🛑 หยุดการทำงาน ไม่ส่งข้อมูลไปหลังบ้าน
+    }
+
+    // 2. เช็คว่ามีกล่องไหนที่ "ลืมใส่ URL" หรือไม่
+    const hasEmptyUrl = data.items.some(item => !item.url || String(item.url).trim() === "");
+    if (hasEmptyUrl) {
+      alert("❌ กรุณากรอก URL ลิงก์ให้ครบทุกช่องก่อนกดบันทึก");
+      return; // 🛑 หยุดการทำงาน ไม่ส่งข้อมูลไปหลังบ้าน
+    }
     try {
       // เตรียมข้อมูลให้ตรงกับที่ Laravel ต้องการ (title และ content_data)
       const payload = {
@@ -121,12 +138,9 @@ export default function EditLink() {
 
       let response; 
 
-      // เช็คเงื่อนไขพระเอก: มี ID = แก้ไข / ไม่มี ID = สร้างใหม่
       if (linkId) {
-        // โหมดแก้ไข (PUT)
         response = await api.put(`/blocks/${linkId}`, payload);
       } else {
-        // โหมดสร้างใหม่ (POST)
         response = await api.post(`/blocks`, payload);
       }
 

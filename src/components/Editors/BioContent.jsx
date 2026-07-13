@@ -123,7 +123,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                             {tiktokId ? (
                               <iframe 
                                 className="w-full h-full" 
-                                src={`https://www.tiktok.com/embed/v2/${tiktokId}?lang=th-TH`} 
+                                src={`https://www.tiktok.com/embed/v2/${tiktokId}?lang=th-TH&autoplay=1&mute=1`} 
                                 title={item?.name || item?.title || link.title} 
                                 frameBorder="0" 
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 

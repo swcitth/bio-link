@@ -52,7 +52,7 @@ export default function ShareModal({ isOpen, onClose, profile }) {
         url: fullUrl,
       }).catch(console.error);
     } else {
-      alert('เบราว์เซอร์ของคุณไม่รองรับปุ่มแชร์นี้ โปรดใช้ปุ่มคัดลอกแทนครับ');
+      alert('เบราว์เซอร์ของคุณไม่รองรับปุ่มแชร์นี้ โปรดใช้ปุ่มคัดลอกแทน');
     }
   };
 
