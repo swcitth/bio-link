@@ -20,6 +20,8 @@ import CRMDashboardPage from './pages/admin/CRMDashboardPage.jsx';
 
 import { LoadingProvider } from './context/LoadingContext';
 
+import UserRoute from './components/UserRoute';
+
 function App() {
   return (
     <LoadingProvider>
@@ -32,12 +34,14 @@ function App() {
         <Route path="/forgot-password" element={<AuthPage defaultView="forgot-password" />} /> 
 
         {/* หน้าหลักของระบบจัดการและโปรไฟล์ (สำหรับ User ทั่วไป) */}
-        <Route path="/dd" element={<DashboardPage />} />
-        <Route path="/preview" element={<PreviewPage isPublic={false} />} />
-        <Route path="/edit-link" element={<EditLink />} />
-        <Route path="/edit-shop" element={<EditShop />} />
-        <Route path="/edit-video" element={<EditVideo />} />
-        <Route path="/edit-slider" element={<EditSlider />} />
+        <Route element={<UserRoute />}>
+          <Route path="/dd" element={<DashboardPage />} />
+          <Route path="/preview" element={<PreviewPage isPublic={false} />} />
+          <Route path="/edit-link" element={<EditLink />} />
+          <Route path="/edit-shop" element={<EditShop />} />
+          <Route path="/edit-video" element={<EditVideo />} />
+          <Route path="/edit-slider" element={<EditSlider />} />
+        </Route>
 
         {/* นโยบายคุกกี้และการตั้งค่าคุกกี้ */}
         <Route path="/cookie-policy" element={<CookiePolicyPage />} />  
