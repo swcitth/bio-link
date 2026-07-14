@@ -35,6 +35,42 @@ const getTiktokId = (url) => {
   return match ? match[1] : null;
 };
 
+const formatUrl = (inputUrl) => {
+  if (!inputUrl) return null;
+  
+  const url = String(inputUrl).trim();
+
+  // 🌟 1. ดักจับว่าเป็นอีเมลหรือไม่
+  if (url.includes('@') && !url.startsWith('http')) {
+    const cleanEmail = url.replace('mailto:', '').trim(); 
+    
+    // 🌟 2. เช็คว่าอุปกรณ์ที่ใช้เปิดคือ "มือถือ" หรือไม่
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      // 📱 สำหรับมือถือ: ใช้ mailto: เพื่อปลุกแอปอีเมลในเครื่อง
+      return `mailto:${cleanEmail}`;
+    } else {
+      // 💻 สำหรับคอมพิวเตอร์: บังคับเปิดหน้าเว็บเขียนจดหมายของ Gmail
+      return `https://mail.google.com/mail/?view=cm&fs=1&to=${cleanEmail}`;
+    }
+  }
+  
+  // ==========================================
+  // ส่วนด้านล่างนี้คือของเบอร์โทรและเว็บปกติ (เหมือนเดิมครับ)
+  // ==========================================
+  const phoneRegex = /^[0-9\-+]{9,15}$/;
+  if (phoneRegex.test(url) && !url.startsWith('tel:')) {
+    return `tel:${url.replace(/-/g, '')}`; 
+  }
+
+  if (!url.startsWith('http') && !url.startsWith('mailto:') && !url.startsWith('tel:')) {
+    return `https://${url}`;
+  }
+
+  return url;
+};
+
 const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, onLinkClick }) => {
   const safeLinks = Array.isArray(links) ? links : [];
   const safeProfile = profile || {};
@@ -58,6 +94,42 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
     : (activeTheme?.cfg?.coverBg || activeTheme?.cfg?.bgGradient || "#D8B4FE");
 
   const defaultAvatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
+  const handleItemClick = async (e, blockId, url) => {
+    if (!url) return;
+
+    console.log(`[🔍 Debug] 1. มีคนกดปุ่ม!`);
+    console.log(`- Block ID: ${blockId}`);
+    console.log(`- URL: ${url}`);
+
+    // ถ้าเป็นเบอร์โทรหรืออีเมล ให้เบรกเบราว์เซอร์ไว้ก่อน
+    if (!url.startsWith('http')) {
+      e.preventDefault(); 
+      console.log(`[🔍 Debug] 2. 🛑 เบรกเบราว์เซอร์สำเร็จ ไม่ให้รีบเด้งเปิดแอป`);
+    }
+
+    if (onLinkClick) {
+      console.log(`[🔍 Debug] 3. 📡 กำลังส่งข้อมูลให้ API นับยอด...`);
+      try {
+        // ลองใส่ await เผื่อว่าฟังก์ชัน onLinkClick ของคุณเป็นแบบ Async
+        await onLinkClick(blockId, url);
+        console.log(`[🔍 Debug] 4. ✅ API ส่งข้อมูลเสร็จเรียบร้อย!`);
+      } catch (error) {
+        console.error(`[🔍 Debug] ❌ 4. API พัง! ยิงไม่เข้า เพราะ:`, error);
+      }
+    } else {
+      console.warn(`[🔍 Debug] ⚠️ ไม่มีฟังก์ชัน onLinkClick (ไม่ได้เชื่อมกับหลังบ้าน)`);
+    }
+
+    // ถ้าเป็นเบอร์/อีเมล ค่อยเปิดแอปหลังจาก API ทำงานเสร็จ
+    if (!url.startsWith('http')) {
+      console.log(`[🔍 Debug] 5. 📱 สั่งให้เบราว์เซอร์เปิดแอปโทร/อีเมลได้!`);
+      
+      // เพิ่มเวลาหน่วงเป็น 300ms เพื่อความชัวร์ (0.3 วินาที)
+      setTimeout(() => {
+        window.location.href = url;
+      }, 300); 
+    }
+  };
 
   return (
     <div className={`relative z-10 ${isCompact ? "pb-5" : "pb-20"}`} style={{ fontFamily: selectedFont }}>
@@ -177,7 +249,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                   
                   <div className="flex items-start overflow-x-auto gap-4 pb-4 px-1 snap-x snap-mandatory scroll-smooth" style={{ scrollbarWidth: "none" }}>
                     {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
-                      const itemUrl = item?.url || item?.link;
+                      const itemUrl = formatUrl(item?.url || item?.link);
                       const imageUrl = item?.image || item?.imageUrl; 
                       const WrapperTag = itemUrl ? "a" : "div";
                       
@@ -190,10 +262,10 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                       return (
                         <WrapperTag 
                           key={item?.id || idx} 
-                          {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})} 
+                          {...(itemUrl ? { href: itemUrl, target: itemUrl.startsWith('http') ? "_blank" : "_self", rel: "noopener noreferrer" } : {})} 
                           className={`relative snap-center shrink-0 w-[85%] max-w-[280px] aspect-square group shadow-sm overflow-hidden ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"}`} 
                           style={{ textDecoration: 'none', borderRadius: blockRadius }}
-                          onClick={() => { if(itemUrl && onLinkClick) onLinkClick(link?.id, itemUrl) }}
+                          onClick={(e) => handleItemClick(e, link?.id, itemUrl)}
                         >
                           {imageUrl ? (
                             <img src={getImageUrl(imageUrl)} alt={item?.name || item?.title} className="w-full h-full object-cover bg-white" />
@@ -239,17 +311,17 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                   
                   <div className={`flex flex-col items-start w-full ${isCompact ? "gap-4" : "gap-6"}`}>
                     {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
-                      const itemUrl = item?.url || item?.link;
+                      const itemUrl = formatUrl(item?.url || item?.link);
                       const imageUrl = item?.image || item?.imageUrl; 
                       const WrapperTag = itemUrl ? "a" : "div";
                       
                       return (
                         <WrapperTag 
                           key={item?.id || idx} 
-                          {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})} 
+                          {...(itemUrl ? { href: itemUrl, target: itemUrl.startsWith('http') ? "_blank" : "_self", rel: "noopener noreferrer" } : {})} 
                           className={`flex flex-col group items-start ${itemUrl ? "hover:opacity-90 cursor-pointer" : "cursor-default"} w-full`} 
                           style={{ textDecoration: 'none' }}
-                          onClick={() => { if(itemUrl && onLinkClick) onLinkClick(link?.id, itemUrl) }}
+                          onClick={(e) => handleItemClick(e, link?.id, itemUrl)}
                         >
                           {imageUrl ? (
                             <img src={getImageUrl(imageUrl)} alt={item?.name || item?.title} className="w-full h-auto max-h-[500px] object-contain shadow-sm mb-3 bg-white/50" style={{ borderRadius: blockRadius }} />
@@ -288,16 +360,16 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
               <div key={link?.id || Math.random()} className="w-full mb-2 flex flex-col gap-2">
                 {link?.items && link?.title && <h3 className={`${titleClass} mb-1`} style={{ color: safeDesign.textColor || "#000" }}>{link.title}</h3>}
                 {subItems.filter(item => item?.isVisible !== false && item?.visible !== false).map((item, idx) => {
-                  const itemUrl = item?.url || item?.link;
+                  const itemUrl = formatUrl(item?.url || item?.link);
                   const WrapperTag = itemUrl ? "a" : "div";
                   const ItemIcon = ICON_MAP[item?.iconId] || ICON_MAP[item?.icon] || ICON_MAP[link?.icon] || ICON_MAP["Link"];
                   
                   return (
                     <WrapperTag 
                       key={item?.id || idx} 
-                      {...(itemUrl ? { href: itemUrl, target: "_blank", rel: "noopener noreferrer" } : {})}
+                      {...(itemUrl ? { href: itemUrl, target: itemUrl.startsWith('http') ? "_blank" : "_self", rel: "noopener noreferrer" } : {})}
                       className={`block w-full flex items-center transition-transform ${itemUrl ? "hover:scale-[1.02] cursor-pointer" : "cursor-default"}`}
-                      onClick={() => { if(itemUrl && onLinkClick) onLinkClick(link?.id, itemUrl) }}
+                      onClick={(e) => handleItemClick(e, link?.id, itemUrl)}
                       style={{
                         padding: isCompact ? "8px 12px" : "16px",
                         backgroundColor: safeDesign.btnStyle === "outline" ? "transparent" : (safeDesign.btnBgColor || "#ffffff"),
