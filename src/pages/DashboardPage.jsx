@@ -19,7 +19,7 @@ import ShareModal    from "../components/Modals/ShareModal";
 import api, { getImageUrl } from "../api/axios"; 
 
 // Hooks
-import { useDragSort } from "../hooks/useDragSort";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 import {
   MOCK_DESIGN,
@@ -357,8 +357,23 @@ const DashboardPage = () => {
     window.dispatchEvent(new Event("storage"));
   }, [profile, links, design]);
 
-  const { handleDragStart, handleDragEnter, handleDragEnd } =
-    useDragSort(links, setLinks);
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+
+    if (sourceIndex === destinationIndex) return;
+
+    // สลับตำแหน่ง Array
+    const reorderedLinks = Array.from(links);
+    const [removed] = reorderedLinks.splice(sourceIndex, 1);
+    reorderedLinks.splice(destinationIndex, 0, removed);
+
+    // 🌟 สั่งเปลี่ยนหน้าจอทันที (ส่วนการย้ายข้อมูลไป LocalStorage จะทำงานอัตโนมัติจาก useEffect ด้านบนอยู่แล้ว)
+    setLinks(reorderedLinks);
+    
+  };
 
   const handleUpdateLink = (updatedLink) =>
     setLinks((prev) => prev.map((l) => (l.id === updatedLink.id ? updatedLink : l)));
@@ -558,6 +573,15 @@ formData.append("bg_image_url", design.bgImage || "");
     );
 
     if (response.status === 200) {
+      
+      // 🌟 เพิ่มโค้ดอัปเดตลำดับบล็อกตรงนี้! 
+      // มันจะทำงานแบบเงียบๆ รวดเดียวพร้อมกับการบันทึกโปรไฟล์
+      await Promise.all(
+        links.map((link, index) =>
+          api.put(`/blocks/${link.id}`, { display_order: index + 1 }).catch(() => {})
+        )
+      );
+
       alert("💾 บันทึกข้อมูลและรูปภาพลงฐานข้อมูล MySQL จริงสำเร็จเรียบร้อยแล้ว");
       
       setProfile(prev => ({ ...prev, username: cleanProfileUsername }));
@@ -643,20 +667,31 @@ formData.append("bg_image_url", design.bgImage || "");
                       <span className="text-xs text-slate-400">ลากเพื่อเรียงลำดับ</span>
                     </div>
 
-                    {links.map((link, index) => (
-                      <LinkItem
-                        key={link.id}
-                        link={link}
-                        index={index}
-                        onUpdate={handleUpdateLink}
-                        onDelete={handleDeleteLink}
-                        onToggleVisibility={handleToggleVisibility}
-                        onDragStart={handleDragStart}
-                        onDragEnter={handleDragEnter}
-                        onDragEnd={handleDragEnd}
-                        onEdit={handleEditClick}
-                      />
-                    ))}
+                    <DragDropContext onDragEnd={onDragEnd}>
+                      <Droppable droppableId="dashboard-droppable">
+                        {(provided) => (
+                          <div {...provided.droppableProps} ref={provided.innerRef}>
+                            {links.map((link, index) => (
+                              <Draggable key={String(link.id)} draggableId={String(link.id)} index={index}>
+                                {(provided, snapshot) => (
+                                  <LinkItem
+                                    link={link}
+                                    index={index}
+                                    onUpdate={handleUpdateLink}
+                                    onDelete={handleDeleteLink}
+                                    onToggleVisibility={handleToggleVisibility}
+                                    onEdit={handleEditClick}
+                                    provided={provided} // 🌟 ส่งต่อให้ LinkItem
+                                    snapshot={snapshot} // 🌟 ส่งต่อให้ LinkItem
+                                  />
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
 
                     {links.length === 0 && (
                       <div className="text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 text-sm">
