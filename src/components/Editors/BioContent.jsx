@@ -4,6 +4,7 @@ import { THEME_LIST } from "../../constants/themes";
 import SaveContactButton from "../UI/Button/SaveContactButton"; 
 import BlockSlider from "../Blocks/BlockSlider"; 
 import api, { getImageUrl } from "../../api/axios";
+import TikTok from '../Blocks/TikTok';
 
 const FONT_MAP = {
   kanit: "'Kanit', sans-serif",
@@ -186,32 +187,19 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
                     const isTikTokItem = videoUrl.toLowerCase().includes("tiktok") || (link?.icon === "TikTok" && !videoUrl);
 
                     if (isTikTokItem) {
-                      const tiktokId = getTiktokId(videoUrl);
-                      const TiktokIcon = ICON_MAP["TikTok"] || ICON_MAP["Link"];
                       return (
-                        <div key={item?.id || idx} className="flex flex-col gap-1">
-                          {/* 🌟 โครงสร้างกรอบเดิมของคุณคงเดิมทั้งหมด */}
-                          <div className="w-full overflow-hidden shadow-md bg-black relative" style={{ aspectRatio: '9/16', maxHeight: isCompact ? '480px' : '600px', borderRadius: blockRadius }}>
-                            {tiktokId ? (
-                              <iframe 
-                                className="w-full h-full" 
-                                src={`https://www.tiktok.com/embed/v2/${tiktokId}?lang=th-TH&autoplay=1&mute=1`} 
-                                title={item?.name || item?.title || link.title} 
-                                frameBorder="0" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                                allowFullScreen 
-                                scrolling="no" 
-                              />
-                            ) : (
-                              <div className={`w-full h-full flex flex-col items-center justify-center text-white text-center px-2 ${isCompact ? "min-h-[200px]" : "min-h-[300px]"}`}>
-                                {TiktokIcon && <TiktokIcon size={isCompact ? 32 : 40} className="mb-2 opacity-40" />}
-                                <p className={`font-bold ${isCompact ? "text-sm" : "text-base"}`}>ยังไม่มีวิดีโอ TikTok</p>
-                                <p className={`${isCompact ? "text-[10px]" : "text-sm"} opacity-70 mt-1`}>โปรดใส่ลิงก์แบบเต็ม</p>
-                              </div>
-                            )}
-                          </div>
-                          {(item?.name || item?.title) && <p className={nameClass} style={{ color: safeDesign.textColor || "#000" }}>{item?.name || item?.title}</p>}
-                        </div>
+                        <TikTok 
+                          key={item?.id || idx}
+                          item={item}
+                          videoUrl={videoUrl}
+                          isCompact={isCompact}
+                          blockRadius={blockRadius}
+                          ICON_MAP={ICON_MAP}
+                          safeDesign={safeDesign}
+                          nameClass={nameClass}
+                          idx={idx}
+                          getTiktokId={getTiktokId}
+                        />
                       );
                     } else {
                       const youtubeEmbedUrl = getYoutubeEmbedUrl(videoUrl, item?.isAutoplay || link?.isAutoplay); 

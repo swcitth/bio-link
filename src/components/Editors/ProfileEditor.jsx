@@ -85,7 +85,9 @@ const ProfileEditor = ({ profile, setProfile }) => {
       <hr className="border-slate-100 mb-6" />
 
       {/* Avatar + Fields */}
-      <div className="flex gap-5 items-start">
+      {/* 🟢 แก้ไข: มือถือใช้ flex-col จัดกึ่งกลาง / จอคอมใช้ sm:flex-row จัดชิดซ้าย-ขวา */}
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6 w-full">
+        
         {/* Avatar */}
         <div
           className="relative shrink-0 cursor-pointer z-10"
@@ -93,8 +95,8 @@ const ProfileEditor = ({ profile, setProfile }) => {
           onMouseOver={() => setHoverAvatar(true)}
           onMouseOut={() => setHoverAvatar(false)}
         >
-          <div className="w-[72px] h-[72px] rounded-full border-4 border-white shadow-lg overflow-hidden">
-            {/* ⭐️ ครอบด้วย getImageUrl() และเช็คตัวแปร avatar_url */}
+          {/* 🟢 ปรับขนาด: มือถือรูปใหญ่หน่อย (w-24) จอคอมปรับเล็กลงนิดนึง (sm:w-[72px]) ให้พอดีกับบรรทัด */}
+          <div className="w-24 h-24 sm:w-[72px] sm:h-[72px] rounded-full border-4 border-white shadow-lg overflow-hidden">
             <img
               src={getImageUrl(profile.avatar || profile.avatar_url) || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"} alt="avatar"
               className="w-full h-full object-cover"
@@ -102,13 +104,14 @@ const ProfileEditor = ({ profile, setProfile }) => {
           </div>
           {hoverAvatar && (
             <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center">
-              <Camera size={18} className="text-white" />
+              <Camera size={20} className="text-white" />
             </div>
           )}
         </div>
 
         {/* Text Fields */}
-        <div className="flex-1 flex flex-col gap-3">
+        {/* 🟢 ใส่ flex-1 เพื่อให้ช่องข้อความขยายเต็มพื้นที่ฝั่งขวาเมื่ออยู่บนจอคอม */}
+        <div className="w-full flex-1 flex flex-col gap-3">
           
           {/* Name */}
           <div className="relative">
