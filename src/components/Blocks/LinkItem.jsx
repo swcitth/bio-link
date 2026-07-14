@@ -3,7 +3,7 @@
 // ============================================================
 
 import React, { useState } from "react";
-import { FiEdit2, FiEye, FiEyeOff, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiEye, FiEyeOff, FiTrash2, FiCopy } from "react-icons/fi";
 import { FaGripVertical, FaLink } from "react-icons/fa";
 import { ICON_MAP } from "../../constants/icons";
 
@@ -12,12 +12,11 @@ const LinkItem = ({
   index,
   onDelete,
   onToggleVisibility,
-  onDragStart,
-  onDragEnter,
-  onDragEnd,
   onEdit,
+  provided, // 🌟 รับมาจาก Dashboard
+  snapshot  // 🌟 รับมาจาก Dashboard
 }) => {
-  const [isDragOver, setIsDragOver] = useState(false);
+  // (ไม่ต้องมี State isDragOver แล้ว)
 
 // 1. ระบบแกะกล่องข้อมูล
   let safeItems = link?.items || [];
@@ -43,6 +42,14 @@ const LinkItem = ({
   else if (link.icon === "Youtube" || link.icon === "TikTok") {
     IconComponent = ICON_MAP[firstItemIcon] || ICON_MAP[link?.icon] || ICON_MAP["Link"];
   } 
+  // 🌟 เพิ่มส่วนนี้: ถ้าเป็นสไลด์ ให้ใช้ไอคอน FiCopy
+  else if (link.icon === "Slider" || link.icon === "SLIDER") {
+    IconComponent = FiCopy;
+  }
+  // 🌟 เพิ่มส่วนนี้ด้วยเลย: ถ้าเป็นของขาย (Shop) ให้ใช้ FaImage
+  else if (link.icon === "Shop" || link.icon === "SHOP") {
+    IconComponent = ICON_MAP["Image"] || FaLink;
+  }
   // กรณีอื่นๆ (บล็อก "ปุ่มลิงก์") ให้แสดงห่วงโซ่เสมอ
   else {
     IconComponent = FaLink;
@@ -50,16 +57,13 @@ const LinkItem = ({
   
   return (
     <div
-      draggable
-      onDragStart={(e) => onDragStart(e, index)}
-      onDragEnter={(e) => { setIsDragOver(true); onDragEnter(e, index); }}
-      onDragLeave={() => setIsDragOver(false)}
-      onDragEnd={() => { setIsDragOver(false); onDragEnd(); }}
-      onDragOver={(e) => e.preventDefault()}
+      ref={provided.innerRef}
+      {...provided.draggableProps}
+      style={provided.draggableProps.style} // 🌟 จุดที่ 1: เพิ่มบรรทัดนี้สำคัญมาก! (ช่วยให้ลื่น 60FPS)
       className={`
-        rounded-2xl mb-3 overflow-hidden transition-all duration-200
-        ${isDragOver
-          ? "border-2 border-dashed border-indigo-400 bg-indigo-50"
+        rounded-2xl mb-3 overflow-hidden transition-colors transition-shadow duration-200
+        ${snapshot.isDragging
+          ? "border-2 border-dashed border-indigo-400 bg-indigo-50 scale-[1.02] shadow-lg"
           : "border border-white/80 bg-white/80 shadow-sm hover:shadow-md hover:border-indigo-100"
         }
         ${!link.visible ? "opacity-60 grayscale-[40%]" : ""}
@@ -68,10 +72,13 @@ const LinkItem = ({
       <div className="flex items-center gap-3 p-3">
 
         {/* Drag Handle */}
-        <FaGripVertical
-          size={16}
-          className="text-slate-300 hover:text-slate-500 cursor-grab shrink-0 transition-colors"
-        />
+        <div 
+          {...provided.dragHandleProps} 
+          // 🌟 จุดที่ 2: เพิ่ม touch-none เข้าไปที่บรรทัดนี้ (ทำให้แตะแล้วขยับทันที ไม่ต้องรอกดค้าง)
+          className="p-1 -ml-1 cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 shrink-0 transition-colors touch-none"
+        >
+          <FaGripVertical size={16} />
+        </div>
 
         {/* Icon */}
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-50 to-pink-50 flex items-center justify-center shrink-0 text-slate-600">
