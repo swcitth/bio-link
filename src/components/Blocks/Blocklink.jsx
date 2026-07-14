@@ -59,7 +59,8 @@ export default function Blocklink({
           {/* ⭐️ แก้ไขให้ถูกต้อง: เปลี่ยนจาก MdAppRegistration เป็น register */}
           <input 
             type="text" 
-            placeholder="https://"
+            // 🌟 แนะนำให้เปลี่ยน placeholder เพื่อบอกใบ้ผู้ใช้งาน
+            placeholder="https://..., เบอร์โทร, หรือ Email"
             {...register(`items.${index}.url`)}
             className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all" 
           />
