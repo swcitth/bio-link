@@ -2,16 +2,19 @@
 // src/components/NavbarDetail.jsx
 // ============================================================
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom"; 
 import { FaSignOutAlt, FaHome, FaPalette, FaChartBar } from "react-icons/fa";
-import { Eye, Share2 } from "lucide-react"; 
+// 🟢 เพิ่ม Menu และ X จาก lucide-react สำหรับไอคอน 3 ขีดและกากบาท
+import { Eye, Share2, Menu, X } from "lucide-react"; 
 
 import Header from "./Header"; 
 import api from "../../api/axios";
 
 const Navbar = ({ activeTab, setActiveTab, onShare }) => {
   const navigate = useNavigate();
+  // 🟢 State สำหรับจัดการการเปิด/ปิดเมนูบนมือถือ
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const TABS = [
     { key: "info",   label: "ข้อมูล", icon: <FaHome size={18} /> },
@@ -20,29 +23,20 @@ const Navbar = ({ activeTab, setActiveTab, onShare }) => {
   ];
 
   const handleLogout = async () => {
-  try { 
-    // แจ้งหลังบ้านให้ทำลาย Token ทิ้งเพื่อความปลอดภัย
-    await api.post('/logout'); 
-  } catch (error) { 
-    console.error("Logout API Error:", error); 
-  } finally {
-    // เคลียร์ข้อมูลทั้งใน localStorage และ sessionStorage ให้เกลี้ยง
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
-    
-    // หรือถ้าในเว็บไม่ได้เก็บค่าสำคัญอื่นๆ ไว้ จะใช้คำสั่งเหมาเข่งแบบนี้ก็ได้ครับ
-    // localStorage.clear();
-    // sessionStorage.clear();
-
-    // แจ้งเตือน Tab อื่นๆ ว่าเราทำการ Logout แล้ว (อิงจากที่คุณเขียนในหน้า Login)
-    window.dispatchEvent(new Event("storage"));
-
-    // เด้งกลับไปหน้าแรก
-    navigate("/");
-  }
-};
+    try { 
+      await api.post('/logout'); 
+    } catch (error) { 
+      console.error("Logout API Error:", error); 
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      
+      window.dispatchEvent(new Event("storage"));
+      navigate("/");
+    }
+  };
 
   return (
     <>
@@ -59,8 +53,11 @@ const Navbar = ({ activeTab, setActiveTab, onShare }) => {
           ))}
         </div>
 
-        {/* ปุ่มทั้งหมด (Desktop เห็นครบ) */}
-        <div className="flex items-center gap-2">
+        {/* 🟢 ส่วนปุ่มและเมนู 3 ขีด */}
+        {/* เพิ่ม relative เพื่อให้เมนู Dropdown อิงตำแหน่งจากกล่องนี้ */}
+        <div className="relative flex items-center gap-2">
+          
+          {/* ปุ่ม "ดู" (Desktop เห็น) */}
           <button
             onClick={() => navigate("/preview")}
             className="hidden md:flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors"
@@ -68,19 +65,56 @@ const Navbar = ({ activeTab, setActiveTab, onShare }) => {
             <Eye size={15} /> ดู
           </button>
 
+          {/* ปุ่ม "แชร์" (Desktop เห็น) */}
           <button
             onClick={onShare}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+            className="hidden md:flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
           >
             <Share2 size={15} /> แชร์
           </button>
           
+          {/* ปุ่ม "ออกจากระบบ" (Desktop เห็น) */}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors shadow-md shadow-red-200"
+            className="hidden md:flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors shadow-md shadow-red-200"
           >
             <FaSignOutAlt size={15} /> ออกจากระบบ
           </button>
+
+          {/* 🌟 ปุ่ม 3 ขีด (Mobile เท่านั้น) */}
+          <button 
+            className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors focus:outline-none"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            title="เมนู"
+          >
+            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+
+          {/* 🌟 Dropdown Menu สำหรับมือถือ */}
+          {isMobileMenuOpen && (
+            <div className="absolute top-full right-0 mt-3 w-48 bg-white border border-slate-200 rounded-xl shadow-lg md:hidden z-[100] flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+              <button
+                onClick={() => {
+                  onShare();
+                  setIsMobileMenuOpen(false); // กดแล้วปิดเมนู
+                }}
+                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 active:bg-slate-100 text-left transition-colors border-b border-slate-100"
+              >
+                <Share2 size={16} className="text-slate-500" /> แชร์
+              </button>
+              
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 active:bg-red-100 text-left transition-colors"
+              >
+                <FaSignOutAlt size={16} className="text-red-500" /> ออกจากระบบ
+              </button>
+            </div>
+          )}
+
         </div>
       </Header>
 
@@ -94,7 +128,6 @@ const Navbar = ({ activeTab, setActiveTab, onShare }) => {
             <span className="text-[10px] font-bold">{label}</span>
           </button>
         ))}
-        {/* แก้ไขปุ่มดูให้เป็น text-slate-400 เหมือนปุ่มอื่นแล้วครับ */}
         <button onClick={() => navigate("/preview")} className="flex flex-col items-center gap-1 w-full text-slate-400 hover:text-indigo-600 transition-colors">
           <Eye size={18} />
           <span className="text-[10px] font-bold">ดู</span>
@@ -102,7 +135,6 @@ const Navbar = ({ activeTab, setActiveTab, onShare }) => {
       </div>
 
       <div className="h-[72px] w-full shrink-0"></div>
-      <div className="md:hidden h-[60px] w-full shrink-0"></div>
     </>
   );
 };

@@ -628,12 +628,12 @@ formData.append("bg_image_url", design.bgImage || "");
           profile={profile} 
         />
 
-        <main className="max-w-6xl mx-auto px-4 py-6">
+        <main className="max-w-6xl mx-auto px-4 pt-4 pb-24 md:pb-6 md:py-6">
 
           {activeTab === "stats" ? (
             <StatsPage links={links} /> // ไม่ต้องส่ง links หรือ stats เข้าไป เพราะ StatsPage เรียก API เองแล้ว
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 lg:gap-8 items-start">
 
               <div>
 
