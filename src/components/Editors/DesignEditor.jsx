@@ -2,10 +2,13 @@
 // src/components/Editors/DesignEditor.jsx
 // ============================================================
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Sparkles, Type, UploadCloud, Trash2 } from "lucide-react";
 import { THEME_LIST } from "../../constants/themes";
 import { getImageUrl } from "../../api/axios";
+
+// ⭐️ 1. นำเข้า Component ป๊อปอัปตัดรูป
+import ImageCropperModal from "../Modals/ImageCropperModal";
 
 const parseColorToHex = (color) => {
   if (!color) return "#ffffff";
@@ -40,10 +43,13 @@ const debounce = (func, wait) => {
 const DesignEditor = ({ design, setDesign, profile }) => {
   const bgRef = useRef(null);
 
+  // ⭐️ 2. เพิ่ม State สำหรับควบคุมป๊อปอัปตัดรูปพื้นหลัง
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState(null);
+
   const update = (field, value) => {
     setDesign((prev) => {
       const newState = { ...prev, [field]: value };
-      // 🌟 เพิ่มเงื่อนไข: ถ้าเปลี่ยนสีต่างๆ ในหมวด Custom ให้สลับเป็นธีม custom ทันที
       if (
         field === "bgColor" || 
         field === "coverColor" || 
@@ -58,28 +64,35 @@ const DesignEditor = ({ design, setDesign, profile }) => {
     });
   };
 
-  // ✨ อัปเดต: เปลี่ยนจากการแปลง Base64 เป็นการเก็บไฟล์จริง (File Upload)
+  // ⭐️ 3. แก้ไขฟังก์ชันตอนเลือกไฟล์ ให้เรียก Modal ขึ้นมาแทนการอัปเดตทันที
   const handleBgChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const maxFileSize = 5 * 1024 * 1024; // 5 MB
+    const maxFileSize = 20 * 1024 * 1024;
     if (file.size > maxFileSize) {
-      alert("❌ รูปภาพมีขนาดใหญ่เกินไป! กรุณาเลือกรูปภาพที่มีขนาดไม่เกิน 5MB");
+      alert("❌ รูปภาพมีขนาดใหญ่เกินไป! กรุณาเลือกรูปภาพที่มีขนาดไม่เกิน 20MB");
       e.target.value = ""; 
       return;
     }
 
-    // 1. สร้าง URL พรีวิวชั่วคราว
+    // สร้าง URL พรีวิวและเปิดป๊อปอัปตัดรูป
     const previewUrl = URL.createObjectURL(file);
+    setSelectedImageSrc(previewUrl);
+    setIsCropModalOpen(true);
+    
+    e.target.value = ""; // รีเซ็ตเพื่อให้เลือกไฟล์เดิมซ้ำได้
+  };
 
-    // 2. เก็บทั้ง "ไฟล์จริง" และ "URL พรีวิว"
+  // ⭐️ 4. ฟังก์ชันรับข้อมูลรูปพื้นหลังที่ "ตัดเสร็จแล้ว" มาอัปเดตใส่ระบบ
+  const handleCropComplete = (croppedData) => {
     setDesign((prev) => ({
       ...prev,
-      bgImageFile: file,    // 👉 สำหรับส่งไปให้ Laravel (FormData)
-      bgImage: previewUrl,  // 👉 สำหรับโชว์บนหน้าจอทันที
-      theme: "custom"       // เปลี่ยนเป็นธีม custom เมื่อมีการใส่รูปพื้นหลัง
+      bgImageFile: croppedData.file,    // สำหรับส่งไปให้ Laravel (FormData)
+      bgImage: croppedData.url,         // สำหรับโชว์บนหน้าจอทันที
+      theme: "custom"                   // เปลี่ยนเป็นธีม custom อัตโนมัติ
     }));
+    setIsCropModalOpen(false);
   };
 
   const applyTheme = (themeId) => {
@@ -128,7 +141,7 @@ const DesignEditor = ({ design, setDesign, profile }) => {
                 <p className="text-sm font-semibold text-slate-600 mb-1">
                   ลากไฟล์มาวางที่นี่ หรือ <span className="text-indigo-600">คลิกเพื่ออัปโหลด</span>
                 </p>
-                <p className="text-xs text-slate-400">รองรับ JPG, PNG (ไม่เกิน 5MB)</p>
+                <p className="text-xs text-slate-400">รองรับ JPG, PNG (ไม่เกิน 20MB)</p>
               </>
             )}
           </div>
@@ -140,7 +153,6 @@ const DesignEditor = ({ design, setDesign, profile }) => {
         {design.bgImage && (
           <div className="flex justify-end mt-3">
             <button 
-              // ✨ อัปเดตตอนลบรูป ให้เคลียร์ค่าไฟล์จริงทิ้งด้วย
               onClick={() => setDesign(prev => ({ ...prev, bgImage: "", bgImageFile: null }))} 
               className="text-sm text-red-500 hover:text-red-600 flex items-center gap-1 font-semibold transition-colors"
             >
@@ -226,6 +238,17 @@ const DesignEditor = ({ design, setDesign, profile }) => {
           ))}
         </div>
       </div>
+
+      {/* ⭐️ 5. แทรกรองรับป๊อปอัปตัดรูปตรงนี้ */}
+      <ImageCropperModal 
+        isOpen={isCropModalOpen}
+        imageSrc={selectedImageSrc}
+        aspect={9 / 16} /* ปรับสัดส่วนพื้นหลังให้เป็นแนวตั้ง (มือถือ) */
+        cropShape="rect" /* คงรูปทรงให้เป็นสี่เหลี่ยม */
+        onClose={() => setIsCropModalOpen(false)}
+        onCropComplete={handleCropComplete}
+      />
+
     </div>
   );
 };
@@ -240,11 +263,9 @@ const SectionTitle = ({ icon, children }) => (
 );
 
 const ColorInput = ({ label, disabled, disabledText, value, onChange }) => {
-  // นำค่าที่รับเข้ามาผ่านฟังก์ชัน parseColorToHex เพื่อแปลงเป็น HEX ทันที
   const [localColor, setLocalColor] = React.useState(parseColorToHex(value));
 
   React.useEffect(() => {
-    // อัปเดต state ใหม่เมื่อค่า value มีการเปลี่ยนแปลงจากภายนอก
     setLocalColor(parseColorToHex(value));
   }, [value]);
 

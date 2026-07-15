@@ -149,7 +149,6 @@ export default function EditLink() {
         // สร้างเสียงกระดิ่งเตือนให้หน้ามือถือจำลอง (Phone Preview) โหลดข้อมูลใหม่
         window.dispatchEvent(new Event("db_updated"));
 
-        alert("บันทึกข้อมูลสำเร็จ!");
         navigate("/dd"); // ย้ายกลับไปหน้า Dashboard หลัก
       }
     } catch (error) {

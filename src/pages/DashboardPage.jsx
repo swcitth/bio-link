@@ -39,7 +39,64 @@ const preloadImage = (url) => {
     img.onerror = () => resolve(); // ถ้าไฟล์เสียให้ข้ามไป ระบบจะได้ไม่ค้าง
   });
 };
+// ⭐️ ฟังก์ชันตัวช่วย: ย่อรูปด้วย HTML5 Canvas (ไร้แพ็กเกจ)
+const compressImageWithCanvas = (file, maxWidth) => {
+  return new Promise((resolve) => {
+    if (!file) {
+      resolve(null);
+      return;
+    }
+    
+    // ถ้าไฟล์เล็กกว่า 500KB อยู่แล้ว ไม่ต้องย่อให้เสียเวลา
+    if (file.size <= 0.5 * 1024 * 1024) {
+      resolve(file);
+      return;
+    }
 
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        // คำนวณสัดส่วนรูปภาพใหม่
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        // สร้างผ้าใบ (Canvas) และวาดรูปลงไป
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // แปลงภาพจาก Canvas กลับมาเป็นไฟล์นามสกุล JPEG คุณภาพ 80%
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(newFile);
+            } else {
+              resolve(file); // ถ้าแปลงพัง ให้ส่งไฟล์ต้นฉบับกลับไปแทน
+            }
+          },
+          "image/jpeg",
+          0.8
+        );
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+};
 const DashboardPage = () => {
 
   const navigate = useNavigate();
@@ -167,7 +224,7 @@ const DashboardPage = () => {
           ...prev,
           username: dbData.username || realUser.username,
           name: dbData.display_name || prev.name,
-          bio: dbData.bio || prev.bio,
+          bio: dbData.bio ?? "", 
           
           avatar: (dbData.avatar === null || dbData.avatar_url === null) ? "" : (avatarUrlToLoad || prev.avatar),
           cover: (dbData.cover === null || dbData.cover_url === null) ? "" : (coverUrlToLoad || prev.cover),
@@ -252,28 +309,25 @@ const DashboardPage = () => {
           } 
           // 🟢 กฎข้อที่ 2: สำหรับบล็อกประเภทอื่นๆ (Shop, Slider, Image, Video) อนุโลมให้มีแค่ชื่อหรือรูปก็ได้
           else {
+            // บังคับว่าต้องมีข้อมูลใน contentData เท่านั้น ถึงจะถือว่าบล็อกนี้ใช้งานได้จริง
             if (Array.isArray(contentData) && contentData.length > 0) {
               hasValidContent = contentData.some(item => 
                 (item.url && String(item.url).trim() !== '') || 
                 (item.link && String(item.link).trim() !== '') || 
                 (item.title && String(item.title).trim() !== '') || 
                 (item.name && String(item.name).trim() !== '') ||   
-                item.image || 
-                item.imageUrl
+                (item.image && String(item.image).trim() !== '') || // เพิ่มเช็ค string ว่าง
+                (item.imageUrl && String(item.imageUrl).trim() !== '')
               );
             } else if (typeof contentData === 'object' && contentData !== null && !Array.isArray(contentData)) {
               hasValidContent = (contentData.url && String(contentData.url).trim() !== '') || 
                                 (contentData.link && String(contentData.link).trim() !== '') || 
                                 (contentData.title && String(contentData.title).trim() !== '') || 
                                 (contentData.name && String(contentData.name).trim() !== '') ||   
-                                contentData.image || 
-                                contentData.imageUrl;
+                                (contentData.image && String(contentData.image).trim() !== '') || 
+                                (contentData.imageUrl && String(contentData.imageUrl).trim() !== '');
             }
-
-            // ถ้าไม่มีอะไรเลย แต่ตัวกล่องแม่มีการตั้งชื่อไว้ ก็ถือว่ารอด
-            if (!hasValidContent && hasBlockTitle) {
-              hasValidContent = true;
-            }
+            
           }
 
           // 🗑️ ถ้าไม่ผ่านกฎ (ไม่มีข้อมูลสำคัญ) ให้ลบทิ้งและนับยอดสะสมไว้
@@ -434,19 +488,26 @@ const DashboardPage = () => {
       else if (defaultIcon === "Image") dbType = 'IMAGE';
       else if (defaultIcon === "Youtube" || defaultIcon === "TikTok") dbType = 'VIDEO';
 
-      // 2. ⭐️ ให้หลังบ้าน (Laravel) สร้างบล็อกลง Database ของจริงก่อน
+      // 2. ให้หลังบ้าน (Laravel) สร้างบล็อกลง Database ก่อน
       const response = await api.post('/blocks', {
         type: dbType,
         title: defaultTitle,
         content_data: []
       });
 
-      // 3. เอา ID จริงจาก Database (Primary Key) มาใช้งาน
+      // 3. เอา ID จริงจาก Database มาใช้งาน
       const newId = response.data.data.id;
+
+      // 🌟 3.5 (แก้บั๊กกระโดดขึ้นบน) สั่งยิง API ไปอัปเดตลำดับให้อยู่ล่างสุดทันที! 🌟
+      try {
+        await api.put(`/blocks/${newId}`, { display_order: links.length + 1 });
+      } catch (orderError) {
+        console.log("อัปเดตลำดับตอนสร้างไม่สำเร็จ (แต่สร้างบล็อกผ่านแล้ว):", orderError);
+      }
 
       // 4. อัปเดตข้อมูลลง LocalStorage และ State ตามโค้ดเดิมของคุณ
       const newLink = {
-        id:      newId, // 👈 ใช้ ID จริงที่ดึงมาจากหลังบ้านแล้ว
+        id:      newId, 
         title:   defaultTitle,
         url:     "",
         icon:    defaultIcon,
@@ -486,127 +547,107 @@ const DashboardPage = () => {
   };
   
   const handleSave = async () => {
-  try {
-    const cleanProfileUsername = profile.username ? profile.username.trim() : "";
+    // 🌟 1. เปิดหน้าจอ "กำลังโหลดข้อมูล" ทันทีที่กดปุ่ม
+    setIsLoading(true);
 
-    if (!cleanProfileUsername) {
-      alert("⚠️ บันทึกไม่ได้: กรุณากรอกช่อง username บนหน้าเว็บก่อนครับ!");
-      return;
-    }
+    try {
+      const cleanProfileUsername = profile.username ? profile.username.trim() : "";
 
-    localStorage.setItem("bio_profile", JSON.stringify({ ...profile, username: cleanProfileUsername }));
-    localStorage.setItem("bio_links", JSON.stringify(links));
-    localStorage.setItem("bio_design", JSON.stringify(design));
-
-const formData = new FormData();
-formData.append("_method", "PUT"); 
-
-// ... ข้อมูล Text อื่นๆ ส่งเหมือนเดิม ...
-formData.append("username", cleanProfileUsername); 
-formData.append("display_name", profile.name || "");
-formData.append("bio", profile.bio || "");
-formData.append("contact_name", profile.contactName || "");
-formData.append("contact_phone", profile.phone || "");
-formData.append("contact_email", profile.email || "");
-formData.append("contact_company", profile.company || "");
-formData.append("contact_job_title", profile.title || "");
-formData.append("contact_website", profile.website || "");
-formData.append("show_save_contact", profile.showSaveContact !== false ? 1 : 0);
-
-// 🌟🌟🌟 ส่วนที่ต้องแก้: การส่งข้อมูลรูปภาพ 🌟🌟🌟
-
-// 1. จัดการรูป Avatar
-if (profile.avatarFile) {
-    // ถ้ามีการเลือกไฟล์ใหม่ ให้ส่ง 'ตัวไฟล์' ไปที่ Key 'avatar'
-    formData.append("avatar", profile.avatarFile);
-}
-// ส่ง URL ควบคู่ไปด้วย เพื่อให้ Backend รู้ว่าไม่ได้สั่งลบ (ถ้ากดลบจะเป็นค่าว่าง Backend จะได้ลบให้)
-formData.append("avatar_url", profile.avatar || ""); 
-
-
-// 2. จัดการรูป Cover
-if (profile.coverFile) {
-    formData.append("cover", profile.coverFile);
-}
-formData.append("cover_url", profile.cover || "");
-
-
-// 3. จัดการรูป Background (ถ้ามี)
-if (design.bgImageFile) { // สมมติว่าใน design state มีเก็บไฟล์ไว้
-    formData.append("bg_image", design.bgImageFile);
-}
-formData.append("bg_image_url", design.bgImage || "");
-
-    const themeConfigData = {
-      theme: design.theme || "custom",
-      font: design.font || "kanit",
-      bgColor: design.bgColor || "",
-      coverColor: design.coverColor || "",
-      textColor: design.textColor || "",
-      btnBgColor: design.btnBgColor || "",
-      btnTextColor: design.btnTextColor || "",
-      btnBorderColor: design.btnBorderColor || "",
-      btnRounded: design.btnRounded || "rounded",
-      btnStyle: design.btnStyle || "none",
-    };
-    formData.append("theme_config", JSON.stringify(themeConfigData));
-
-    if (profile.avatarFile) {
-      formData.append("avatar", profile.avatarFile);
-    }
-    if (profile.coverFile) {
-      formData.append("cover", profile.coverFile);
-    }
-    if (design.bgImageFile) {
-      formData.append("bg_image", design.bgImageFile);
-    }
-
-    // 🌟 ส่วนนี้ใช้ api.post ถูกต้องอยู่แล้วค่ะ
-    const response = await api.post(
-      `/profiles/${realUser.username}/test-update`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      if (!cleanProfileUsername) {
+        alert("⚠️ บันทึกไม่ได้: กรุณากรอกช่อง username บนหน้าเว็บก่อนครับ!");
+        return;
       }
-    );
 
-    if (response.status === 200) {
+      localStorage.setItem("bio_profile", JSON.stringify({ ...profile, username: cleanProfileUsername }));
+      localStorage.setItem("bio_links", JSON.stringify(links));
+      localStorage.setItem("bio_design", JSON.stringify(design));
+
+      const formData = new FormData();
+      formData.append("_method", "PUT"); 
+      formData.append("username", cleanProfileUsername); 
+      formData.append("display_name", profile.name || "");
+      formData.append("bio", profile.bio || "");
+      formData.append("contact_name", profile.contactName || "");
+      formData.append("contact_phone", profile.phone || "");
+      formData.append("contact_email", profile.email || "");
+      formData.append("contact_company", profile.company || "");
+      formData.append("contact_job_title", profile.title || "");
+      formData.append("contact_website", profile.website || "");
+      formData.append("show_save_contact", profile.showSaveContact !== false ? 1 : 0);
+
+      // 🌟🌟🌟 2. สั่งย่อรูปด้วย Canvas (ทำงานพร้อมกัน 3 รูป)
+      const [finalAvatar, finalCover, finalBg] = await Promise.all([
+        compressImageWithCanvas(profile.avatarFile, 400),
+        compressImageWithCanvas(profile.coverFile, 1200),
+        compressImageWithCanvas(design.bgImageFile, 1920)
+      ]);
+
+      // นำไฟล์ที่ย่อเสร็จแล้วใส่ลง FormData
+      if (finalAvatar) formData.append("avatar", finalAvatar);
+      formData.append("avatar_url", profile.avatar || ""); 
       
-      // 🌟 เพิ่มโค้ดอัปเดตลำดับบล็อกตรงนี้! 
-      // มันจะทำงานแบบเงียบๆ รวดเดียวพร้อมกับการบันทึกโปรไฟล์
-      await Promise.all(
-        links.map((link, index) =>
-          api.put(`/blocks/${link.id}`, { display_order: index + 1 }).catch(() => {})
-        )
+      if (finalCover) formData.append("cover", finalCover);
+      formData.append("cover_url", profile.cover || "");
+
+      if (finalBg) formData.append("bg_image", finalBg);
+      formData.append("bg_image_url", design.bgImage || "");
+
+      // 🌟 ข้อมูล Theme
+      const themeConfigData = {
+        theme: design.theme || "custom",
+        font: design.font || "kanit",
+        bgColor: design.bgColor || "",
+        coverColor: design.coverColor || "",
+        textColor: design.textColor || "",
+        btnBgColor: design.btnBgColor || "",
+        btnTextColor: design.btnTextColor || "",
+        btnBorderColor: design.btnBorderColor || "",
+        btnRounded: design.btnRounded || "rounded",
+        btnStyle: design.btnStyle || "none",
+      };
+      formData.append("theme_config", JSON.stringify(themeConfigData));
+
+      // 🌟 ยิง API ไปหา Laravel
+      const response = await api.post(
+        `/profiles/${realUser.username}/test-update`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      alert("💾 บันทึกข้อมูลและรูปภาพลงฐานข้อมูล MySQL จริงสำเร็จเรียบร้อยแล้ว");
-      
-      setProfile(prev => ({ ...prev, username: cleanProfileUsername }));
+      if (response.status === 200) {
+        // อัปเดตลำดับบล็อก
+        await Promise.all(
+          links.map((link, index) =>
+            api.put(`/blocks/${link.id}`, { display_order: index + 1 }).catch(() => {})
+          )
+        );
+        
+        setProfile(prev => ({ ...prev, username: cleanProfileUsername }));
+        const updatedUser = { ...realUser, username: cleanProfileUsername };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        realUser.username = cleanProfileUsername; 
 
-      const updatedUser = { ...realUser, username: cleanProfileUsername };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      realUser.username = cleanProfileUsername; 
+        if (typeof fetchMyProfile === 'function') fetchMyProfile();
 
-      if (typeof fetchMyProfile === 'function') {
-        fetchMyProfile();
+        // 🌟 3. แจ้งเตือนเมื่อเสร็จสิ้น
+        // setTimeout(() => alert("✅ บันทึกข้อมูลและรูปภาพสำเร็จเรียบร้อยแล้ว!"), 300);
       }
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาด:", error);
+      const finalReport = error.response?.data?.error_from_backend || error.response?.data?.message || error.message;
+      alert(`❌ บันทึกไม่สำเร็จ! หลังบ้านฟ้องว่า:\n\n👉 "${finalReport}"`);
+    } finally {
+      // 🌟 4. ปิดหน้าจอโหลดดิ้งเสมอ
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error("เกิดข้อผิดพลาด:", error);
-
-    const errorFromLaravel = error.response?.data?.error_from_backend;
-    const generalMessage = error.response?.data?.message;
-    const systemError = error.message;
-
-    const finalReport = errorFromLaravel || generalMessage || systemError;
-    alert(`❌ บันทึกไม่สำเร็จ! หลังบ้านฟ้องว่า:\n\n👉 "${finalReport}"`);
-  }
-};
+  };
   
   const handleShare = () => {
+    // เซฟลำดับทั้งหมดลง Database รวดเดียวก่อนเปิดหน้าต่างแชร์
+    links.forEach((link, index) => {
+      api.put(`/blocks/${link.id}`, { display_order: index + 1 }).catch(() => {});
+    });
+
     setIsShareModalOpen(true); 
   };
 

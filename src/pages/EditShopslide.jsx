@@ -91,7 +91,7 @@ const EditShopslide = () => {
 
             if (response.status === 200 || response.status === 201) {
                 window.dispatchEvent(new Event("db_updated")); 
-                alert("บันทึกการเปลี่ยนแปลงเรียบร้อย!");
+                // alert("บันทึกการเปลี่ยนแปลงเรียบร้อย!");
                 navigate('/dd'); 
             }
             

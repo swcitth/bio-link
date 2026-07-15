@@ -159,7 +159,7 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
           className={`${isCompact ? "text-[11px] mt-1" : "mt-2 text-sm max-w-sm"} w-full px-2 text-center opacity-80 leading-relaxed break-words whitespace-pre-wrap`}
           style={{ color: safeDesign.textColor || "#666" }}
         >
-          {safeProfile.bio || "Bio ของคุณ"}
+          {safeProfile.bio || ""}
         </p>
 
         <div className={`w-full flex flex-col ${isCompact ? "gap-3 mt-5" : "gap-4 mt-8"}`}>
