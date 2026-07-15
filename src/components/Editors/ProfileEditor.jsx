@@ -1,38 +1,57 @@
 import React, { useRef, useState } from "react";
-// นำเข้าไอคอน User เพิ่มเติมสำหรับช่องกรอกชื่อ
 import { Pencil, Camera, UploadCloud, Trash2, Phone, Mail, Building, Briefcase, User, Globe } from "lucide-react";
 import api, { getImageUrl } from "../../api/axios";
+
+// ⭐️ 1. นำเข้า Component ป๊อปอัปตัดรูปที่เราเพิ่งสร้าง
+import ImageCropperModal from "../Modals/ImageCropperModal";
 
 const ProfileEditor = ({ profile, setProfile }) => {
   const avatarRef = useRef(null);
   const coverRef  = useRef(null);
   const [hoverAvatar, setHoverAvatar] = useState(false);
 
-  // ✨ อัปเดตฟังก์ชันจัดการรูปภาพให้รองรับ File Upload จริงๆ
+  // ⭐️ 2. ประกาศตัวแปร State สำหรับควบคุมป๊อปอัปตัดรูป
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState(null);
+  const [cropTargetField, setCropTargetField] = useState("");
+  const [cropAspectRatio, setCropAspectRatio] = useState(1);
+
+  // ⭐️ 3. ปรับปรุงฟังก์ชันเลือกรูป ให้ไปเปิดหน้า Modal แทนการเซฟทันที
   const handleImageChange = (e, field) => {
     const file = e.target.files[0];
     if (!file) return;
 
-     const maxFileSize = 20 * 1024 * 1024
+    const maxFileSize = 20 * 1024 * 1024;
     if (file.size > maxFileSize) {
-      alert("❌ รูปภาพมีขนาดใหญ่เกินไป! กรุณาเลือกรูปภาพที่มีขนาดไม่เกิน 5MB");
+      alert("❌ รูปภาพมีขนาดใหญ่เกินไป! กรุณาเลือกรูปภาพที่มีขนาดไม่เกิน 20MB");
       e.target.value = ""; 
       return;
     }
 
-    // 1. สร้าง URL พรีวิวชั่วคราวให้แสดงบนหน้าเว็บได้ทันที
+    // สร้าง URL ของรูปดิบๆ แล้วส่งให้ Modal เปิดขึ้นมา
     const previewUrl = URL.createObjectURL(file);
+    setSelectedImageSrc(previewUrl);
+    setCropTargetField(field);
+    
+    // กำหนดสัดส่วน: หน้าปก (cover) ใช้ 16:9, โปรไฟล์ (avatar) ใช้ 1:1
+    setCropAspectRatio(field === "cover" ? 16 / 9 : 1); 
+    setIsCropModalOpen(true);
+    
+    e.target.value = ""; // รีเซ็ตค่าให้เลือกไฟล์เดิมซ้ำได้
+  };
 
-    // 2. เก็บทั้ง "ไฟล์จริง (สำหรับส่งไป Laravel)" และ "URL พรีวิว (สำหรับโชว์บนหน้าจอ)"
+  // ⭐️ 4. ฟังก์ชันรับรูปที่ "ตัดเสร็จแล้ว" จาก Modal มาบันทึกลง State
+  const handleCropComplete = (croppedData) => {
     setProfile((prev) => ({ 
       ...prev, 
-      [`${field}File`]: file, // จะได้ตัวแปร avatarFile หรือ coverFile
-      [field]: previewUrl     // จะได้ตัวแปร avatar หรือ cover (เอาไว้โชว์ในแท็บ img)
+      [`${cropTargetField}File`]: croppedData.file, 
+      [cropTargetField]: croppedData.url     
     }));
+    setIsCropModalOpen(false); // ปิดป๊อปอัป
   };
 
   return (
-    <div className="bg-white/70 backdrop-blur-xl border border-white/80 rounded-3xl shadow-sm mb-5 overflow-hidden p-6">
+    <div className="bg-white/70 backdrop-blur-xl border border-white/80 rounded-3xl shadow-sm mb-5 overflow-hidden p-6 relative">
 
       {/* Hidden File Inputs */}
       <input type="file" accept="image/*" ref={coverRef} onChange={(e) => handleImageChange(e, "cover")} className="hidden" />
@@ -46,7 +65,6 @@ const ProfileEditor = ({ profile, setProfile }) => {
           className={`relative border-2 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all group overflow-hidden ${
             (profile.cover || profile.cover_url) ? "border-transparent shadow-sm" : "border-dashed border-slate-300 bg-slate-50/50 hover:border-indigo-400 hover:bg-indigo-50/50"
           }`}
-          // ⭐️ ครอบด้วย getImageUrl() และเช็คตัวแปร cover_url
           style={(profile.cover || profile.cover_url) ? { backgroundImage: `url('${getImageUrl(profile.cover || profile.cover_url)}')`, backgroundSize: "cover", backgroundPosition: "center" } : {}}
         >
           {(profile.cover || profile.cover_url) && <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all" />}
@@ -61,7 +79,7 @@ const ProfileEditor = ({ profile, setProfile }) => {
                 <p className="text-sm font-semibold text-slate-600 mb-1">
                   ลากไฟล์มาวางที่นี่ หรือ <span className="text-indigo-600">คลิกเพื่ออัปโหลด</span>
                 </p>
-                <p className="text-xs text-slate-400">รองรับ JPG, PNG (ไม่เกิน 5MB)</p>
+                <p className="text-xs text-slate-400">รองรับ JPG, PNG</p>
               </>
             )}
           </div>
@@ -69,7 +87,6 @@ const ProfileEditor = ({ profile, setProfile }) => {
         {(profile.cover || profile.cover_url) && (
           <div className="flex justify-end mt-3">
             <button 
-              // ✨ อัปเดตตอนกดลบรูปปก ให้ล้าง cover_url ของเดิมทิ้งด้วย
               onClick={(e) => { 
                 e.stopPropagation(); 
                 setProfile({ ...profile, cover: "", cover_url: "", coverFile: null }); 
@@ -85,7 +102,6 @@ const ProfileEditor = ({ profile, setProfile }) => {
       <hr className="border-slate-100 mb-6" />
 
       {/* Avatar + Fields */}
-      {/* 🟢 แก้ไข: มือถือใช้ flex-col จัดกึ่งกลาง / จอคอมใช้ sm:flex-row จัดชิดซ้าย-ขวา */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6 w-full">
         
         {/* Avatar */}
@@ -95,8 +111,7 @@ const ProfileEditor = ({ profile, setProfile }) => {
           onMouseOver={() => setHoverAvatar(true)}
           onMouseOut={() => setHoverAvatar(false)}
         >
-          {/* 🟢 ปรับขนาด: มือถือรูปใหญ่หน่อย (w-24) จอคอมปรับเล็กลงนิดนึง (sm:w-[72px]) ให้พอดีกับบรรทัด */}
-          <div className="w-24 h-24 sm:w-[72px] sm:h-[72px] rounded-full border-4 border-white shadow-lg overflow-hidden">
+          <div className="w-24 h-24 sm:w-[72px] sm:h-[72px] rounded-full border-4 border-white shadow-lg overflow-hidden bg-slate-100">
             <img
               src={getImageUrl(profile.avatar || profile.avatar_url) || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"} alt="avatar"
               className="w-full h-full object-cover"
@@ -110,10 +125,8 @@ const ProfileEditor = ({ profile, setProfile }) => {
         </div>
 
         {/* Text Fields */}
-        {/* 🟢 ใส่ flex-1 เพื่อให้ช่องข้อความขยายเต็มพื้นที่ฝั่งขวาเมื่ออยู่บนจอคอม */}
         <div className="w-full flex-1 flex flex-col gap-3">
           
-          {/* Name */}
           <div className="relative">
             <input
               type="text"
@@ -125,7 +138,6 @@ const ProfileEditor = ({ profile, setProfile }) => {
             <Pencil size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
 
-          {/* Bio */}
           <div className="relative">
             <input
               type="text"
@@ -137,7 +149,6 @@ const ProfileEditor = ({ profile, setProfile }) => {
             <Pencil size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
 
-          {/* Username */}
           <div className="flex items-center gap-2 mt-1 mb-2">
             <span className="text-xs text-slate-400 font-medium shrink-0">mybiolink.com/</span>
             <input
@@ -149,7 +160,6 @@ const ProfileEditor = ({ profile, setProfile }) => {
             />
           </div>
 
-          {/* ข้อมูลติดต่อ (เพิ่มช่องกรอก "ชื่อสำหรับการบันทึก") */}
           <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
             <p className="text-xs font-bold text-slate-500">ข้อมูลติดต่อ (สำหรับปุ่ม Save Contact)</p>
             
@@ -186,7 +196,6 @@ const ProfileEditor = ({ profile, setProfile }) => {
               <Mail size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
 
-            {/* กลุ่มที่อยู่บรรทัดเดียวกัน (บริษัท / ตำแหน่ง) */}
             <div className="flex gap-3">
               <div className="relative w-1/2">
                 <input
@@ -211,7 +220,6 @@ const ProfileEditor = ({ profile, setProfile }) => {
               </div>
             </div>
 
-            {/* ช่องกรอกเว็บไซต์ */}
             <div className="relative">
               <input
                 type="url"
@@ -222,10 +230,8 @@ const ProfileEditor = ({ profile, setProfile }) => {
               />
               <Globe size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
-
           </div>
 
-          {/* สวิตช์เปิด-ปิด ปุ่ม Save Contact */}
           <div className="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-slate-700">แสดงปุ่ม Save Contact</p>
@@ -245,6 +251,17 @@ const ProfileEditor = ({ profile, setProfile }) => {
 
         </div>
       </div>
+
+      {/* ⭐️ 5. นำป๊อปอัปมาวางไว้ใน Component นี้ เพื่อให้พร้อมถูกเรียกใช้งาน */}
+      <ImageCropperModal 
+        isOpen={isCropModalOpen}
+        imageSrc={selectedImageSrc}
+        aspect={cropAspectRatio}
+        cropShape={cropTargetField === "avatar" ? "round" : "rect"}
+        onClose={() => setIsCropModalOpen(false)}
+        onCropComplete={handleCropComplete}
+      />
+
     </div>
   );
 };

@@ -224,7 +224,7 @@ const DashboardPage = () => {
           ...prev,
           username: dbData.username || realUser.username,
           name: dbData.display_name || prev.name,
-          bio: dbData.bio || prev.bio,
+          bio: dbData.bio ?? "", 
           
           avatar: (dbData.avatar === null || dbData.avatar_url === null) ? "" : (avatarUrlToLoad || prev.avatar),
           cover: (dbData.cover === null || dbData.cover_url === null) ? "" : (coverUrlToLoad || prev.cover),
@@ -309,28 +309,25 @@ const DashboardPage = () => {
           } 
           // 🟢 กฎข้อที่ 2: สำหรับบล็อกประเภทอื่นๆ (Shop, Slider, Image, Video) อนุโลมให้มีแค่ชื่อหรือรูปก็ได้
           else {
+            // บังคับว่าต้องมีข้อมูลใน contentData เท่านั้น ถึงจะถือว่าบล็อกนี้ใช้งานได้จริง
             if (Array.isArray(contentData) && contentData.length > 0) {
               hasValidContent = contentData.some(item => 
                 (item.url && String(item.url).trim() !== '') || 
                 (item.link && String(item.link).trim() !== '') || 
                 (item.title && String(item.title).trim() !== '') || 
                 (item.name && String(item.name).trim() !== '') ||   
-                item.image || 
-                item.imageUrl
+                (item.image && String(item.image).trim() !== '') || // เพิ่มเช็ค string ว่าง
+                (item.imageUrl && String(item.imageUrl).trim() !== '')
               );
             } else if (typeof contentData === 'object' && contentData !== null && !Array.isArray(contentData)) {
               hasValidContent = (contentData.url && String(contentData.url).trim() !== '') || 
                                 (contentData.link && String(contentData.link).trim() !== '') || 
                                 (contentData.title && String(contentData.title).trim() !== '') || 
                                 (contentData.name && String(contentData.name).trim() !== '') ||   
-                                contentData.image || 
-                                contentData.imageUrl;
+                                (contentData.image && String(contentData.image).trim() !== '') || 
+                                (contentData.imageUrl && String(contentData.imageUrl).trim() !== '');
             }
-
-            // ถ้าไม่มีอะไรเลย แต่ตัวกล่องแม่มีการตั้งชื่อไว้ ก็ถือว่ารอด
-            if (!hasValidContent && hasBlockTitle) {
-              hasValidContent = true;
-            }
+            
           }
 
           // 🗑️ ถ้าไม่ผ่านกฎ (ไม่มีข้อมูลสำคัญ) ให้ลบทิ้งและนับยอดสะสมไว้
@@ -491,19 +488,26 @@ const DashboardPage = () => {
       else if (defaultIcon === "Image") dbType = 'IMAGE';
       else if (defaultIcon === "Youtube" || defaultIcon === "TikTok") dbType = 'VIDEO';
 
-      // 2. ⭐️ ให้หลังบ้าน (Laravel) สร้างบล็อกลง Database ของจริงก่อน
+      // 2. ให้หลังบ้าน (Laravel) สร้างบล็อกลง Database ก่อน
       const response = await api.post('/blocks', {
         type: dbType,
         title: defaultTitle,
         content_data: []
       });
 
-      // 3. เอา ID จริงจาก Database (Primary Key) มาใช้งาน
+      // 3. เอา ID จริงจาก Database มาใช้งาน
       const newId = response.data.data.id;
+
+      // 🌟 3.5 (แก้บั๊กกระโดดขึ้นบน) สั่งยิง API ไปอัปเดตลำดับให้อยู่ล่างสุดทันที! 🌟
+      try {
+        await api.put(`/blocks/${newId}`, { display_order: links.length + 1 });
+      } catch (orderError) {
+        console.log("อัปเดตลำดับตอนสร้างไม่สำเร็จ (แต่สร้างบล็อกผ่านแล้ว):", orderError);
+      }
 
       // 4. อัปเดตข้อมูลลง LocalStorage และ State ตามโค้ดเดิมของคุณ
       const newLink = {
-        id:      newId, // 👈 ใช้ ID จริงที่ดึงมาจากหลังบ้านแล้ว
+        id:      newId, 
         title:   defaultTitle,
         url:     "",
         icon:    defaultIcon,
@@ -639,6 +643,11 @@ const DashboardPage = () => {
   };
   
   const handleShare = () => {
+    // เซฟลำดับทั้งหมดลง Database รวดเดียวก่อนเปิดหน้าต่างแชร์
+    links.forEach((link, index) => {
+      api.put(`/blocks/${link.id}`, { display_order: index + 1 }).catch(() => {});
+    });
+
     setIsShareModalOpen(true); 
   };
 

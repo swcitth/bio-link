@@ -77,7 +77,7 @@ export default function EditShop() {
 
       if (response.status === 200 || response.status === 201) {
         window.dispatchEvent(new Event("db_updated")); // กระตุกให้ Preview รีเฟรช
-        alert("บันทึกข้อมูลสำเร็จ!");
+        //alert("บันทึกข้อมูลสำเร็จ!");
         navigate("/dd");
       }
     } catch (error) {

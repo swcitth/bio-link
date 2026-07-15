@@ -48,12 +48,19 @@ const BlockSlider = ({ block, items = [], handleBlockClick, design }) => {
 
   // ดักจับการคลิกลิงก์
   const handleItemClick = (e, itemLink) => {
-    // ถ้าเมาส์ลากไปไกลกว่า 5px ให้ถือว่าเป็นการ "เลื่อน" ไม่ใช่การ "คลิก"
+    // 1. ถ้าเมาส์ลากไปไกลกว่า 5px ให้ถือว่าเป็นการ "เลื่อน" ไม่ใช่การ "คลิก"
     if (dragDistance.current > 5) {
       e.preventDefault(); 
       return;
     }
     
+    // 🌟 2. ดักเพิ่มตรงนี้: ถ้าไม่มีลิงก์ (ค่าเป็น #) ให้ยกเลิกการคลิกทันที!
+    if (itemLink === "#") {
+      e.preventDefault();
+      return;
+    }
+    
+    // 3. ถ้ามีลิงก์และไม่ได้ลากเมาส์ ถึงจะยอมให้ทำงานต่อ
     if (handleBlockClick) {
       handleBlockClick(block.id, itemLink);
     }
@@ -82,35 +89,59 @@ const BlockSlider = ({ block, items = [], handleBlockClick, design }) => {
       className={`flex overflow-x-auto gap-4 pb-4 hide-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${isDragging ? "cursor-grabbing snap-none" : "cursor-grab snap-x"}`}
     >
       {items.map((item, index) => {
-        const itemLink = item.link || item.url || "#";
+        // 🌟 1. ตรวจสอบว่ามีลิงก์จริงๆ หรือไม่ (ต้องไม่ใช่ค่าว่าง)
+        const hasValidLink = item.link || item.url;
+        const itemLink = hasValidLink ? (item.link || item.url) : null;
 
-        return (
-          <a 
-            key={index} 
-            href={itemLink}
-            target={itemLink !== "#" ? "_blank" : "_self"}
-            // 🌟 เรียกใช้ฟังก์ชันดักการคลิกที่เราสร้างไว้
-            onClick={(e) => handleItemClick(e, itemLink)}
-            rel="noopener noreferrer"
-            draggable="false" // 🌟 สำคัญ: ป้องกันไม่ให้เบราว์เซอร์ลากรูปเป็นเงาๆ แบบตั้งต้น
-            className={`w-[70%] shrink-0 snap-center bg-white shadow-sm border border-slate-100 p-3 transition-transform ${!isDragging && "hover:scale-[1.02]"} block ${getRadiusClass(design?.btnRounded)}`}
-          >
+        // 🌟 2. ดึงเนื้อหาและสไตล์ออกมา เพื่อจะได้ไม่ต้องเขียนโค้ดซ้ำ 2 รอบ
+        const baseClass = `w-[70%] shrink-0 snap-center bg-white shadow-sm border border-slate-100 p-3 transition-transform block ${getRadiusClass(design?.btnRounded)}`;
+        
+        const CardContent = (
+          <>
             <img 
               src={getImageUrl(item.image) || "https://placehold.co/400x400/e2e8f0/94a3b8?text=No+Image"} 
               alt={item.name || `สินค้าชิ้นที่ ${index + 1}`} 
-              draggable="false" // 🌟 สำคัญ: ป้องกันรูปถูกลากแยก
+              draggable="false" 
               className={`w-full aspect-square object-cover bg-slate-100 pointer-events-none ${getRadiusClass(design?.btnRounded)}`} 
             />
-            
             <h4 className="font-bold mt-3 truncate text-slate-800 pointer-events-none">
               {item.name || "ไม่มีชื่อสินค้า"}
             </h4>
-            
             <div className="text-sm font-bold text-indigo-600 mt-2 pointer-events-none">
               {item.price ? `฿${item.price}` : "฿0"}
             </div>
-          </a>
+          </>
         );
+
+        // 🌟 3. สลับแท็กตามเงื่อนไข (เด็ดขาด 100%)
+        if (hasValidLink) {
+          return (
+            // 🟢 กรณีมีลิงก์: ใช้ <a> และบังคับเมาส์เป็น "รูปนิ้วชี้" เสมอ (cursor-pointer)
+            <a 
+              key={index} 
+              href={itemLink}
+              target="_blank"
+              onClick={(e) => handleItemClick(e, itemLink)}
+              rel="noopener noreferrer"
+              draggable="false" 
+              className={`${baseClass} cursor-pointer ${!isDragging ? "hover:scale-[1.02]" : ""}`}
+            >
+              {CardContent}
+            </a>
+          );
+        } else {
+          return (
+            // 🔴 กรณีไม่มีลิงก์: ใช้ <div> และบังคับเมาส์เป็น "รูปลูกศร" (cursor-default)
+            // (หรือถ้าอยากให้เมาส์เป็นรูป "มือแบกาง" เพื่อบอกว่าลากสไลด์ได้แต่กดไม่ได้ ให้เปลี่ยนเป็น cursor-grab ครับ)
+            <div 
+              key={index} 
+              draggable="false" 
+              className={`${baseClass} cursor-default`} 
+            >
+              {CardContent}
+            </div>
+          );
+        }
       })}
     </div>
   );

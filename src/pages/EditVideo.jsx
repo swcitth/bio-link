@@ -87,7 +87,7 @@ export default function EditVideo() {
 
       if (response.status === 200 || response.status === 201) {
         window.dispatchEvent(new Event("db_updated")); // กระตุกให้ Preview รีเฟรช
-        alert("บันทึกการเปลี่ยนแปลงสำเร็จ!");
+        // alert("บันทึกการเปลี่ยนแปลงสำเร็จ!");
         navigate('/dd'); 
       }
     } catch (error) {
