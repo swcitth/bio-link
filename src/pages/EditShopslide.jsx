@@ -53,7 +53,7 @@ const EditShopslide = () => {
                     }))
                 });
             } catch (error) {
-                console.error("❌ โหลดข้อมูลไม่สำเร็จ:", error);
+                // console.error("❌ โหลดข้อมูลไม่สำเร็จ:", error);
             }
         };
         fetchData();
@@ -96,7 +96,7 @@ const EditShopslide = () => {
             }
             
         } catch (error) {
-            console.error("❌ บันทึกไม่สำเร็จ:", error);
+            // console.error("❌ บันทึกไม่สำเร็จ:", error);
             alert("บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
         } finally {
             setLoading(false);

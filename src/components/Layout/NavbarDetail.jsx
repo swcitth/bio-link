@@ -26,7 +26,7 @@ const Navbar = ({ activeTab, setActiveTab, onShare }) => {
     try { 
       await api.post('/logout'); 
     } catch (error) { 
-      console.error("Logout API Error:", error); 
+      // console.error("Logout API Error:", error); 
     } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('user');

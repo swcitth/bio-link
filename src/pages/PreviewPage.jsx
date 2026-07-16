@@ -38,7 +38,7 @@ const PreviewPage = ({ isPublic }) => {
 
   // ⭐️ 1. ฟังก์ชันแอบยิง API เก็บสถิติ (ทำงานอยู่เบื้องหลัง) ⭐️
   const trackAnalytics = (targetUsername, blockId = null, clickedUrl = null) => {
-    console.log("🎯 เช็คการคลิก! ยิงไปที่:", targetUsername, " | Block ID:", blockId, " | URL:", clickedUrl);
+    // console.log("🎯 เช็คการคลิก! ยิงไปที่:", targetUsername, " | Block ID:", blockId, " | URL:", clickedUrl);
     
     // 🟡 [ปิดชั่วคราวเพื่อทดสอบ] ด่านที่ 1: เช็คว่าเป็นหน้าจอ Preview หรือไม่
     // if (!isPublic || isFromAdmin || !targetUsername) {
@@ -67,7 +67,7 @@ const PreviewPage = ({ isPublic }) => {
     // }
 
     // ✅ ปล่อยให้ผ่านฉลุยเพื่อส่งข้อมูลไปหลังบ้านตอนเราเทส
-    console.log("✅ ผ่านทุกด่าน: ระบบกำลังยิง API นับยอด... ID:", blockId, "URL:", clickedUrl);
+    // console.log("✅ ผ่านทุกด่าน: ระบบกำลังยิง API นับยอด... ID:", blockId, "URL:", clickedUrl);
     
     let sessionId = sessionStorage.getItem("analytics_session");
     if (!sessionId) {
@@ -89,7 +89,7 @@ const PreviewPage = ({ isPublic }) => {
         source: source                    // 👈 เพิ่มบรรทัดนี้เข้าไปเลยครับ!
     })
     .catch((err) => {
-        console.error("Analytics error:", err);
+        // console.error("Analytics error:", err);
     });
   };
   
@@ -189,7 +189,7 @@ const PreviewPage = ({ isPublic }) => {
 
         // นุชเพิ่มตรงนี้ด้วยน้าในส่วนของ การแสดงผลถ้า กดดูโปรไฟล์ที่แชร์ไว้แล้วโปรไฟล์โดนแบนอยู่
         .catch((err) => {
-          console.error("Error fetching profile:", err);
+          // console.error("Error fetching profile:", err);
           
           if (err.response && err.response.status === 403) {
             // ถ้าโดนแบน (403) หน้าตาจะเหมือนเดิม แต่คำตรงกลางจะเปลี่ยนเป็นคำนี้
@@ -229,7 +229,7 @@ const PreviewPage = ({ isPublic }) => {
     // แจ้งหลังบ้านให้ทำลาย Token ทิ้งเพื่อความปลอดภัย
     await api.post('/logout'); 
   } catch (error) { 
-    console.error("Logout API Error:", error); 
+    // console.error("Logout API Error:", error); 
   } finally {
     // เคลียร์ข้อมูลทั้งใน localStorage และ sessionStorage ให้เกลี้ยง
     localStorage.removeItem('token');

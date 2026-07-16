@@ -144,8 +144,8 @@ const DashboardPage = () => {
     // แยกเอาเฉพาะเลขตัวหน้า
     const cleanId = String(link.id).split(':')[0]; 
     
-    console.log("ID ที่ส่งไปหน้า Edit คือ:", cleanId);
-    console.log("ไอคอนที่กดคือ:", link.icon);
+    // console.log("ID ที่ส่งไปหน้า Edit คือ:", cleanId);
+    // console.log("ไอคอนที่กดคือ:", link.icon);
 
     if (link.icon === "Image") {
       navigate(`/edit-shop?id=${cleanId}`);
@@ -265,14 +265,14 @@ const DashboardPage = () => {
         }
       }
     } catch (error) {
-      console.error("❌ ไม่พบข้อมูล Profile เดิม หรือเกิดข้อผิดพลาด:", error);
+      // console.error("❌ ไม่พบข้อมูล Profile เดิม หรือเกิดข้อผิดพลาด:", error);
     }
   };
 
   const fetchMyBlocks = async () => {
     try {
       const response = await api.get(`/blocks`);
-      console.log("ข้อมูลดิบจาก API:", response.data.data);
+      // console.log("ข้อมูลดิบจาก API:", response.data.data);
 
       if (response.status === 200) {
         const dbBlocks = response.data.data || [];
@@ -332,8 +332,9 @@ const DashboardPage = () => {
 
           // 🗑️ ถ้าไม่ผ่านกฎ (ไม่มีข้อมูลสำคัญ) ให้ลบทิ้งและนับยอดสะสมไว้
           if (!hasValidContent) {
-            console.log(`🧹 ตรวจพบดราฟต์ที่ไม่สมบูรณ์ [${blockType}] -> ระบบกำลังลบทิ้ง`);
-            api.delete(`/blocks/${block.id}`).catch(err => console.log("ลบดราฟต์ขยะไม่สำเร็จ:", err));
+            // console.log(`🧹 ตรวจพบดราฟต์ที่ไม่สมบูรณ์ [${blockType}] -> ระบบกำลังลบทิ้ง`);
+            api.delete(`/blocks/${block.id}`)
+            // .catch(err => console.log("ลบดราฟต์ขยะไม่สำเร็จ:", err));
             
             deletedCount++; // 🌟 นับเพิ่มไป 1
             return false; // เตะทิ้ง ไม่ให้เข้ารอบไปแสดงผล
@@ -388,7 +389,7 @@ const DashboardPage = () => {
         localStorage.setItem("bio_links", JSON.stringify(formattedBlocks));
       }
     } catch (error) {
-      console.error("❌ ดึงข้อมูลบล็อกทั้งหมดไม่สำเร็จ:", error);
+      // console.error("❌ ดึงข้อมูลบล็อกทั้งหมดไม่สำเร็จ:", error);
     }
   };
   // ⭐️ 5. ปรับ useEffect ให้รอดาวน์โหลดทั้ง Data และ Image จนครบ ค่อยปิดหน้า Loading ⭐️
@@ -449,7 +450,7 @@ const DashboardPage = () => {
       window.dispatchEvent(new Event("db_updated")); 
 
     } catch (error) {
-      console.error("ลบข้อมูลไม่สำเร็จ:", error);
+      // console.error("ลบข้อมูลไม่สำเร็จ:", error);
       alert("เกิดข้อผิดพลาดในการลบข้อมูลที่ฐานข้อมูลค่ะ");
     }
   };
@@ -473,10 +474,10 @@ const DashboardPage = () => {
       await api.put(`/blocks/${id}`, { 
         is_visible: targetLink.visible ? 1 : 0 
       });
-      console.log("อัปเดตสถานะการซ่อนบล็อกสำเร็จ!");
+      // console.log("อัปเดตสถานะการซ่อนบล็อกสำเร็จ!");
       
     } catch (error) {
-      console.error("เกิดข้อผิดพลาดในการอัปเดตสถานะ:", error);
+      // console.error("เกิดข้อผิดพลาดในการอัปเดตสถานะ:", error);
     }
   };
 
@@ -502,7 +503,7 @@ const DashboardPage = () => {
       try {
         await api.put(`/blocks/${newId}`, { display_order: links.length + 1 });
       } catch (orderError) {
-        console.log("อัปเดตลำดับตอนสร้างไม่สำเร็จ (แต่สร้างบล็อกผ่านแล้ว):", orderError);
+        // console.log("อัปเดตลำดับตอนสร้างไม่สำเร็จ (แต่สร้างบล็อกผ่านแล้ว):", orderError);
       }
 
       // 4. อัปเดตข้อมูลลง LocalStorage และ State ตามโค้ดเดิมของคุณ
@@ -541,7 +542,7 @@ const DashboardPage = () => {
       }
 
     } catch (error) {
-      console.error("❌ สร้างบล็อกใหม่ใน Database ไม่สำเร็จ:", error);
+      // console.error("❌ สร้างบล็อกใหม่ใน Database ไม่สำเร็จ:", error);
       alert("ไม่สามารถสร้างบล็อกได้ ลองตรวจสอบการเชื่อมต่อหรือข้อมูลโปรไฟล์อีกครั้ง");
     }
   };
@@ -633,7 +634,7 @@ const DashboardPage = () => {
         // setTimeout(() => alert("✅ บันทึกข้อมูลและรูปภาพสำเร็จเรียบร้อยแล้ว!"), 300);
       }
     } catch (error) {
-      console.error("เกิดข้อผิดพลาด:", error);
+      // console.error("เกิดข้อผิดพลาด:", error);
       const finalReport = error.response?.data?.error_from_backend || error.response?.data?.message || error.message;
       alert(`❌ บันทึกไม่สำเร็จ! หลังบ้านฟ้องว่า:\n\n👉 "${finalReport}"`);
     } finally {
