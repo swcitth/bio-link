@@ -22,7 +22,7 @@ const TikTok = ({ item, videoUrl, isCompact, blockRadius, ICON_MAP, safeDesign, 
             currentUrl = response.data.fullUrl;
           }
         } catch (error) {
-          console.error("Failed to resolve short URL via Axios", error);
+          // console.error("Failed to resolve short URL via Axios", error);
         }
       }
 

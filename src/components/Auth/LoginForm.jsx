@@ -232,7 +232,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
       }
 
       } catch (error) {
-      console.error("Catch Error:", error);
+      // console.error("Catch Error:", error);
       
       if (error.response) {
         

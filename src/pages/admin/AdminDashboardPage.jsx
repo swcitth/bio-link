@@ -67,7 +67,7 @@ export default function DashboardPage() {
         setStats(response.data.data);
       }
     } catch (error) {
-      console.error("Failed to fetch dashboard stats:", error);
+      // console.error("Failed to fetch dashboard stats:", error);
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +93,7 @@ export default function DashboardPage() {
     try {
       const response = await api.post('/admin/remind-bulk', { user_ids: userIds });
     } catch (error) {
-      console.error("Failed to send bulk emails:", error);
+      // console.error("Failed to send bulk emails:", error);
       alert('เกิดข้อผิดพลาดในการสั่งรันระบบส่งอีเมลกลุ่ม');
     }
   };
@@ -105,7 +105,7 @@ export default function DashboardPage() {
     try {
       const response = await api.post(`/admin/remind-single/${userId}`);
     } catch (error) {
-      console.error("Failed to send email:", error);
+      // console.error("Failed to send email:", error);
       alert('เกิดข้อผิดพลาดในการส่งอีเมล');
     }
   };

@@ -41,7 +41,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         });
       }
     } catch (error) {
-      console.error("รูปแบบข้อมูล User ไม่ถูกต้องใน Sidebar:", error);
+      // console.error("รูปแบบข้อมูล User ไม่ถูกต้องใน Sidebar:", error);
     }
   }, []);
 

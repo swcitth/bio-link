@@ -80,7 +80,7 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
         source: source // ส่งตัวแปร source แนบไปให้หลังบ้านจัดการ
       });
     } catch (err) {
-      console.log("Analytics Error:", err);
+      // console.log("Analytics Error:", err);
     }
   };
  
@@ -113,7 +113,7 @@ const SaveContactButton = ({ profileData = {}, design = {}, isCompact = false })
           }
         }
       } catch (e) {
-        console.error("Error processing avatar image for VCF:", e);
+        // console.error("Error processing avatar image for VCF:", e);
       }
     }
 
