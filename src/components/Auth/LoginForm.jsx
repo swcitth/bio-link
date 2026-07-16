@@ -378,13 +378,13 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           เข้าสู่ระบบ
         </ButtonBig>
 
-        <div className="relative flex items-center py-2">
+        {/* <div className="relative flex items-center py-2">
           <div className="flex-grow border-t border-slate-200"></div>
           <span className="flex-shrink-0 mx-4 text-slate-400 text-xs uppercase tracking-wider font-medium">หรือดำเนินการต่อด้วย</span>
           <div className="flex-grow border-t border-slate-200"></div>
-        </div>
+        </div> */}
 
-        <div className="flex justify-center w-full">
+        {/* <div className="flex justify-center w-full">
           <button 
             type="button" 
             onClick={loginWithGoogle}
@@ -399,7 +399,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
             </svg>
             Google
           </button>
-        </div>
+        </div> */}
       </form>
 
       <div className="mt-8 text-center text-sm text-slate-600">
