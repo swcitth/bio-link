@@ -331,7 +331,7 @@ export default function LoginForm({ onSwitchView, onForgotPassword }) {
           id="login-identifier" 
           label="อีเมล หรือ ชื่อผู้ใช้" 
           type="text" 
-          placeholder="your@email.com หรือ username" 
+          placeholder="your@sherwood.co.th หรือ username" 
           icon={User} 
           value={identifier}
           onChange={handleIdentifierChange}

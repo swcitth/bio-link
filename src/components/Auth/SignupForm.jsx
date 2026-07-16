@@ -189,7 +189,7 @@ export default function SignupForm({ onSwitchView }) {
           type="email" 
           id="email" 
           label="อีเมล" 
-          placeholder="your@email.com" 
+          placeholder="your@sherwood.co.th" 
           icon={Mail} 
           value={email}
           onChange={handleEmailChange}
