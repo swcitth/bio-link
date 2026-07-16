@@ -34,9 +34,12 @@ export default function SignupForm({ onSwitchView }) {
     if (value.length > 0) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(value)) {
-        // อัปเดตเฉพาะ error ของอีเมล
         setErrors(prev => ({ ...prev, email: "รูปแบบอีเมลไม่ถูกต้อง" })); 
-      } else {
+      } 
+      else if (!value.endsWith('@sherwood.co.th')) { 
+        setErrors(prev => ({ ...prev, email: "ต้องใช้โดเมน @sherwood.co.th เท่านั้น" })); 
+      } 
+      else {
         setErrors(prev => ({ ...prev, email: "" })); 
       }
     } else {
@@ -55,8 +58,19 @@ export default function SignupForm({ onSwitchView }) {
     if (!displayName.trim()) { currentErrors.displayName = "กรุณากรอกชื่อที่แสดง"; hasError = true; }
     if (!username.trim()) { currentErrors.username = "กรุณากรอกชื่อผู้ใช้"; hasError = true; }
     
-    if (!email.trim()) { currentErrors.email = "กรุณากรอกอีเมล"; hasError = true; }
-    else if (errors.email) { currentErrors.email = errors.email; hasError = true; } // ถ้าติด Error Real-time อยู่
+    // 👈 เพิ่มการดักจับโดเมนอีเมลตรงนี้
+    if (!email.trim()) { 
+        currentErrors.email = "กรุณากรอกอีเมล"; 
+        hasError = true; 
+    } 
+    else if (!email.endsWith('@sherwood.co.th')) { 
+        currentErrors.email = "อีเมลสำหรับการลงทะเบียนจะต้องใช้โดเมน @sherwood.co.th เท่านั้น"; 
+        hasError = true; 
+    }
+    else if (errors.email) { 
+        currentErrors.email = errors.email; 
+        hasError = true; 
+    } 
 
     if (!password) { currentErrors.password = "กรุณากรอกรหัสผ่าน"; hasError = true; }
     else if (password.length < 8) { currentErrors.password = "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร"; hasError = true; }
@@ -64,7 +78,7 @@ export default function SignupForm({ onSwitchView }) {
     // ถ้ามี Error อย่างน้อย 1 ช่อง ให้แสดงเส้นแดงและหยุดทำงาน
     if (hasError) {
       setErrors(currentErrors);
-      return;
+      return; // 👈 ตรงนี้แหละครับที่จะทำให้ระบบหยุดทำงานทันทีโดยไม่ต้องโหลดหรือยิง API
     }
 
     try {
@@ -175,7 +189,7 @@ export default function SignupForm({ onSwitchView }) {
           type="email" 
           id="email" 
           label="อีเมล" 
-          placeholder="your@email.com" 
+          placeholder="your@sherwood.co.th" 
           icon={Mail} 
           value={email}
           onChange={handleEmailChange}
