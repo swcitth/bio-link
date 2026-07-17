@@ -181,7 +181,7 @@ export default function LandingPage() {
 
             {/* 🌟 บล็อกที่ 4: วิธีการใช้งาน (ลิงก์ไป YouTube) */}
             <a 
-              href="https://www.youtube.com/playlist?list=YOUR_PLAYLIST_ID_HERE" //  แก้ไขลิงก์ YouTube 
+              href="https://www.youtube.com/playlist?list=PLQ_NmbBTDeRY" //  แก้ไขลิงก์ YouTube 
               target="_blank" 
               rel="noopener noreferrer"
               className="block bg-slate-50/50 hover:bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-red-500/5 transition-all duration-300 group cursor-pointer"
