@@ -88,61 +88,63 @@ const BlockSlider = ({ block, items = [], handleBlockClick, design }) => {
       // เปลี่ยน cursor เป็นรูปมือจับเวลาคลิกค้าง
       className={`flex overflow-x-auto gap-4 pb-4 hide-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${isDragging ? "cursor-grabbing snap-none" : "cursor-grab snap-x"}`}
     >
-      {items.map((item, index) => {
-        // 🌟 1. ตรวจสอบว่ามีลิงก์จริงๆ หรือไม่ (ต้องไม่ใช่ค่าว่าง)
-        const hasValidLink = item.link || item.url;
-        const itemLink = hasValidLink ? (item.link || item.url) : null;
+      {/* 🟢 แก้ไขตรงนี้: เพิ่ม .filter ก่อน .map */}
+      {items
+        .filter(item => item.isVisible !== false) 
+        .map((item, index) => {
+          // 🌟 1. ตรวจสอบว่ามีลิงก์จริงๆ หรือไม่ (ต้องไม่ใช่ค่าว่าง)
+          const hasValidLink = item.link || item.url;
+          const itemLink = hasValidLink ? (item.link || item.url) : null;
 
-        // 🌟 2. ดึงเนื้อหาและสไตล์ออกมา เพื่อจะได้ไม่ต้องเขียนโค้ดซ้ำ 2 รอบ
-        const baseClass = `w-[70%] shrink-0 snap-center bg-white shadow-sm border border-slate-100 p-3 transition-transform block ${getRadiusClass(design?.btnRounded)}`;
-        
-        const CardContent = (
-          <>
-            <img 
-              src={getImageUrl(item.image) || "https://placehold.co/400x400/e2e8f0/94a3b8?text=No+Image"} 
-              alt={item.name || `สินค้าชิ้นที่ ${index + 1}`} 
-              draggable="false" 
-              className={`w-full aspect-square object-cover bg-slate-100 pointer-events-none ${getRadiusClass(design?.btnRounded)}`} 
-            />
-            <h4 className="font-bold mt-3 truncate text-slate-800 pointer-events-none">
-              {item.name || "ไม่มีชื่อสินค้า"}
-            </h4>
-            <div className="text-sm font-bold text-indigo-600 mt-2 pointer-events-none">
-              {item.price ? `฿${item.price}` : "฿0"}
-            </div>
-          </>
-        );
+          // 🌟 2. ดึงเนื้อหาและสไตล์ออกมา เพื่อจะได้ไม่ต้องเขียนโค้ดซ้ำ 2 รอบ
+          const baseClass = `w-[70%] shrink-0 snap-center bg-white shadow-sm border border-slate-100 p-3 transition-transform block ${getRadiusClass(design?.btnRounded)}`;
+          
+          const CardContent = (
+            <>
+              <img 
+                src={getImageUrl(item.image) || "https://placehold.co/400x400/e2e8f0/94a3b8?text=No+Image"} 
+                alt={item.name || `สินค้าชิ้นที่ ${index + 1}`} 
+                draggable="false" 
+                className={`w-full aspect-square object-cover bg-slate-100 pointer-events-none ${getRadiusClass(design?.btnRounded)}`} 
+              />
+              <h4 className="font-bold mt-3 truncate text-slate-800 pointer-events-none">
+                {item.name || "ไม่มีชื่อสินค้า"}
+              </h4>
+              <div className="text-sm font-bold text-indigo-600 mt-2 pointer-events-none">
+                {item.price ? `฿${item.price}` : "฿0"}
+              </div>
+            </>
+          );
 
-        // 🌟 3. สลับแท็กตามเงื่อนไข (เด็ดขาด 100%)
-        if (hasValidLink) {
-          return (
-            // 🟢 กรณีมีลิงก์: ใช้ <a> และบังคับเมาส์เป็น "รูปนิ้วชี้" เสมอ (cursor-pointer)
-            <a 
-              key={index} 
-              href={itemLink}
-              target="_blank"
-              onClick={(e) => handleItemClick(e, itemLink)}
-              rel="noopener noreferrer"
-              draggable="false" 
-              className={`${baseClass} cursor-pointer ${!isDragging ? "hover:scale-[1.02]" : ""}`}
-            >
-              {CardContent}
-            </a>
-          );
-        } else {
-          return (
-            // 🔴 กรณีไม่มีลิงก์: ใช้ <div> และบังคับเมาส์เป็น "รูปลูกศร" (cursor-default)
-            // (หรือถ้าอยากให้เมาส์เป็นรูป "มือแบกาง" เพื่อบอกว่าลากสไลด์ได้แต่กดไม่ได้ ให้เปลี่ยนเป็น cursor-grab ครับ)
-            <div 
-              key={index} 
-              draggable="false" 
-              className={`${baseClass} cursor-default`} 
-            >
-              {CardContent}
-            </div>
-          );
-        }
-      })}
+          // 🌟 3. สลับแท็กตามเงื่อนไข (เด็ดขาด 100%)
+          if (hasValidLink) {
+            return (
+              // 🟢 กรณีมีลิงก์: ใช้ <a> และบังคับเมาส์เป็น "รูปนิ้วชี้" เสมอ (cursor-pointer)
+              <a 
+                key={index} 
+                href={itemLink}
+                target="_blank"
+                onClick={(e) => handleItemClick(e, itemLink)}
+                rel="noopener noreferrer"
+                draggable="false" 
+                className={`${baseClass} cursor-pointer ${!isDragging ? "hover:scale-[1.02]" : ""}`}
+              >
+                {CardContent}
+              </a>
+            );
+          } else {
+            return (
+              // 🔴 กรณีไม่มีลิงก์: ใช้ <div> และบังคับเมาส์เป็น "รูปลูกศร" (cursor-default)
+              <div 
+                key={index} 
+                draggable="false" 
+                className={`${baseClass} cursor-default`} 
+              >
+                {CardContent}
+              </div>
+            );
+          }
+        })}
     </div>
   );
 };
