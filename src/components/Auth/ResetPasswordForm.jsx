@@ -52,7 +52,7 @@ export default function ResetPasswordForm({ email, otp, onSubmit }) {
       }
 
     } catch (error) {
-      console.error("Reset Password Error:", error);
+      // console.error("Reset Password Error:", error);
       if (error.response && error.response.data) {
         alert(error.response.data.message);
       } else {

@@ -35,7 +35,7 @@ export default function AuthPage({ defaultView = 'login' }) {
           navigate('/dd');
         }
       } catch (error) {
-        console.error("รูปแบบข้อมูล User ไม่ถูกต้อง:", error);
+        // console.error("รูปแบบข้อมูล User ไม่ถูกต้อง:", error);
       }
     }
   }, [navigate]);

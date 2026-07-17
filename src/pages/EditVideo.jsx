@@ -58,7 +58,7 @@ export default function EditVideo() {
           }
         }
       } catch (error) {
-        console.error("ดึงข้อมูลวิดีโอไม่สำเร็จ:", error);
+        // console.error("ดึงข้อมูลวิดีโอไม่สำเร็จ:", error);
       }
     };
 
@@ -91,7 +91,7 @@ export default function EditVideo() {
         navigate('/dd'); 
       }
     } catch (error) {
-      console.error("บันทึกไม่สำเร็จ:", error);
+      // console.error("บันทึกไม่สำเร็จ:", error);
       alert("ไม่สามารถบันทึกได้ กรุณาลองใหม่อีกครั้ง");
     }
   };

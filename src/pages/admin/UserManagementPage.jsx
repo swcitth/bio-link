@@ -27,7 +27,7 @@ export default function AdminUserManagement() {
         setUsers(response.data.users);
       }
     } catch (error) {
-      console.error("ดึงข้อมูลผู้ใช้ล้มเหลว:", error);
+      // console.error("ดึงข้อมูลผู้ใช้ล้มเหลว:", error);
     }
   };
 

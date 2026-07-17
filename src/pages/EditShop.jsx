@@ -50,7 +50,7 @@ export default function EditShop() {
           });
         }
       } catch (error) {
-        console.error("ดึงข้อมูลร้านค้าไม่สำเร็จ:", error);
+        // console.error("ดึงข้อมูลร้านค้าไม่สำเร็จ:", error);
       }
     };
 
@@ -81,7 +81,7 @@ export default function EditShop() {
         navigate("/dd");
       }
     } catch (error) {
-      console.error("บันทึกไม่สำเร็จ:", error);
+      // console.error("บันทึกไม่สำเร็จ:", error);
       alert("ไม่สามารถบันทึกได้ โปรดลองอีกครั้ง");
     }
   };

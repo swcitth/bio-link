@@ -57,7 +57,7 @@ export default function OTPForm({ email, onBack, onSuccess }) {
       }
 
     } catch (error) {
-      console.error("Verify OTP Error:", error);
+      // console.error("Verify OTP Error:", error);
       if (error.response && error.response.status === 400) {
         alert(error.response.data.message); // โชว์ข้อความผิดพลาดจาก Laravel
       } else {

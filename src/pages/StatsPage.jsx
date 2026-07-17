@@ -125,7 +125,7 @@ const StatsPage = ({ links }) => {
       if (response.data.success) setStats(response.data.data);
       setIsLoading(false);
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       setError("ไม่สามารถโหลดข้อมูลสถิติได้ในขณะนี้");
       setIsLoading(false);
     }
@@ -170,7 +170,7 @@ const StatsPage = ({ links }) => {
       window.URL.revokeObjectURL(urlBlob);
       
     } catch (error) {
-      console.error("ดาวน์โหลดไฟล์ไม่สำเร็จ:", error);
+      // console.error("ดาวน์โหลดไฟล์ไม่สำเร็จ:", error);
       alert("❌ เกิดข้อผิดพลาดในการดาวน์โหลดรายงาน กรุณาลองใหม่อีกครั้ง");
     } finally {
       // 🌟 สำคัญสุด: ไม่ว่าจะโหลดสำเร็จหรือพัง ต้องคืนค่าปุ่มกลับมาเป็นสีม่วงเสมอ
@@ -574,7 +574,7 @@ const StatsPage = ({ links }) => {
                       setIsLoading(false);
                     })
                     .catch(err => {
-                      console.error(err);
+                      // console.error(err);
                       setError("ไม่สามารถโหลดข้อมูลสถิติได้ในขณะนี้");
                       setIsLoading(false);
                     });

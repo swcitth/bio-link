@@ -9,7 +9,7 @@ export default function AdminRoute() {
   try {
     user = userString ? JSON.parse(userString) : null;
   } catch (error) {
-    console.error("รูปแบบข้อมูล User ไม่ถูกต้อง:", error);
+    // console.error("รูปแบบข้อมูล User ไม่ถูกต้อง:", error);
   }
 
   // 1. ด่านแรก: เช็คว่ามี Token และ User ไหม? (ถ้าไม่มีคือยังไม่ได้ล็อกอิน)

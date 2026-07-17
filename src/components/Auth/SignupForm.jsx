@@ -99,7 +99,7 @@ export default function SignupForm({ onSwitchView }) {
         setShowSuccessPopup(true);
       }
     } catch (error) {
-      console.error("เกิดข้อผิดพลาดในการสมัครสมาชิก:", error);
+      // console.error("เกิดข้อผิดพลาดในการสมัครสมาชิก:", error);
 
       // 🌟 3. ดักจับ Error จาก Laravel (Status 422) แล้วนำไปแสดงใต้ช่อง
       if (error.response && error.response.status === 422) {

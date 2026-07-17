@@ -78,7 +78,7 @@ export default function DownloadModal({ onClose, initialTimeRange = '30days', mo
       onClose(); 
 
     } catch (error) {
-      console.error("Download failed:", error);
+      // console.error("Download failed:", error);
       alert("เกิดข้อผิดพลาดในการดาวน์โหลดไฟล์");
     }
   };

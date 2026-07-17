@@ -97,32 +97,32 @@ const BioContent = ({ profile = {}, links = [], design = {}, isCompact = false, 
   const handleItemClick = async (e, blockId, url) => {
     if (!url) return;
 
-    console.log(`[🔍 Debug] 1. มีคนกดปุ่ม!`);
-    console.log(`- Block ID: ${blockId}`);
-    console.log(`- URL: ${url}`);
+    // console.log(`[🔍 Debug] 1. มีคนกดปุ่ม!`);
+    // console.log(`- Block ID: ${blockId}`);
+    // console.log(`- URL: ${url}`);
 
     // ถ้าเป็นเบอร์โทรหรืออีเมล ให้เบรกเบราว์เซอร์ไว้ก่อน
     if (!url.startsWith('http')) {
       e.preventDefault(); 
-      console.log(`[🔍 Debug] 2. 🛑 เบรกเบราว์เซอร์สำเร็จ ไม่ให้รีบเด้งเปิดแอป`);
+      // console.log(`[🔍 Debug] 2. 🛑 เบรกเบราว์เซอร์สำเร็จ ไม่ให้รีบเด้งเปิดแอป`);
     }
 
     if (onLinkClick) {
-      console.log(`[🔍 Debug] 3. 📡 กำลังส่งข้อมูลให้ API นับยอด...`);
+      // console.log(`[🔍 Debug] 3. 📡 กำลังส่งข้อมูลให้ API นับยอด...`);
       try {
         // ลองใส่ await เผื่อว่าฟังก์ชัน onLinkClick ของคุณเป็นแบบ Async
         await onLinkClick(blockId, url);
-        console.log(`[🔍 Debug] 4. ✅ API ส่งข้อมูลเสร็จเรียบร้อย!`);
+        // console.log(`[🔍 Debug] 4. ✅ API ส่งข้อมูลเสร็จเรียบร้อย!`);
       } catch (error) {
-        console.error(`[🔍 Debug] ❌ 4. API พัง! ยิงไม่เข้า เพราะ:`, error);
+        // console.error(`[🔍 Debug] ❌ 4. API พัง! ยิงไม่เข้า เพราะ:`, error);
       }
     } else {
-      console.warn(`[🔍 Debug] ⚠️ ไม่มีฟังก์ชัน onLinkClick (ไม่ได้เชื่อมกับหลังบ้าน)`);
+      // console.warn(`[🔍 Debug] ⚠️ ไม่มีฟังก์ชัน onLinkClick (ไม่ได้เชื่อมกับหลังบ้าน)`);
     }
 
     // ถ้าเป็นเบอร์/อีเมล ค่อยเปิดแอปหลังจาก API ทำงานเสร็จ
     if (!url.startsWith('http')) {
-      console.log(`[🔍 Debug] 5. 📱 สั่งให้เบราว์เซอร์เปิดแอปโทร/อีเมลได้!`);
+      // console.log(`[🔍 Debug] 5. 📱 สั่งให้เบราว์เซอร์เปิดแอปโทร/อีเมลได้!`);
       
       // เพิ่มเวลาหน่วงเป็น 300ms เพื่อความชัวร์ (0.3 วินาที)
       setTimeout(() => {
