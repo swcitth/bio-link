@@ -64,7 +64,7 @@ export default function ForgotPasswordForm({ onSwitchView, onSubmit }) {
             <input
               type="email"
               id="reset-email"
-              placeholder="your@email.com"
+              placeholder="your@sherwood.co.th"
               value={email} // ผูก State เข้ากับ Input
               onChange={(e) => setEmail(e.target.value)} //บันทึกค่าตอนพิมพ์
               className="w-full pl-11 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all hover:border-slate-300"
